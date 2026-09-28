@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,13 +8,22 @@ import { checkOrganizerLegalCompliance } from "@/lib/legal";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const organizerId = searchParams.get("organizerId") || "user_organizer_01";
+    const cookieStore = await cookies();
+    let organizerId = searchParams.get("organizerId") || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!organizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        organizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+    }
 
     const records = await db.select().from(users).where(eq(users.id, organizerId));
     const organizer = records[0];
 
     if (!organizer) {
-      return NextResponse.json({ error: "Organizer not found" }, { status: 404 });
+      return NextResponse.json({ error: "Veranstalter nicht gefunden" }, { status: 404 });
     }
 
     const compliance = checkOrganizerLegalCompliance(organizer);
@@ -30,7 +40,16 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const organizerId = body.organizerId || "user_organizer_01";
+    const cookieStore = await cookies();
+    let organizerId = body.organizerId || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!organizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        organizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+    }
 
     const {
       legalName,

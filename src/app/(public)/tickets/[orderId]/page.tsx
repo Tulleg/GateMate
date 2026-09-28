@@ -59,10 +59,10 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
         <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" /> GateMate Home
         </Link>
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <TicketIcon className="w-5 h-5 text-indigo-400" />
           <span className="font-bold text-white text-base">GateMate Digital Passes</span>
-        </div>
+        </Link>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 space-y-8">

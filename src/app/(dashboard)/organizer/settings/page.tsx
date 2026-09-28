@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
-import { Key, ShieldCheck, User, Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, Save } from "lucide-react";
+import { Key, ShieldCheck, User, Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, Save, LogOut } from "lucide-react";
 
 export default function OrganizerSettingsPage() {
-  // Demo user preset (can be overridden by organizer email)
-  const [email, setEmail] = useState("organizer@gatemate.io");
+  const router = useRouter();
+  const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,6 +18,18 @@ export default function OrganizerSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user?.email) {
+          setEmail(data.user.email);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,6 +221,33 @@ export default function OrganizerSettingsPage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Section 3: Session & Logout */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20">
+              <LogOut className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Sitzung beenden</h2>
+              <p className="text-xs text-slate-400">Melden Sie sich sicher aus Ihrem Veranstalter-Konto ab</p>
+            </div>
+          </div>
+          <div>
+            <button
+              onClick={async () => {
+                try {
+                  await fetch("/api/auth/sign-out", { method: "POST" });
+                } catch {}
+                router.push("/login");
+              }}
+              className="px-5 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 text-xs font-bold flex items-center gap-2 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              Jetzt abmelden
+            </button>
+          </div>
         </div>
       </main>
     </div>

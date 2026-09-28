@@ -1,3 +1,6 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/db";
 import { users, events, ticketTiers, orders, tickets } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -8,7 +11,16 @@ import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2 } from "lucid
 import { CreateOrganizerModal } from "@/components/dashboard/create-organizer-modal";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = "force-dynamic";
+
 export default async function SuperAdminDashboard() {
+  const cookieStore = await cookies();
+  const role = cookieStore.get("gatemate_role")?.value;
+
+  // Access control: if user is an organizer, deny access and redirect to organizer dashboard
+  if (role === "organizer") {
+    redirect("/organizer");
+  }
   async function refreshData() {
     "use server";
     revalidatePath("/admin");
@@ -37,7 +49,7 @@ export default async function SuperAdminDashboard() {
 
       <main className="flex-1 p-8 space-y-8 overflow-y-auto">
         {/* Page Header */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-extrabold tracking-tight text-white">Platform Superadmin Portal</h1>
@@ -49,7 +61,15 @@ export default async function SuperAdminDashboard() {
               Global platform oversight, registered organizer registry, active events, and fee collection volume.
             </p>
           </div>
-          <CreateOrganizerModal />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/users"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+            >
+              <Users className="w-4 h-4 text-indigo-400" /> Userverwaltung
+            </Link>
+            <CreateOrganizerModal />
+          </div>
         </div>
 
         {/* Global Platform Metrics */}

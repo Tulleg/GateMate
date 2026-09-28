@@ -38,7 +38,7 @@ export function EventForm() {
   const fetchLegalStatus = async () => {
     setCheckingLegal(true);
     try {
-      const res = await fetch("/api/organizer/legal?organizerId=user_organizer_01");
+      const res = await fetch("/api/organizer/legal");
       const data = await res.json();
       if (data.compliance) {
         setCompliance(data.compliance);
@@ -99,7 +99,6 @@ export function EventForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          organizerId: "user_organizer_01",
           title,
           slug,
           description,
@@ -111,6 +110,7 @@ export function EventForm() {
           tiers: formattedTiers,
         }),
       });
+
 
       const data = await res.json();
       if (data.success) {

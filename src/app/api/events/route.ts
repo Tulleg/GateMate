@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -7,7 +8,16 @@ import { checkOrganizerLegalCompliance } from "@/lib/legal";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const organizerId = searchParams.get("organizerId") || "user_organizer_01";
+    const cookieStore = await cookies();
+    let organizerId = searchParams.get("organizerId") || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!organizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        organizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+    }
 
     const organizerEvents = await db
       .select()
@@ -48,13 +58,22 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { organizerId, title, slug, description, venue, bannerUrl, startDate, endDate, isListedInDirectory = true, tiers } = body;
+    const cookieStore = await cookies();
+    let cleanOrganizerId = body.organizerId || cookieStore.get("gatemate_user_id")?.value;
 
-    if (!title || !slug || !startDate || !endDate || !tiers || !Array.isArray(tiers)) {
-      return NextResponse.json({ error: "Missing required fields or invalid tiers" }, { status: 400 });
+    if (!cleanOrganizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        cleanOrganizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
     }
 
-    const cleanOrganizerId = organizerId || "user_organizer_01";
+    const { title, slug, description, venue, bannerUrl, startDate, endDate, isListedInDirectory = true, tiers } = body;
+
+    if (!title || !slug || !startDate || !endDate || !tiers || !Array.isArray(tiers)) {
+      return NextResponse.json({ error: "Pflichtfelder fehlen oder ungültige Ticket-Kategorien" }, { status: 400 });
+    }
 
     // Publication Guard Check: Fetch organizer and check legal compliance
     const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));

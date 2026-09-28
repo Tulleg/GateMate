@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { tickets, checkInLogs, ticketTiers, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyTicketJwt } from "@/lib/qr";
+
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -11,7 +13,12 @@ interface RouteParams {
 export async function POST(req: Request, { params }: RouteParams) {
   try {
     const { id: eventId } = await params;
-    const { token, ticketId, scannedByUserId = "user_organizer_01", deviceInfo } = await req.json();
+    const body = await req.json();
+    const { token, ticketId, scannedByUserId, deviceInfo } = body;
+
+    const cookieStore = await cookies();
+    const activeUserId = scannedByUserId || cookieStore.get("gatemate_user_id")?.value || "gate_scanner";
+
 
     if (!token && !ticketId) {
       return NextResponse.json({ success: false, message: "Missing token or ticketId parameter" }, { status: 400 });
@@ -106,8 +113,9 @@ export async function POST(req: Request, { params }: RouteParams) {
     await db.insert(checkInLogs).values({
       id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       ticketId: ticket.id,
-      scannedByUserId: scannedByUserId,
+      scannedByUserId: activeUserId,
       scannedAt: now,
+
       deviceInfo: deviceInfo || "PWA Mobile Camera Scanner",
     });
 

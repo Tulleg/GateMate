@@ -83,10 +83,10 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
         <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-medium transition-colors">
           <ArrowLeft className="w-4 h-4" /> Home Directory
         </Link>
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Ticket className="w-5 h-5 text-indigo-400" />
           <span className="font-bold text-white text-base">GateMate Organizer Profile</span>
-        </div>
+        </Link>
       </header>
 
       {/* Main Container */}

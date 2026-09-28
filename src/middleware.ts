@@ -4,6 +4,14 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Protect /admin routes: organizers must not access superadmin portal
+  if (pathname.startsWith("/admin")) {
+    const roleCookie = request.cookies.get("gatemate_role")?.value;
+    if (roleCookie === "organizer") {
+      return NextResponse.redirect(new URL("/organizer", request.url));
+    }
+  }
+
   // Header propagation for embed & iframe routes
   if (pathname.startsWith("/embed/")) {
     const response = NextResponse.next();

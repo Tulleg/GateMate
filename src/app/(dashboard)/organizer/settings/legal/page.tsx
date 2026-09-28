@@ -20,8 +20,6 @@ import Link from "next/link";
 import { checkOrganizerLegalCompliance, LegalComplianceResult } from "@/lib/legal";
 
 export default function OrganizerLegalSettingsPage() {
-  const organizerId = "user_organizer_01";
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +49,7 @@ export default function OrganizerLegalSettingsPage() {
   const [termsContent, setTermsContent] = useState("");
 
   const [revocationNoticeCustom, setRevocationNoticeCustom] = useState("");
-  const [organizerSlug, setOrganizerSlug] = useState("demo-organizer");
+  const [organizerSlug, setOrganizerSlug] = useState("organizer");
 
   const [compliance, setCompliance] = useState<LegalComplianceResult>({
     isCompliant: false,
@@ -67,7 +65,7 @@ export default function OrganizerLegalSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/organizer/legal?organizerId=${organizerId}`);
+      const res = await fetch(`/api/organizer/legal`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Fehler beim Laden des Rechtsprofils");
 
@@ -116,8 +114,8 @@ export default function OrganizerLegalSettingsPage() {
 
     try {
       const payload = {
-        organizerId,
         legalName,
+
         street,
         zip,
         city,

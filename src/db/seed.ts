@@ -11,8 +11,20 @@ function hashPassword(password: string): string {
 }
 
 async function seed() {
-  const connectionString = process.env.DATABASE_URL || "postgres://gatemate:gatemate_secret@localhost:5432/gatemate_db";
+  if (process.env.ENABLE_DEMO_ACCOUNTS !== "true") {
+    console.log("[SEED SKIPPED] Demo accounts disabled. Set ENABLE_DEMO_ACCOUNTS=true in environment to seed demo accounts and sample events.");
+    process.exit(0);
+  }
+
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error("[SEED ERROR] DATABASE_URL environment variable is missing.");
+    process.exit(1);
+  }
+
   console.log("Connecting to database for seeding...");
+
+
   
   const client = postgres(connectionString, { max: 1 });
   const db = drizzle(client);

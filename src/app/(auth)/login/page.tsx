@@ -18,27 +18,41 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Direct login router redirect for demo / organizer dashboard
-      if (email.includes("admin")) {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Anmeldung fehlgeschlagen.");
+      }
+
+      if (data.user?.role === "superadmin") {
         router.push("/admin");
       } else {
         router.push("/organizer");
       }
     } catch (err: any) {
-      setError("Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.");
+      setError(err.message || "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.");
     } finally {
       setLoading(false);
     }
   };
 
+  const enableDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === "true";
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-slate-950 text-slate-50">
       <div className="w-full max-w-md space-y-6 bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 mb-2">
-            <Ticket className="w-8 h-8" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">Anmelden bei GateMate</h2>
+          <Link href="/" className="inline-flex flex-col items-center group">
+            <div className="inline-flex p-3 rounded-2xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 mb-2 group-hover:scale-105 transition-transform">
+              <Ticket className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-extrabold text-white tracking-tight group-hover:text-indigo-300 transition-colors">Anmelden bei GateMate</h2>
+          </Link>
           <p className="text-xs text-slate-400">Events verwalten, Ticketverkäufe einsehen und QR-Tickets entwerten.</p>
         </div>
 
@@ -69,7 +83,7 @@ export default function LoginPage() {
                 href="/reset-password"
                 className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
               >
-                <KeyRound className="w-3 h-3" /> Passwort vergessen / zurücksetzen?
+                <KeyRound className="w-3 h-3" /> Passwort vergessen?
               </Link>
             </div>
             <input
@@ -91,16 +105,26 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-          <p className="font-semibold text-slate-300">Initial-Zugangsdaten der Entwicklung:</p>
-          <p>
-            • Admin: <span className="font-mono text-indigo-400">admin@gatemate.io</span> / SuperAdmin123!
-          </p>
-          <p>
-            • Organizer: <span className="font-mono text-emerald-400">organizer@gatemate.io</span> / Organizer123!
-          </p>
+        <div className="text-center text-xs text-slate-400">
+          Noch kein Konto?{" "}
+          <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold underline">
+            Jetzt kostenlos registrieren
+          </Link>
         </div>
+
+        {enableDemoAccounts && (
+          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+            <p className="font-semibold text-slate-300">Initial-Zugangsdaten der Entwicklung:</p>
+            <p>
+              • Admin: <span className="font-mono text-indigo-400">admin@gatemate.io</span> / SuperAdmin123!
+            </p>
+            <p>
+              • Organizer: <span className="font-mono text-emerald-400">organizer@gatemate.io</span> / Organizer123!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
+
 }

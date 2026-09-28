@@ -6,6 +6,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { EventSearch } from "@/components/public/event-search";
 import { Ticket, ShieldCheck, Zap, QrCode, ArrowRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "GateMate | Discover Events & Mobile QR Ticketing",
   description: "Discover upcoming live events, purchase verified tickets with instant Stripe checkout, and check in seamlessly with cryptographic mobile QR passes.",
@@ -65,12 +67,12 @@ export default async function LandingPage() {
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white">
       {/* Header */}
       <header className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Ticket className="w-6 h-6 text-indigo-400" />
           <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
             GateMate
           </span>
-        </div>
+        </Link>
         <nav className="flex items-center gap-4">
           <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors">
             Sign In

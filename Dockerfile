@@ -1,6 +1,6 @@
 # Step 1: Dependencies Stage
 FROM node:20-alpine AS deps
-RUN apk add --no-libc6-compat
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -17,7 +17,7 @@ ENV NODE_ENV=production
 
 RUN npm run build
 
-# Step 3: Production Runner Stage (Tailored for Coolify)
+# Step 3: Production Runner Stage
 FROM node:20-alpine AS runner
 WORKDIR /app
 

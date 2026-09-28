@@ -14,12 +14,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
   }
 
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("Missing STRIPE_WEBHOOK_SECRET environment variable.");
+    return NextResponse.json({ error: "Server configuration error: missing STRIPE_WEBHOOK_SECRET" }, { status: 500 });
+  }
+
   try {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder"
+      webhookSecret
     );
+
 
     switch (event.type) {
       case "checkout.session.completed": {

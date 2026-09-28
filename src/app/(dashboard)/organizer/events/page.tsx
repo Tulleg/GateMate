@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { events, ticketTiers, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -6,14 +8,26 @@ import { EventsList } from "@/components/dashboard/events-list";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrganizerEventsPage() {
-  const organizerId = "user_organizer_01";
+  const cookieStore = await cookies();
+  let organizerId = cookieStore.get("gatemate_user_id")?.value;
+
+  if (!organizerId) {
+    if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      organizerId = "user_organizer_01";
+    } else {
+      redirect("/login");
+    }
+  }
 
   const organizerEvents = await db
     .select()
     .from(events)
     .where(eq(events.organizerId, organizerId))
     .orderBy(desc(events.createdAt));
+
 
   const eventsWithStats = await Promise.all(
     organizerEvents.map(async (event) => {

@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
+      - PORT=${PORT:-3000}
+      - HOSTNAME=0.0.0.0
       - DATABASE_URL=postgres://gatemate:${POSTGRES_PASSWORD:-gatemate_secret}@postgres:5432/${POSTGRES_DB:-gatemate_db}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
@@ -17,6 +19,8 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
       - QR_SIGNING_SECRET=${QR_SIGNING_SECRET}
+      - ENABLE_DEMO_ACCOUNTS=${ENABLE_DEMO_ACCOUNTS:-false}
+      - NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS=${NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS:-false}
     depends_on:
       postgres:
         condition: service_healthy

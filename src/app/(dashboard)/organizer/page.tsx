@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { users, events, ticketTiers, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -7,8 +9,19 @@ import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
 import Link from "next/link";
 import { Calendar, DollarSign, Ticket, TrendingUp, PlusCircle, ArrowUpRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrganizerDashboardPage() {
-  const organizerId = "user_organizer_01"; // Demo organizer ID
+  const cookieStore = await cookies();
+  let organizerId = cookieStore.get("gatemate_user_id")?.value;
+
+  if (!organizerId) {
+    if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      organizerId = "user_organizer_01";
+    } else {
+      redirect("/login");
+    }
+  }
 
   // Fetch organizer user record
   const organizerRecords = await db.select().from(users).where(eq(users.id, organizerId));
@@ -20,6 +33,7 @@ export default async function OrganizerDashboardPage() {
     .from(events)
     .where(eq(events.organizerId, organizerId))
     .orderBy(desc(events.createdAt));
+
 
   // Compute analytics
   let totalRevenueCents = 0;
