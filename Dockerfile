@@ -41,10 +41,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
-COPY --from=builder --chown=nextjs:nodejs /app/migrate.js ./migrate.js
+COPY --from=builder --chown=nextjs:nodejs /app/migrate.cjs ./migrate.cjs
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node migrate.js && node server.js"]
+CMD ["sh", "-c", "node migrate.cjs && node server.js"]
