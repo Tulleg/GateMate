@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -16,13 +17,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const { userId } = await req.json();
-    if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    let bodyUserId: string | undefined;
+    try {
+      const body = await req.json();
+      bodyUserId = body?.userId;
+    } catch {}
+
+    const cookieStore = await cookies();
+    let targetUserId = bodyUserId || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!targetUserId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        targetUserId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Benutzer-ID fehlt oder nicht autorisiert" }, { status: 400 });
+      }
     }
 
     // 1. Fetch user record
-    const userRecords = await db.select().from(users).where(eq(users.id, userId));
+    const userRecords = await db.select().from(users).where(eq(users.id, targetUserId));
     const user = userRecords[0];
 
     if (!user) {
@@ -48,7 +61,7 @@ export async function POST(req: Request) {
       stripeAccountId = account.id;
 
       // Update user record with new Stripe connected account ID
-      await db.update(users).set({ stripeConnectedAccountId: stripeAccountId }).where(eq(users.id, userId));
+      await db.update(users).set({ stripeConnectedAccountId: stripeAccountId }).where(eq(users.id, targetUserId));
     }
 
     // 3. Create Account Link for Stripe Express Onboarding
