@@ -41,8 +41,6 @@ export default function LoginPage() {
     }
   };
 
-  const enableDemoAccounts = process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === "true";
-
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-slate-950 text-slate-50">
       <div className="w-full max-w-md space-y-6 bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
@@ -111,20 +109,7 @@ export default function LoginPage() {
             Jetzt kostenlos registrieren
           </Link>
         </div>
-
-        {enableDemoAccounts && (
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-            <p className="font-semibold text-slate-300">Initial-Zugangsdaten der Entwicklung:</p>
-            <p>
-              • Admin: <span className="font-mono text-indigo-400">admin@gatemate.io</span> / SuperAdmin123!
-            </p>
-            <p>
-              • Organizer: <span className="font-mono text-emerald-400">organizer@gatemate.io</span> / Organizer123!
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
-
 }

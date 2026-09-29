@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "db:seed-admin": "tsx src/db/seed-admin.ts"
   },
   "dependencies": {
     "@lucia-auth/adapter-drizzle": "^1.1.0",

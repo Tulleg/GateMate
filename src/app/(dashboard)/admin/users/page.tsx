@@ -13,8 +13,8 @@ export default async function AdminUsersPage() {
   const role = cookieStore.get("gatemate_role")?.value;
 
   // Access control: strictly restrict to superadmin
-  if (role === "organizer") {
-    redirect("/organizer");
+  if (role !== "superadmin") {
+    redirect("/login");
   }
 
   const allUsersList = await db.select().from(users);

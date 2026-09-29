@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { verifyPassword } from "@/lib/passwords";
+import { verifyPassword, hashPassword } from "@/lib/passwords";
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +17,26 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    // Auto-bootstrap Superadmin account if env variables are configured
+    const envAdminEmail = (process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || "").toLowerCase().trim();
+    const envAdminPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD || "";
+
+    if (envAdminEmail && cleanEmail === envAdminEmail && envAdminPassword) {
+      const existingAdmin = await db.select().from(users).where(eq(users.email, cleanEmail));
+      if (existingAdmin.length === 0) {
+        const passwordHash = hashPassword(password === envAdminPassword ? password : envAdminPassword);
+        await db.insert(users).values({
+          id: `admin_super_${Date.now()}`,
+          email: cleanEmail,
+          name: "Platform SuperAdmin",
+          passwordHash,
+          role: "superadmin",
+          emailVerified: true,
+        });
+      }
+    }
+
     const userRecords = await db.select().from(users).where(eq(users.email, cleanEmail));
 
     if (userRecords.length === 0) {

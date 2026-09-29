@@ -17,9 +17,9 @@ export default async function SuperAdminDashboard() {
   const cookieStore = await cookies();
   const role = cookieStore.get("gatemate_role")?.value;
 
-  // Access control: if user is an organizer, deny access and redirect to organizer dashboard
-  if (role === "organizer") {
-    redirect("/organizer");
+  // Access control: strictly restrict to superadmin
+  if (role !== "superadmin") {
+    redirect("/login");
   }
   async function refreshData() {
     "use server";
