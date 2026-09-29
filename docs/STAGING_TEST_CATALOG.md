@@ -35,7 +35,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **AUTH-01** | Registrierung Veranstalter | 1. Navigiere zu `/register`<br>2. Formular mit gültigen Daten ausfüllen<br>3. Absenden | Benutzerkonto wird erstellt, Bestätigungsmeldung oder Weiterleitung zum Dashboard | `[ ] Pass` |
+| **AUTH-01** | Registrierung Veranstalter (Deaktiviert) | 1. Navigiere zu `/login`<br>2. Prüfen, dass kein Registrierungs-Link vorhanden ist | Selbstregistrierung deaktiviert; es existiert kein Registrierungs-Link auf der Login-Seite | `[ ] Pass` |
 | **AUTH-02** | Login mit gültigen Daten | 1. Navigiere zu `/login`<br>2. E-Mail & Passwort eingeben<br>3. Anmelden klicken | Erfolgreicher Login, Weiterleitung zum jeweiligen Dashboard (Organizer/Admin) | `[ ] Pass` |
 | **AUTH-03** | Login mit ungültigen Daten | 1. Navigiere zu `/login`<br>2. Falsches Passwort eingeben | Fehlermeldung erscheint ("Ungültige Anmeldedaten"), kein Zugriff | `[ ] Pass` |
 | **AUTH-04** | Passwort zurücksetzen | 1. Navigiere zu `/reset-password`<br>2. E-Mail eingeben & anfordern | Erfolgsmeldung für E-Mail-Versand erscheint | `[ ] Pass` |

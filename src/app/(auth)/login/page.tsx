@@ -102,13 +102,6 @@ export default function LoginPage() {
             {loading ? "Melde an..." : "Anmelden"} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="text-center text-xs text-slate-400">
-          Noch kein Konto?{" "}
-          <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold underline">
-            Jetzt kostenlos registrieren
-          </Link>
-        </div>
       </div>
     </div>
   );
