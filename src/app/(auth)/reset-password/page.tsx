@@ -16,11 +16,20 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      // Simulate reset email link request / direct reset prompt
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Fehler beim Anfordern des Passwort-Resets.");
+      }
+
       setSubmitted(true);
     } catch (err: any) {
-      setError("Fehler beim Anfordern des Passwort-Resets.");
+      setError(err?.message || "Fehler beim Anfordern des Passwort-Resets.");
     } finally {
       setLoading(false);
     }

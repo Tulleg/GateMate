@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/db";
-import { users, orders, tickets, ticketTiers } from "@/db/schema";
+import { users, orders, tickets, ticketTiers, events } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { generateSignedTicketJwt } from "@/lib/qr";
+import { sendTicketConfirmationEmail } from "@/lib/email";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
@@ -47,27 +48,27 @@ export async function POST(req: Request) {
     );
   }
 
-  let event: any = null;
+  let eventObj: any = null;
   let lastError: any = null;
 
   for (const sec of secretsToTry) {
     try {
-      event = stripe.webhooks.constructEvent(body, signature, sec);
-      if (event) break;
+      eventObj = stripe.webhooks.constructEvent(body, signature, sec);
+      if (eventObj) break;
     } catch (err: any) {
       lastError = err;
     }
   }
 
-  if (!event) {
+  if (!eventObj) {
     console.error("Stripe webhook verification error:", lastError?.message);
     return NextResponse.json({ error: `Webhook Error: ${lastError?.message || "Invalid signature"}` }, { status: 400 });
   }
 
   try {
-    switch (event.type) {
+    switch (eventObj.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as any;
+        const session = eventObj.data.object as any;
         const { orderId, eventId, tierId, quantity, buyerEmail, buyerName } = session.metadata || {};
 
         if (!orderId || !eventId || !tierId) {
@@ -134,11 +135,37 @@ export async function POST(req: Request) {
         }
 
         console.log(`[TICKET FULFILLMENT SUCCESS] Issued ${numQty} tickets for Order ${orderId}`);
+
+        // 5. Trigger Resend Ticket Confirmation Email
+        const targetEmail = buyerEmail || session.customer_details?.email;
+        if (targetEmail) {
+          try {
+            const eventRecords = await db.select().from(events).where(eq(events.id, eventId));
+            const tierRecords = await db.select().from(ticketTiers).where(eq(ticketTiers.id, tierId));
+
+            const currentEvent = eventRecords[0];
+            const currentTier = tierRecords[0];
+
+            await sendTicketConfirmationEmail({
+              buyerEmail: targetEmail,
+              buyerName: buyerName || session.customer_details?.name || "Kunde",
+              orderId,
+              eventTitle: currentEvent?.title || "GateMate Event",
+              eventDate: currentEvent?.startDate,
+              venue: currentEvent?.venue,
+              ticketCount: numQty,
+              tierName: currentTier?.name || "Standard Ticket",
+              totalCents: orderRecord?.totalCents || session.amount_total || 0,
+            });
+          } catch (mailErr: any) {
+            console.error("Failed to trigger Resend confirmation email:", mailErr?.message || mailErr);
+          }
+        }
         break;
       }
 
       case "account.updated": {
-        const account = event.data.object as any;
+        const account = eventObj.data.object as any;
         console.log(`Stripe Account Updated: ${account.id}`);
         if (account.id) {
           await db

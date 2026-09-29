@@ -89,12 +89,13 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 
 ---
 
-## 6. E-Mails & Ticket-Generierung
+## 6. E-Mails & Ticket-Generierung (Resend Integration)
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **MAIL-01** | Bestellbestätigungs-E-Mail | 1. Nach erfolgreichem Ticketkauf Posteingang prüfen (bzw. Mail-Catch/Logs) | E-Mail mit Bestellzusammenfassung & Ticket-Link ist angekommen | `[ ] Pass` |
-| **MAIL-02** | PDF-Ticket Download | 1. Auf `/tickets/[orderId]` oder in der E-Mail auf "PDF herunterladen" klicken | PDF wird heruntergeladen, QR-Code & Event-Daten sind gut lesbar | `[ ] Pass` |
+| **MAIL-01** | Resend Ticketbestätigungs-Mail | 1. Erfolgreichen Testkauf im Shop durchführen<br>2. Posteingang der angegebenen Käufer-E-Mail prüfen | HTML-E-Mail von Resend mit Event-Titel, Datum, Ort & Direktlink zu `/tickets/[orderId]` trifft ein (Server-Log zeigt `[RESEND EMAIL SUCCESS]`) | `[ ] Pass` |
+| **MAIL-02** | Resend Passwort-Reset Mail | 1. Zu `/reset-password` navigieren<br>2. E-Mail eingeben & anfordern | Resend stellt E-Mail mit Reset-Link zu | `[ ] Pass` |
+| **MAIL-03** | PDF-Ticket Download | 1. Auf `/tickets/[orderId]` oder in der E-Mail auf "PDF herunterladen" klicken | PDF wird heruntergeladen, QR-Code & Event-Daten sind gut lesbar | `[ ] Pass` |
 
 ---
 
