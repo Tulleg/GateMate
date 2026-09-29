@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
 
 function maskKey(key?: string | null, prefixLen = 7, suffixLen = 4): string | null {
   if (!key || key.trim().length === 0) return null;
@@ -32,9 +33,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Veranstalter nicht gefunden" }, { status: 404 });
     }
 
+    let detailsSubmitted = false;
+    let chargesEnabled = false;
+
+    if (organizer.stripeConnectedAccountId && hasPlatformStripeKey()) {
+      try {
+        const acc = await stripe.accounts.retrieve(organizer.stripeConnectedAccountId);
+        detailsSubmitted = Boolean(acc.details_submitted);
+        chargesEnabled = Boolean(acc.charges_enabled);
+      } catch (err) {
+        console.error("Failed to retrieve connected account from Stripe:", err);
+      }
+    }
+
     return NextResponse.json({
       stripeMode: organizer.stripeMode || "connect",
       stripeConnectedAccountId: organizer.stripeConnectedAccountId || null,
+      detailsSubmitted,
+      chargesEnabled,
       stripePublishableKey: organizer.stripePublishableKey || "",
       stripeSecretKeyMasked: maskKey(organizer.stripeSecretKey),
       hasSecretKey: Boolean(organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0),

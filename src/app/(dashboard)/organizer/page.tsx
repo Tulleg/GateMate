@@ -9,6 +9,8 @@ import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
 import Link from "next/link";
 import { Calendar, DollarSign, Ticket, TrendingUp, PlusCircle, ArrowUpRight } from "lucide-react";
 
+import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
+
 export const dynamic = "force-dynamic";
 
 export default async function OrganizerDashboardPage() {
@@ -25,7 +27,20 @@ export default async function OrganizerDashboardPage() {
 
   // Fetch organizer user record
   const organizerRecords = await db.select().from(users).where(eq(users.id, organizerId));
-  const organizer = organizerRecords[0] || { id: organizerId, stripeConnectedAccountId: null };
+  const organizer = organizerRecords[0] || { id: organizerId, stripeConnectedAccountId: null, stripeSecretKey: null };
+
+  // Check if Stripe is connected and onboarding completed
+  let isStripeConnected = false;
+  if (organizer.stripeConnectedAccountId && hasPlatformStripeKey()) {
+    try {
+      const acc = await stripe.accounts.retrieve(organizer.stripeConnectedAccountId);
+      isStripeConnected = Boolean(acc.details_submitted);
+    } catch {
+      isStripeConnected = false;
+    }
+  } else if (organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0) {
+    isStripeConnected = true;
+  }
 
   // Fetch organizer events
   const organizerEvents = await db
@@ -58,8 +73,6 @@ export default async function OrganizerDashboardPage() {
       };
     })
   );
-
-  const isStripeConnected = Boolean(organizer.stripeConnectedAccountId);
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-50">

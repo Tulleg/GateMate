@@ -25,7 +25,7 @@ export function StripeConnectCard({ userId, isConnected, accountId }: StripeConn
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank", "noopener,noreferrer");
       } else {
         setErrorMsg(data.error || "Onboarding konnte nicht gestartet werden.");
       }

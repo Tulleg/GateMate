@@ -28,6 +28,8 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
   // Stripe Keys state
   const [stripeMode, setStripeMode] = useState<"connect" | "direct_keys">("connect");
   const [connectedAccountId, setConnectedAccountId] = useState<string | null>(null);
+  const [detailsSubmitted, setDetailsSubmitted] = useState(false);
+  const [chargesEnabled, setChargesEnabled] = useState(false);
   const [publishableKey, setPublishableKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
@@ -58,6 +60,8 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
       if (res.ok) {
         setStripeMode(data.stripeMode || "connect");
         setConnectedAccountId(data.stripeConnectedAccountId || null);
+        setDetailsSubmitted(Boolean(data.detailsSubmitted));
+        setChargesEnabled(Boolean(data.chargesEnabled));
         setPublishableKey(data.stripePublishableKey || "");
         setSecretKey(data.stripeSecretKeyMasked || "");
         setHasSecretKey(data.hasSecretKey);
@@ -82,7 +86,7 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank", "noopener,noreferrer");
       } else {
         setConnectError(data.error || "Stripe Express Onboarding konnte nicht gestartet werden.");
       }
@@ -204,9 +208,13 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30">
                     {isTestMode ? "Test-Modus (Direkte Keys)" : isLiveMode ? "Live-Modus (Direkte Keys)" : "Manuelle Keys Aktiv"}
                   </span>
-                ) : connectedAccountId ? (
+                ) : connectedAccountId && detailsSubmitted ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono border border-emerald-500/30">
                     Connect Express Aktiv
+                  </span>
+                ) : connectedAccountId && !detailsSubmitted ? (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30">
+                    Onboarding Unvollständig
                   </span>
                 ) : (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono border border-slate-700">
@@ -217,8 +225,10 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
               <p className="text-xs text-slate-400 mt-1">
                 {hasSecretKey
                   ? "Ihre manuellen Stripe API-Schlüssel sind aktiv. Auszahlungen fließen direkt in Ihr eigenes Stripe-Konto."
-                  : connectedAccountId
+                  : connectedAccountId && detailsSubmitted
                   ? `Verknüpft mit Stripe Express Konto ${connectedAccountId}. Ticket-Einnahmen werden direkt ausgezahlt.`
+                  : connectedAccountId && !detailsSubmitted
+                  ? `Stripe Express Konto ${connectedAccountId} wurde erstellt, aber die Registrierung bei Stripe wurde nicht abgeschlossen.`
                   : "Verknüpfen Sie Ihr Bankkonto per 1-Klick über Stripe Express, um Ticketverkäufe zu empfangen."}
               </p>
             </div>
@@ -231,11 +241,16 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
           >
             {connectLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Verbinne mit Stripe...
+                <Loader2 className="w-4 h-4 animate-spin" /> Verbinde mit Stripe...
               </>
             ) : (
               <>
-                {connectedAccountId ? "Stripe Dashboard verwalten" : "Connect Stripe Express"} <ArrowRight className="w-4 h-4" />
+                {connectedAccountId && detailsSubmitted
+                  ? "Stripe Dashboard verwalten"
+                  : connectedAccountId && !detailsSubmitted
+                  ? "Onboarding fortsetzen"
+                  : "Connect Stripe Express"}{" "}
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
