@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { events, ticketTiers, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -34,6 +35,10 @@ export const metadata: Metadata = {
 };
 
 export default async function LandingPage() {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("gatemate_user_id")?.value;
+  const isLoggedIn = Boolean(userId);
+
   // Query all published & listed events
   const publicEvents = await db
     .select()
@@ -74,15 +79,18 @@ export default async function LandingPage() {
           </span>
         </Link>
         <nav className="flex items-center gap-4">
-          <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors">
-            Sign In
-          </Link>
-          <Link
-            href="/organizer"
-            className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
-          >
-            Organizer Hub
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/organizer"
+              className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
+            >
+              Organizer Hub
+            </Link>
+          ) : (
+            <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors">
+              Sign In
+            </Link>
+          )}
         </nav>
       </header>
 
