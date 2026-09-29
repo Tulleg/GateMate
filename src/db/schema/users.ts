@@ -8,6 +8,10 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash"),
   role: systemRoleEnum("role").default("attendee").notNull(),
   stripeConnectedAccountId: text("stripe_connected_account_id"),
+  stripePublishableKey: text("stripe_publishable_key"),
+  stripeSecretKey: text("stripe_secret_key"),
+  stripeWebhookSecret: text("stripe_webhook_secret"),
+  stripeMode: text("stripe_mode").default("connect"), // 'connect' | 'direct_keys'
   name: text("name"),
   organizerSlug: text("organizer_slug").unique(),
   bio: text("bio"),

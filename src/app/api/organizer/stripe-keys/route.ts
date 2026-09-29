@@ -1,0 +1,145 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+function maskKey(key?: string | null, prefixLen = 7, suffixLen = 4): string | null {
+  if (!key || key.trim().length === 0) return null;
+  const trimmed = key.trim();
+  if (trimmed.length <= prefixLen + suffixLen) return "••••••••";
+  return `${trimmed.substring(0, prefixLen)}••••${trimmed.substring(trimmed.length - suffixLen)}`;
+}
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const cookieStore = await cookies();
+    let organizerId = searchParams.get("organizerId") || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!organizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        organizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+    }
+
+    const records = await db.select().from(users).where(eq(users.id, organizerId));
+    const organizer = records[0];
+
+    if (!organizer) {
+      return NextResponse.json({ error: "Veranstalter nicht gefunden" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      stripeMode: organizer.stripeMode || "connect",
+      stripeConnectedAccountId: organizer.stripeConnectedAccountId || null,
+      stripePublishableKey: organizer.stripePublishableKey || "",
+      stripeSecretKeyMasked: maskKey(organizer.stripeSecretKey),
+      hasSecretKey: Boolean(organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0),
+      stripeWebhookSecretMasked: maskKey(organizer.stripeWebhookSecret, 6, 4),
+      hasWebhookSecret: Boolean(organizer.stripeWebhookSecret && organizer.stripeWebhookSecret.trim().length > 0),
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const cookieStore = await cookies();
+    let organizerId = body.organizerId || cookieStore.get("gatemate_user_id")?.value;
+
+    if (!organizerId) {
+      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+        organizerId = "user_organizer_01";
+      } else {
+        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+      }
+    }
+
+    const { stripePublishableKey, stripeSecretKey, stripeWebhookSecret, stripeMode } = body;
+
+    // Optional Key format validation
+    if (stripePublishableKey && stripePublishableKey.trim() !== "" && !stripePublishableKey.trim().startsWith("pk_")) {
+      return NextResponse.json(
+        { error: "Ungültiger Stripe Publishable Key. Ein Publishable Key muss mit 'pk_' beginnen." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      stripeSecretKey &&
+      stripeSecretKey.trim() !== "" &&
+      !stripeSecretKey.trim().startsWith("sk_") &&
+      !stripeSecretKey.trim().startsWith("rk_")
+    ) {
+      return NextResponse.json(
+        { error: "Ungültiger Stripe Secret Key. Ein Secret Key muss mit 'sk_' oder 'rk_' beginnen." },
+        { status: 400 }
+      );
+    }
+
+    if (stripeWebhookSecret && stripeWebhookSecret.trim() !== "" && !stripeWebhookSecret.trim().startsWith("whsec_")) {
+      return NextResponse.json(
+        { error: "Ungültiges Stripe Webhook Secret. Ein Webhook Secret muss mit 'whsec_' beginnen." },
+        { status: 400 }
+      );
+    }
+
+    const records = await db.select().from(users).where(eq(users.id, organizerId));
+    const existingUser = records[0];
+    if (!existingUser) {
+      return NextResponse.json({ error: "Veranstalter nicht gefunden" }, { status: 404 });
+    }
+
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (stripeMode !== undefined) {
+      updateData.stripeMode = stripeMode;
+    }
+
+    if (stripePublishableKey !== undefined) {
+      updateData.stripePublishableKey = stripePublishableKey.trim() || null;
+    }
+
+    if (stripeSecretKey !== undefined && stripeSecretKey.trim() !== "" && !stripeSecretKey.includes("••••")) {
+      updateData.stripeSecretKey = stripeSecretKey.trim();
+    } else if (stripeSecretKey === "") {
+      updateData.stripeSecretKey = null;
+    }
+
+    if (stripeWebhookSecret !== undefined && stripeWebhookSecret.trim() !== "" && !stripeWebhookSecret.includes("••••")) {
+      updateData.stripeWebhookSecret = stripeWebhookSecret.trim();
+    } else if (stripeWebhookSecret === "") {
+      updateData.stripeWebhookSecret = null;
+    }
+
+    await db.update(users).set(updateData).where(eq(users.id, organizerId));
+
+    const updatedRecords = await db.select().from(users).where(eq(users.id, organizerId));
+    const updatedOrganizer = updatedRecords[0];
+
+    return NextResponse.json({
+      success: true,
+      message: "Stripe Einstellungen erfolgreich gespeichert.",
+      stripeMode: updatedOrganizer.stripeMode || "connect",
+      stripeConnectedAccountId: updatedOrganizer.stripeConnectedAccountId || null,
+      stripePublishableKey: updatedOrganizer.stripePublishableKey || "",
+      stripeSecretKeyMasked: maskKey(updatedOrganizer.stripeSecretKey),
+      hasSecretKey: Boolean(updatedOrganizer.stripeSecretKey && updatedOrganizer.stripeSecretKey.trim().length > 0),
+      stripeWebhookSecretMasked: maskKey(updatedOrganizer.stripeWebhookSecret, 6, 4),
+      hasWebhookSecret: Boolean(updatedOrganizer.stripeWebhookSecret && updatedOrganizer.stripeWebhookSecret.trim().length > 0),
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  return PUT(req);
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { StripeSettingsCard } from "@/components/dashboard/stripe-settings-card";
 import { Key, ShieldCheck, User, Sparkles, CheckCircle2, AlertCircle, Eye, EyeOff, Save, LogOut } from "lucide-react";
 
 export default function OrganizerSettingsPage() {
@@ -124,6 +125,9 @@ export default function OrganizerSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Section: Stripe & Payments */}
+        <StripeSettingsCard />
 
         {/* Section 2: Password Change Form */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">

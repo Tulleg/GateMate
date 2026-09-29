@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, PLATFORM_FEE_PERCENT } from "@/lib/stripe";
+import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasPlatformStripeKey } from "@/lib/stripe";
 import { db } from "@/db";
 import { events, ticketTiers, users, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -33,9 +33,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Requested quantity exceeds remaining ticket capacity" }, { status: 400 });
     }
 
-    // 3. Fetch Organizer for Stripe Connected Account ID
+    // 3. Fetch Organizer
     const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
     const organizer = organizerRecords[0];
+
+    // Determine Stripe Client and method
+    const { client: activeStripe, isDirectKey } = getOrganizerStripeClient(organizer);
+
+    if (!isDirectKey && !organizer?.stripeConnectedAccountId && !hasPlatformStripeKey()) {
+      return NextResponse.json(
+        {
+          error:
+            "Der Veranstalter hat bisher keine Stripe Zahlungsdaten hinterlegt und auf dem Server ist kein Plattform-Key gesetzt.",
+        },
+        { status: 400 }
+      );
+    }
 
     const totalCents = tier.priceCents * numQuantity;
     const platformFeeCents = Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
@@ -79,13 +92,14 @@ export async function POST(req: Request) {
         quantity: numQuantity.toString(),
         buyerEmail,
         buyerName,
+        organizerId: event.organizerId,
       },
       success_url: `${appUrl}/tickets/${orderId}?success=true`,
       cancel_url: `${appUrl}/e/${event.slug}?canceled=true`,
     };
 
-    // Apply Stripe Connect Destination Charge & Platform Fee if organizer is connected
-    if (stripeAccountId) {
+    // Apply Stripe Connect Destination Charge & Platform Fee only if using Connect platform account
+    if (!isDirectKey && stripeAccountId) {
       sessionOptions.payment_intent_data = {
         application_fee_amount: platformFeeCents,
         transfer_data: {
@@ -94,7 +108,7 @@ export async function POST(req: Request) {
       };
     }
 
-    const session = await stripe.checkout.sessions.create(sessionOptions);
+    const session = await activeStripe.checkout.sessions.create(sessionOptions);
 
     // Update order with Stripe Checkout Session ID
     await db.update(orders).set({ stripeCheckoutSessionId: session.id } as any).where(eq(orders.id, orderId));

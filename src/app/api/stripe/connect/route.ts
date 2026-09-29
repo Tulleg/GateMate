@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
+    if (!hasPlatformStripeKey()) {
+      return NextResponse.json(
+        {
+          error:
+            "Stripe Connect ist auf der Server-Plattform nicht konfiguriert (STRIPE_SECRET_KEY fehlt in den Umgebungsvariablen). Bitte Plattform-Schlüssel hinterlegen oder manuelle API-Keys verwenden.",
+        },
+        { status: 400 }
+      );
+    }
+
     const { userId } = await req.json();
     if (!userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });

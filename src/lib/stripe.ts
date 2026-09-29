@@ -9,3 +9,37 @@ export const stripe = new Stripe(stripeSecretKey, {
 });
 
 export const PLATFORM_FEE_PERCENT = parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || "5.0");
+
+export function hasPlatformStripeKey(): boolean {
+  return (
+    Boolean(process.env.STRIPE_SECRET_KEY) &&
+    process.env.STRIPE_SECRET_KEY !== "sk_test_dummy_build_key_placeholder"
+  );
+}
+
+export function getOrganizerStripeClient(organizer?: { stripeSecretKey?: string | null } | null): {
+  client: Stripe;
+  isDirectKey: boolean;
+} {
+  if (organizer?.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0) {
+    return {
+      client: new Stripe(organizer.stripeSecretKey.trim(), {
+        apiVersion: "2024-12-18.acacia" as any,
+        typescript: true,
+      }),
+      isDirectKey: true,
+    };
+  }
+
+  return {
+    client: stripe,
+    isDirectKey: false,
+  };
+}
+
+export function getOrganizerWebhookSecret(organizer?: { stripeWebhookSecret?: string | null } | null): string | undefined {
+  if (organizer?.stripeWebhookSecret && organizer.stripeWebhookSecret.trim().length > 0) {
+    return organizer.stripeWebhookSecret.trim();
+  }
+  return process.env.STRIPE_WEBHOOK_SECRET;
+}
