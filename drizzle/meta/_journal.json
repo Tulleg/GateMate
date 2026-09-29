@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790318770490,
+      "tag": "0000_brave_hawkeye",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790333879003,
+      "tag": "0001_sticky_moonstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790673600000,
+      "tag": "0002_add_verification_and_account_fields",
+      "breakpoints": true
+    }
+  ]
+}

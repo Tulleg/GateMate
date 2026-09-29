@@ -29,7 +29,7 @@ yarn-error.log*
 next-env.d.ts
 
 # drizzle
-/drizzle/meta
+# /drizzle/meta
 
 # OS & IDE files
 .DS_Store
