@@ -40,6 +40,8 @@ export const users = pgTable("users", {
   cancellationPolicyContent: text("cancellation_policy_content"),
   eventTermsContent: text("event_terms_content"),
   revocationNoticeCustom: text("revocation_notice_custom"),
+  isVerifiedByAdmin: boolean("is_verified_by_admin").default(false).notNull(),
+  kytcVerifiedAt: timestamp("kytc_verified_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

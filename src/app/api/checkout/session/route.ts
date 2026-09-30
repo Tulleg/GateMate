@@ -80,6 +80,10 @@ export async function POST(req: Request) {
 
     const documentVersionsSnapshot = await createOrderLegalSnapshot({ organizer: organizer as any, event, tier });
 
+    // Extract client IP and User-Agent for audit log
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || null;
+    const userAgent = req.headers.get("user-agent") || null;
+
     // 4. Create Order in Database (status: pending)
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     await db.insert(orders).values({
@@ -91,6 +95,9 @@ export async function POST(req: Request) {
       termsSnapshot,
       legalProfileSnapshot,
       documentVersionsSnapshot,
+      ipAddress: clientIp,
+      userAgent,
+      acceptedAt: new Date(),
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -109,7 +116,7 @@ export async function POST(req: Request) {
               description: `Eintrittskarte für ${event.title}. Vertragspartner & Verkäufer: ${organizerLegalName}`,
               images: event.bannerUrl ? [event.bannerUrl] : [],
             },
-            unit_amount: tier.priceCents,
+            unit_amount: tier.priceCents + (tier.feeCents || 0),
           },
           quantity: numQuantity,
         },
@@ -135,10 +142,10 @@ export async function POST(req: Request) {
       cancel_url: `${appUrl}/e/${event.slug}?canceled=true`,
     };
 
-    // Apply Stripe Connect Destination Charge & Platform Fee only if using Connect platform account
+    // Apply Stripe Connect Destination Charge & Platform Fee only if using Connect platform account & fee > 0
     if (!isDirectKey && stripeAccountId) {
       sessionOptions.payment_intent_data = {
-        application_fee_amount: platformFeeCents,
+        ...(platformFeeCents > 0 ? { application_fee_amount: platformFeeCents } : {}),
         on_behalf_of: stripeAccountId,
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
         transfer_data: {

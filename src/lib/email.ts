@@ -179,8 +179,12 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
   `;
 
   try {
+    const rawFromEmail = DEFAULT_FROM.includes("<") ? DEFAULT_FROM.split("<")[1].replace(">", "").trim() : DEFAULT_FROM.trim();
+    const senderName = displayLegalName ? `${displayLegalName} via GateMate` : "GateMate Tickets";
+    const dynamicFrom = `${senderName} <${rawFromEmail}>`;
+
     const data = await resend.emails.send({
-      from: DEFAULT_FROM,
+      from: dynamicFrom,
       to: [buyerEmail],
       subject: `Deine Tickets für ${eventTitle} (Verkäufer: ${displayLegalName}) 🎟️`,
       html,

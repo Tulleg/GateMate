@@ -10,6 +10,7 @@ interface Tier {
   id: string;
   name: string;
   priceCents: number;
+  feeCents?: number;
   quantityAvailable: number;
   quantitySold: number;
 }
@@ -40,7 +41,9 @@ export function CheckoutWidget({
   const [loading, setLoading] = useState<boolean>(false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
-  const unitPrice = selectedTier ? selectedTier.priceCents : 0;
+  const tierBasePrice = selectedTier ? selectedTier.priceCents : 0;
+  const tierFeePrice = selectedTier ? (selectedTier.feeCents || 0) : 0;
+  const unitPrice = tierBasePrice + tierFeePrice;
   const totalPriceCents = unitPrice * quantity;
 
   const organizerSlug = organizer?.organizerSlug || "demo-organizer";
@@ -318,12 +321,12 @@ export function CheckoutWidget({
                 <span className="font-semibold text-white">{selectedTier?.name} ({quantity}x)</span>
               </div>
               <div className="flex justify-between text-slate-400 text-[11px]">
-                <span>Einzelpreis:</span>
-                <span>{formatCurrency(unitPrice)}</span>
+                <span>Einzelpreis Ticket:</span>
+                <span>{formatCurrency(tierBasePrice)}</span>
               </div>
               <div className="flex justify-between text-slate-400 text-[11px]">
                 <span>Vorverkaufs- / Systemgebühr:</span>
-                <span>{formatCurrency(0)} (Inkludiert)</span>
+                <span>{tierFeePrice > 0 ? formatCurrency(tierFeePrice) : `${formatCurrency(0)} (Inkludiert)`}</span>
               </div>
               <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800 font-bold">
                 <span className="text-white">Gesamtpreis:</span>

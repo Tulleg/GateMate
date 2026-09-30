@@ -49,7 +49,7 @@ ${organizer.zip || ""} ${organizer.city || ""}
 ${organizer.country || "Deutschland"}  
 
 **Kontakt:**  
-E-Mail: ${organizer.email || "kontakt@gatemate.io"}  
+E-Mail: ${organizer.email || "Siehe Veranstalterprofil"}  
 ${organizer.phone ? `Telefon: ${organizer.phone}\n` : ""}
 ${organizer.registrationCouncil || organizer.registrationNumber ? `**Registereintrag:**\n${[organizer.registrationCouncil, organizer.registrationNumber].filter(Boolean).join(", ")}\n` : ""}
 ${organizer.vatId ? `**Umsatzsteuer-ID:**\nUmsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz: ${organizer.vatId}` : ""}

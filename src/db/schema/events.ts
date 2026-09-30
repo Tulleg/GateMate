@@ -19,6 +19,7 @@ export const events = pgTable("events", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   hasEndTime: boolean("has_end_time").default(true).notNull(),
+  isFixedDateEvent: boolean("is_fixed_date_event").default(true).notNull(),
   doorsOpenAt: timestamp("doors_open_at"),
   ageRestriction: text("age_restriction"),
   accessibilityInfo: text("accessibility_info"),

@@ -16,6 +16,9 @@ export const orders = pgTable("orders", {
   termsSnapshot: text("terms_snapshot"),
   legalProfileSnapshot: text("legal_profile_snapshot"),
   documentVersionsSnapshot: text("document_versions_snapshot"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  acceptedAt: timestamp("accepted_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

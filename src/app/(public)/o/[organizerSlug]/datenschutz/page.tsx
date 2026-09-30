@@ -47,7 +47,7 @@ Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Nachfolgend informie
 ${organizer.legalName || organizer.name || "Veranstalter"}  
 ${organizer.street || ""}  
 ${organizer.zip || ""} ${organizer.city || ""}  
-E-Mail: ${organizer.email || "kontakt@gatemate.io"}  
+E-Mail: ${organizer.email || "Siehe Veranstalterprofil"}  
 
 2. **Datenverarbeitung beim Ticketkauf**:
 Beim Kauf von Eintrittskarten erheben wir Ihren Namen und Ihre E-Mail-Adresse zur Erfüllung des Kaufvertrags und der Ticketzustellung (Art. 6 Abs. 1 lit. b DSGVO).

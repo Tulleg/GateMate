@@ -19,15 +19,11 @@ export async function POST(req: Request) {
   const { searchParams } = new URL(req.url);
   let organizerId = searchParams.get("organizerId");
 
-  // If no organizerId in query param, attempt pre-parse payload metadata to get organizerId
-  if (!organizerId) {
-    try {
-      const parsedJson = JSON.parse(body);
-      organizerId = parsedJson?.data?.object?.metadata?.organizerId || null;
-    } catch {}
-  }
-
   let secretsToTry: string[] = [];
+
+  if (process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOK_SECRET.trim().length > 0) {
+    secretsToTry.push(process.env.STRIPE_WEBHOOK_SECRET.trim());
+  }
 
   if (organizerId) {
     const orgRecords = await db.select().from(users).where(eq(users.id, organizerId));
@@ -37,12 +33,8 @@ export async function POST(req: Request) {
     }
   }
 
-  if (process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOK_SECRET.trim().length > 0) {
-    secretsToTry.push(process.env.STRIPE_WEBHOOK_SECRET.trim());
-  }
-
   if (secretsToTry.length === 0) {
-    console.error("Missing Stripe Webhook Secret (neither organizer secret nor STRIPE_WEBHOOK_SECRET configured).");
+    console.error("Missing Stripe Webhook Secret (neither platform secret nor organizer secret configured).");
     return NextResponse.json(
       { error: "Server configuration error: missing Stripe webhook secret" },
       { status: 500 }

@@ -9,7 +9,7 @@ export const stripe = new Stripe(stripeSecretKey, {
   typescript: true,
 });
 
-export const PLATFORM_FEE_PERCENT = parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || "5.0");
+export const PLATFORM_FEE_PERCENT = parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || "0.0");
 
 export function hasPlatformStripeKey(): boolean {
   return (

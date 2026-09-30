@@ -11,15 +11,24 @@ import { eq, inArray } from "drizzle-orm";
  */
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { email } = body || {};
     const cookieStore = await cookies();
-
     const sessionEmail = cookieStore.get("gatemate_user_email")?.value;
-    const targetEmail = (email || sessionEmail || "").toLowerCase().trim();
+    const isDemoMode = process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
+
+    if (!sessionEmail && !isDemoMode) {
+      return NextResponse.json(
+        { error: "Authentifizierung erforderlich. Aus Sicherheitsgründen müssen Sie angemeldet sein, um die Löschung Ihrer Daten zu beantragen." },
+        { status: 401 }
+      );
+    }
+
+    const targetEmail = (sessionEmail || email || "").toLowerCase().trim();
 
     if (!targetEmail) {
       return NextResponse.json(
-        { error: "Bitte geben Sie eine E-Mail-Adresse für die Löschungsanfrage an." },
+        { error: "Keine verknüpfte E-Mail-Adresse für die Löschungsanfrage gefunden." },
         { status: 400 }
       );
     }

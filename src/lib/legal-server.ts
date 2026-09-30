@@ -17,33 +17,38 @@ export async function getPublishedDocument(params: {
   documentType: LegalDocumentType;
   eventType?: string | null;
 }) {
-  const { organizerId, documentType, eventType } = params;
+  try {
+    const { organizerId, documentType, eventType } = params;
 
-  // Build query condition
-  const conditions = [
-    eq(legalDocuments.documentType, documentType as any),
-    eq(legalDocuments.status, "published"),
-  ];
+    // Build query condition
+    const conditions = [
+      eq(legalDocuments.documentType, documentType as any),
+      eq(legalDocuments.status, "published"),
+    ];
 
-  if (organizerId) {
-    conditions.push(eq(legalDocuments.organizerId, organizerId));
-  } else {
-    conditions.push(isNull(legalDocuments.organizerId));
+    if (organizerId) {
+      conditions.push(eq(legalDocuments.organizerId, organizerId));
+    } else {
+      conditions.push(isNull(legalDocuments.organizerId));
+    }
+
+    const docs = await db
+      .select()
+      .from(legalDocuments)
+      .where(and(...conditions))
+      .orderBy(desc(legalDocuments.version));
+
+    // If filtered by eventType, find specific eventType doc or fallback to general doc (null eventType)
+    if (eventType && docs.length > 0) {
+      const specificDoc = docs.find((d) => d.eventType === eventType);
+      if (specificDoc) return specificDoc;
+    }
+
+    return docs[0] || null;
+  } catch (err: any) {
+    console.warn(`[getPublishedDocument Note] Could not fetch document ${params.documentType} from DB:`, err?.message || err);
+    return null;
   }
-
-  const docs = await db
-    .select()
-    .from(legalDocuments)
-    .where(and(...conditions))
-    .orderBy(desc(legalDocuments.version));
-
-  // If filtered by eventType, find specific eventType doc or fallback to general doc (null eventType)
-  if (eventType && docs.length > 0) {
-    const specificDoc = docs.find((d) => d.eventType === eventType);
-    if (specificDoc) return specificDoc;
-  }
-
-  return docs[0] || null;
 }
 
 /**
