@@ -64,7 +64,18 @@ export async function POST(req: Request) {
       await db.update(users).set({ stripeConnectedAccountId: stripeAccountId }).where(eq(users.id, targetUserId));
     }
 
-    // 3. Create Account Link for Stripe Express Onboarding
+    // 3. If account exists and onboarding is submitted, generate Stripe Express Login Link
+    try {
+      const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
+      if (existingAccount.details_submitted) {
+        const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
+        return NextResponse.json({ url: loginLink.url });
+      }
+    } catch (err) {
+      console.error("Stripe retrieve account / login link error:", err);
+    }
+
+    // 4. Create Account Link for Stripe Express Onboarding
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
