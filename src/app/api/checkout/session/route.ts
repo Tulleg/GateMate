@@ -102,6 +102,7 @@ export async function POST(req: Request) {
     if (!isDirectKey && stripeAccountId) {
       sessionOptions.payment_intent_data = {
         application_fee_amount: platformFeeCents,
+        on_behalf_of: stripeAccountId,
         transfer_data: {
           destination: stripeAccountId,
         },
