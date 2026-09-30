@@ -17,7 +17,15 @@ export async function POST(req: Request, { params }: RouteParams) {
     const { token, ticketId, scannedByUserId, deviceInfo } = body;
 
     const cookieStore = await cookies();
-    const activeUserId = scannedByUserId || cookieStore.get("gatemate_user_id")?.value || "gate_scanner";
+    const isDemoMode = process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
+    const activeUserId = scannedByUserId || cookieStore.get("gatemate_user_id")?.value || (isDemoMode ? "gate_scanner" : null);
+
+    if (!activeUserId) {
+      return NextResponse.json(
+        { success: false, message: "Authentifizierung erforderlich für Ticket-Entwertung" },
+        { status: 401 }
+      );
+    }
 
     // 0. Check if Event itself is cancelled
     const eventRecords = await db.select().from(events).where(eq(events.id, eventId));

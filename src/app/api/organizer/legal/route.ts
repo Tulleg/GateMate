@@ -5,6 +5,10 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { checkOrganizerLegalCompliance } from "@/lib/legal";
 
+function isDemoAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -12,7 +16,7 @@ export async function GET(req: Request) {
     let organizerId = searchParams.get("organizerId") || cookieStore.get("gatemate_user_id")?.value;
 
     if (!organizerId) {
-      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      if (isDemoAllowed()) {
         organizerId = "user_organizer_01";
       } else {
         return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
@@ -44,7 +48,7 @@ export async function PUT(req: Request) {
     let organizerId = body.organizerId || cookieStore.get("gatemate_user_id")?.value;
 
     if (!organizerId) {
-      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      if (isDemoAllowed()) {
         organizerId = "user_organizer_01";
       } else {
         return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
@@ -54,6 +58,7 @@ export async function PUT(req: Request) {
     const {
       legalName,
       legalForm,
+      responsiblePerson,
       registrationCouncil,
       registrationNumber,
       phone,
@@ -70,12 +75,15 @@ export async function PUT(req: Request) {
       privacyContent,
       termsUrl,
       termsContent,
+      cancellationPolicyContent,
+      eventTermsContent,
       revocationNoticeCustom,
     } = body;
 
     const updateData = {
       legalName: legalName || null,
       legalForm: legalForm || null,
+      responsiblePerson: responsiblePerson || null,
       registrationCouncil: registrationCouncil || null,
       registrationNumber: registrationNumber || null,
       phone: phone || null,
@@ -92,6 +100,8 @@ export async function PUT(req: Request) {
       privacyContent: privacyContent || null,
       termsUrl: termsUrl || null,
       termsContent: termsContent || null,
+      cancellationPolicyContent: cancellationPolicyContent || null,
+      eventTermsContent: eventTermsContent || null,
       revocationNoticeCustom: revocationNoticeCustom || null,
       updatedAt: new Date(),
     };
@@ -116,3 +126,4 @@ export async function PUT(req: Request) {
 export async function POST(req: Request) {
   return PUT(req);
 }
+

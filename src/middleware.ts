@@ -12,11 +12,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Header propagation for embed & iframe routes
+  // Header propagation for embed & iframe routes with CSP frame-ancestors restriction
   if (pathname.startsWith("/embed/")) {
     const response = NextResponse.next();
-    response.headers.set("Access-Control-Allow-Origin", "*");
-    response.headers.set("Content-Security-Policy", "frame-ancestors *");
+    const allowedAncestors = process.env.ALLOWED_EMBED_DOMAINS
+      ? `'self' ${process.env.ALLOWED_EMBED_DOMAINS}`
+      : "'self'";
+    response.headers.set("Content-Security-Policy", `frame-ancestors ${allowedAncestors}`);
     return response;
   }
 

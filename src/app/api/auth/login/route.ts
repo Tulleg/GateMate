@@ -63,14 +63,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Set session cookies
+    // Set session cookies with security flags
     const cookieStore = await cookies();
     const maxAge = 60 * 60 * 24 * 7; // 7 days
+    const isProd = process.env.NODE_ENV === "production";
 
-    cookieStore.set("gatemate_role", user.role, { path: "/", maxAge });
-    cookieStore.set("gatemate_user_id", user.id, { path: "/", maxAge });
-    cookieStore.set("gatemate_user_email", user.email, { path: "/", maxAge });
-    cookieStore.set("gatemate_user_name", user.name || "", { path: "/", maxAge });
+    cookieStore.set("gatemate_role", user.role, { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
+    cookieStore.set("gatemate_user_id", user.id, { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
+    cookieStore.set("gatemate_user_email", user.email, { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
+    cookieStore.set("gatemate_user_name", user.name || "", { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
 
     return NextResponse.json({
       success: true,

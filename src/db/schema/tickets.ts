@@ -15,6 +15,7 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").default("pending").notNull(),
   termsSnapshot: text("terms_snapshot"),
   legalProfileSnapshot: text("legal_profile_snapshot"),
+  documentVersionsSnapshot: text("document_versions_snapshot"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

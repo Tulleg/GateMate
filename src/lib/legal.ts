@@ -1,6 +1,9 @@
 export interface OrganizerLegalProfile {
+  id?: string | null;
+  userId?: string | null;
   legalName?: string | null;
   legalForm?: string | null;
+  responsiblePerson?: string | null;
   registrationCouncil?: string | null;
   registrationNumber?: string | null;
   phone?: string | null;
@@ -17,7 +20,11 @@ export interface OrganizerLegalProfile {
   privacyContent?: string | null;
   termsUrl?: string | null;
   termsContent?: string | null;
+  cancellationPolicyContent?: string | null;
+  eventTermsContent?: string | null;
   revocationNoticeCustom?: string | null;
+  stripeConnectedAccountId?: string | null;
+  stripeSecretKey?: string | null;
   [key: string]: any;
 }
 
@@ -46,6 +53,12 @@ export function checkOrganizerLegalCompliance(organizer?: OrganizerLegalProfile 
 
   if (!organizer.legalName || !organizer.legalName.trim()) {
     missingFields.push("Firmenname / Rechtlicher Name");
+  }
+  if (!organizer.legalForm || !organizer.legalForm.trim()) {
+    missingFields.push("Rechtsform");
+  }
+  if (!organizer.responsiblePerson || !organizer.responsiblePerson.trim()) {
+    missingFields.push("Verantwortliche Kontaktperson (Vertreten durch)");
   }
   if (!organizer.street || !organizer.street.trim()) {
     missingFields.push("Strasse & Hausnummer");
@@ -79,6 +92,21 @@ export function checkOrganizerLegalCompliance(organizer?: OrganizerLegalProfile 
     missingFields.push("Datenschutzerklärung (URL oder Text)");
   }
 
+  const hasTerms =
+    mode === "url"
+      ? Boolean(organizer.termsUrl && organizer.termsUrl.trim())
+      : Boolean(organizer.termsContent && organizer.termsContent.trim()) ||
+        Boolean(organizer.termsUrl && organizer.termsUrl.trim());
+
+  if (!hasTerms) {
+    missingFields.push("Allgemeine Geschäftsbedingungen (AGB)");
+  }
+
+  const hasCancellationPolicy = Boolean(organizer.cancellationPolicyContent && organizer.cancellationPolicyContent.trim());
+  if (!hasCancellationPolicy) {
+    missingFields.push("Stornierungs-/Erstattungsbedingungen");
+  }
+
   const isCompliant = missingFields.length === 0;
 
   return {
@@ -94,6 +122,7 @@ export function formatLegalAddress(organizer?: OrganizerLegalProfile | null): st
   if (!organizer) return "Veranstalteradresse nicht hinterlegt";
   const parts = [
     organizer.legalName,
+    organizer.responsiblePerson ? `Vertreten durch: ${organizer.responsiblePerson}` : null,
     organizer.street,
     [organizer.zip, organizer.city].filter(Boolean).join(" "),
     organizer.country || "Deutschland",

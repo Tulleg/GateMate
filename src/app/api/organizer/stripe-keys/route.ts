@@ -4,10 +4,16 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
+import { encryptText, decryptText } from "@/lib/encryption";
+
+function isDemoAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
+}
 
 function maskKey(key?: string | null, prefixLen = 7, suffixLen = 4): string | null {
-  if (!key || key.trim().length === 0) return null;
-  const trimmed = key.trim();
+  const decrypted = decryptText(key);
+  if (!decrypted || decrypted.trim().length === 0) return null;
+  const trimmed = decrypted.trim();
   if (trimmed.length <= prefixLen + suffixLen) return "••••••••";
   return `${trimmed.substring(0, prefixLen)}••••${trimmed.substring(trimmed.length - suffixLen)}`;
 }
@@ -19,7 +25,7 @@ export async function GET(req: Request) {
     let organizerId = searchParams.get("organizerId") || cookieStore.get("gatemate_user_id")?.value;
 
     if (!organizerId) {
-      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      if (isDemoAllowed()) {
         organizerId = "user_organizer_01";
       } else {
         return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
@@ -46,6 +52,9 @@ export async function GET(req: Request) {
       }
     }
 
+    const decryptedSecretKey = decryptText(organizer.stripeSecretKey);
+    const decryptedWebhookSecret = decryptText(organizer.stripeWebhookSecret);
+
     return NextResponse.json({
       stripeMode: organizer.stripeMode || "connect",
       stripeConnectedAccountId: organizer.stripeConnectedAccountId || null,
@@ -53,9 +62,9 @@ export async function GET(req: Request) {
       chargesEnabled,
       stripePublishableKey: organizer.stripePublishableKey || "",
       stripeSecretKeyMasked: maskKey(organizer.stripeSecretKey),
-      hasSecretKey: Boolean(organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0),
+      hasSecretKey: Boolean(decryptedSecretKey && decryptedSecretKey.trim().length > 0),
       stripeWebhookSecretMasked: maskKey(organizer.stripeWebhookSecret, 6, 4),
-      hasWebhookSecret: Boolean(organizer.stripeWebhookSecret && organizer.stripeWebhookSecret.trim().length > 0),
+      hasWebhookSecret: Boolean(decryptedWebhookSecret && decryptedWebhookSecret.trim().length > 0),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -69,7 +78,7 @@ export async function PUT(req: Request) {
     let organizerId = body.organizerId || cookieStore.get("gatemate_user_id")?.value;
 
     if (!organizerId) {
-      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      if (isDemoAllowed()) {
         organizerId = "user_organizer_01";
       } else {
         return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
@@ -124,13 +133,13 @@ export async function PUT(req: Request) {
     }
 
     if (stripeSecretKey !== undefined && stripeSecretKey.trim() !== "" && !stripeSecretKey.includes("••••")) {
-      updateData.stripeSecretKey = stripeSecretKey.trim();
+      updateData.stripeSecretKey = encryptText(stripeSecretKey.trim());
     } else if (stripeSecretKey === "") {
       updateData.stripeSecretKey = null;
     }
 
     if (stripeWebhookSecret !== undefined && stripeWebhookSecret.trim() !== "" && !stripeWebhookSecret.includes("••••")) {
-      updateData.stripeWebhookSecret = stripeWebhookSecret.trim();
+      updateData.stripeWebhookSecret = encryptText(stripeWebhookSecret.trim());
     } else if (stripeWebhookSecret === "") {
       updateData.stripeWebhookSecret = null;
     }
@@ -140,6 +149,9 @@ export async function PUT(req: Request) {
     const updatedRecords = await db.select().from(users).where(eq(users.id, organizerId));
     const updatedOrganizer = updatedRecords[0];
 
+    const decryptedSecretKey = decryptText(updatedOrganizer.stripeSecretKey);
+    const decryptedWebhookSecret = decryptText(updatedOrganizer.stripeWebhookSecret);
+
     return NextResponse.json({
       success: true,
       message: "Stripe Einstellungen erfolgreich gespeichert.",
@@ -147,9 +159,9 @@ export async function PUT(req: Request) {
       stripeConnectedAccountId: updatedOrganizer.stripeConnectedAccountId || null,
       stripePublishableKey: updatedOrganizer.stripePublishableKey || "",
       stripeSecretKeyMasked: maskKey(updatedOrganizer.stripeSecretKey),
-      hasSecretKey: Boolean(updatedOrganizer.stripeSecretKey && updatedOrganizer.stripeSecretKey.trim().length > 0),
+      hasSecretKey: Boolean(decryptedSecretKey && decryptedSecretKey.trim().length > 0),
       stripeWebhookSecretMasked: maskKey(updatedOrganizer.stripeWebhookSecret, 6, 4),
-      hasWebhookSecret: Boolean(updatedOrganizer.stripeWebhookSecret && updatedOrganizer.stripeWebhookSecret.trim().length > 0),
+      hasWebhookSecret: Boolean(decryptedWebhookSecret && decryptedWebhookSecret.trim().length > 0),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -159,3 +171,4 @@ export async function PUT(req: Request) {
 export async function POST(req: Request) {
   return PUT(req);
 }
+

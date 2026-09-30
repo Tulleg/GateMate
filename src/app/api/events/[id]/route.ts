@@ -5,6 +5,8 @@ import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { checkOrganizerLegalCompliance } from "@/lib/legal";
 import { hasOrganizerStripeAccount } from "@/lib/stripe";
+import { validateEventForPublication } from "@/lib/validation";
+import { snapshotDocumentVersion } from "@/lib/legal-server";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -85,40 +87,79 @@ export async function PUT(req: Request, { params }: RouteParams) {
       bannerUrl,
       startDate,
       endDate,
+      hasEndTime = true,
       doorsOpenAt,
       ageRestriction,
+      accessibilityInfo,
+      houseRules,
+      specialAdmissionConditions,
+      eventTerms,
+      cancellationPolicy,
+      salesStartDate,
+      salesEndDate,
+      legalChecklistConfirmed = false,
       isListedInDirectory = true,
       isPublished = false,
       tiers,
     } = body;
 
-    if (!title || !slug || !startDate || !endDate) {
-      return NextResponse.json({ error: "Pflichtfelder fehlen (Titel, Slug, Start- & Enddatum)" }, { status: 400 });
+    if (!title || !slug || !startDate) {
+      return NextResponse.json({ error: "Pflichtfelder fehlen (Titel, Slug, Startdatum)" }, { status: 400 });
     }
 
-    // Publication Guard Check: If publishing event, check legal compliance profile & Stripe payment setup
-    if (isPublished) {
-      const organizerRecords = await db.select().from(users).where(eq(users.id, existingEvent.organizerId));
-      const organizer = organizerRecords[0];
+    const organizerRecords = await db.select().from(users).where(eq(users.id, existingEvent.organizerId));
+    const organizer = organizerRecords[0];
 
-      const compliance = checkOrganizerLegalCompliance(organizer);
-      if (!compliance.isCompliant) {
+    const eventInput = {
+      title,
+      description,
+      venue,
+      venueStreet,
+      venueZip,
+      venueCity,
+      venueCountry,
+      startDate,
+      endDate,
+      hasEndTime: Boolean(hasEndTime),
+      ageRestriction,
+      accessibilityInfo,
+      houseRules,
+      specialAdmissionConditions,
+      eventTerms,
+      cancellationPolicy,
+      salesStartDate,
+      salesEndDate,
+    };
+
+    const incomingTiersInput = Array.isArray(tiers)
+      ? tiers.map((tier: any) => ({
+          id: tier.id,
+          name: tier.name,
+          priceCents: Number(tier.priceCents) || 0,
+          feeCents: Number(tier.feeCents) || 0,
+          includedServices: tier.includedServices || null,
+          ticketTerms: tier.ticketTerms || null,
+          quantityAvailable: Number(tier.quantityAvailable) || 0,
+        }))
+      : [];
+
+    // Publication Guard Check: If publishing, run full publication validation
+    if (isPublished) {
+      const validation = validateEventForPublication(organizer, eventInput, incomingTiersInput);
+      if (!validation.canPublish) {
         return NextResponse.json(
           {
-            error: `Veröffentlichung blockiert! Ihr Veranstalter-Rechtsprofil ist unvollständig (${compliance.missingFields.join(
-              ", "
-            )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
-            missingFields: compliance.missingFields,
+            error: `Veröffentlichung blockiert! Folgende Angaben fehlen oder sind unvollständig: ${validation.missingBlockingFields.join(", ")}`,
+            validation,
           },
           { status: 400 }
         );
       }
 
-      if (!hasOrganizerStripeAccount(organizer)) {
+      if (!legalChecklistConfirmed && !existingEvent.isPublished) {
         return NextResponse.json(
           {
-            error:
-              "Veröffentlichung blockiert! Sie müssen zuerst ein Stripe-Zahlungskonto (Stripe Connect oder eigene API-Keys) unter /organizer anbinden, bevor Sie ein Event veröffentlichen können.",
+            error: "Veröffentlichung blockiert! Sie müssen die rechtliche Haftungsbestätigung vor der Veröffentlichung anhaken.",
           },
           { status: 400 }
         );
@@ -135,23 +176,35 @@ export async function PUT(req: Request, { params }: RouteParams) {
       }
     }
 
+    const isNewlyPublished = Boolean(isPublished) && !existingEvent.isPublished;
+
     // 2. Update Event details
     await db
       .update(events)
       .set({
         title,
         slug: cleanSlug,
-        description,
-        venue,
+        description: description || null,
+        venue: venue || null,
         venueStreet: venueStreet || null,
         venueZip: venueZip || null,
         venueCity: venueCity || null,
         venueCountry: venueCountry || "Deutschland",
         bannerUrl: bannerUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
         startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        endDate: endDate ? new Date(endDate) : new Date(startDate),
+        hasEndTime: Boolean(hasEndTime),
         doorsOpenAt: doorsOpenAt ? new Date(doorsOpenAt) : null,
         ageRestriction: ageRestriction || null,
+        accessibilityInfo: accessibilityInfo || null,
+        houseRules: houseRules || null,
+        specialAdmissionConditions: specialAdmissionConditions || null,
+        eventTerms: eventTerms || null,
+        cancellationPolicy: cancellationPolicy || null,
+        salesStartDate: salesStartDate ? new Date(salesStartDate) : null,
+        salesEndDate: salesEndDate ? new Date(salesEndDate) : null,
+        legalChecklistConfirmedAt: isNewlyPublished && legalChecklistConfirmed ? new Date() : existingEvent.legalChecklistConfirmedAt,
+        legalChecklistConfirmedBy: isNewlyPublished && legalChecklistConfirmed ? cleanOrganizerId : existingEvent.legalChecklistConfirmedBy,
         isListedInDirectory: Boolean(isListedInDirectory),
         isPublished: Boolean(isPublished),
         updatedAt: new Date(),
@@ -177,6 +230,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
             .set({
               name: tier.name,
               priceCents: Number(tier.priceCents) || 0,
+              feeCents: Number(tier.feeCents) || 0,
+              includedServices: tier.includedServices || null,
+              ticketTerms: tier.ticketTerms || null,
               quantityAvailable: newQtyAvailable,
               updatedAt: new Date(),
             })
@@ -189,6 +245,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
             eventId,
             name: tier.name || `Kategorie ${idx + 1}`,
             priceCents: Number(tier.priceCents) || 0,
+            feeCents: Number(tier.feeCents) || 0,
+            includedServices: tier.includedServices || null,
+            ticketTerms: tier.ticketTerms || null,
             quantityAvailable: Number(tier.quantityAvailable) || 0,
             quantitySold: 0,
           });
@@ -200,6 +259,19 @@ export async function PUT(req: Request, { params }: RouteParams) {
       if (tiersToDelete.length > 0) {
         const deleteIds = tiersToDelete.map((t) => t.id);
         await db.delete(ticketTiers).where(inArray(ticketTiers.id, deleteIds));
+      }
+    }
+
+    // 4. Freeze document versions if newly published
+    if (isNewlyPublished && organizer) {
+      await snapshotDocumentVersion({ organizerId: existingEvent.organizerId, documentType: "impressum", content: organizer.impressumContent, url: organizer.impressumUrl });
+      await snapshotDocumentVersion({ organizerId: existingEvent.organizerId, documentType: "privacy", content: organizer.privacyContent, url: organizer.privacyUrl });
+      await snapshotDocumentVersion({ organizerId: existingEvent.organizerId, documentType: "terms", content: organizer.termsContent, url: organizer.termsUrl });
+      if (eventTerms) {
+        await snapshotDocumentVersion({ organizerId: existingEvent.organizerId, eventId, documentType: "event_terms", content: eventTerms });
+      }
+      if (cancellationPolicy) {
+        await snapshotDocumentVersion({ organizerId: existingEvent.organizerId, eventId, documentType: "cancellation_policy", content: cancellationPolicy });
       }
     }
 

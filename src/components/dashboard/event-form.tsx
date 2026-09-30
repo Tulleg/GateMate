@@ -2,51 +2,104 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Calendar, MapPin, Image, Ticket, Loader2, Globe, EyeOff, AlertTriangle, ShieldCheck } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Calendar,
+  MapPin,
+  Image,
+  Ticket,
+  Loader2,
+  Globe,
+  EyeOff,
+  AlertTriangle,
+  ShieldCheck,
+  FileText,
+  Accessibility,
+  Clock,
+  Euro,
+} from "lucide-react";
 import Link from "next/link";
-import { LegalComplianceResult } from "@/lib/legal";
+import { OrganizerLegalProfile } from "@/lib/legal";
+import { validateEventForPublication, EventPublicationValidationResult } from "@/lib/validation";
+import { PublishLegalChecklistModal } from "./publish-legal-checklist-modal";
 
 interface TicketTierInput {
   name: string;
   price: string;
+  fee: string;
   quantityAvailable: string;
+  includedServices: string;
+  ticketTerms: string;
 }
 
 export function EventForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // Form State
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [venue, setVenue] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
+
+  // Location & Venue
+  const [venue, setVenue] = useState("");
+  const [venueStreet, setVenueStreet] = useState("");
+  const [venueZip, setVenueZip] = useState("");
+  const [venueCity, setVenueCity] = useState("");
+  const [venueCountry, setVenueCountry] = useState("Deutschland");
+
+  // Dates & Times
   const [startDate, setStartDate] = useState("2026-11-20T09:00");
   const [endDate, setEndDate] = useState("2026-11-20T18:00");
+  const [hasEndTime, setHasEndTime] = useState(true);
+  const [doorsOpenAt, setDoorsOpenAt] = useState("");
+  const [salesStartDate, setSalesStartDate] = useState("");
+  const [salesEndDate, setSalesEndDate] = useState("");
+
+  // Special conditions
+  const [ageRestriction, setAgeRestriction] = useState("Keine");
+  const [accessibilityInfo, setAccessibilityInfo] = useState("");
+  const [houseRules, setHouseRules] = useState("");
+  const [specialAdmissionConditions, setSpecialAdmissionConditions] = useState("");
+  const [eventTerms, setEventTerms] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState("");
+
   const [isListedInDirectory, setIsListedInDirectory] = useState(true);
 
+  // Ticket Tiers
   const [tiers, setTiers] = useState<TicketTierInput[]>([
-    { name: "General Admission", price: "49.00", quantityAvailable: "200" },
+    {
+      name: "General Admission",
+      price: "49.00",
+      fee: "2.50",
+      quantityAvailable: "200",
+      includedServices: "Standard Einlass, MVV-Ticket inklusive",
+      ticketTerms: "Personengebunden",
+    },
   ]);
 
-  const [compliance, setCompliance] = useState<LegalComplianceResult | null>(null);
-  const [checkingLegal, setCheckingLegal] = useState(true);
+  // Organizer Legal Profile State
+  const [organizerProfile, setOrganizerProfile] = useState<OrganizerLegalProfile | null>(null);
+  const [validationResult, setValidationResult] = useState<EventPublicationValidationResult | null>(null);
+
+  // Modal State
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
 
   useEffect(() => {
     fetchLegalStatus();
   }, []);
 
   const fetchLegalStatus = async () => {
-    setCheckingLegal(true);
     try {
       const res = await fetch("/api/organizer/legal");
       const data = await res.json();
-      if (data.compliance) {
-        setCompliance(data.compliance);
+      if (data.organizer) {
+        setOrganizerProfile(data.organizer);
       }
     } catch (err) {
       console.error("Failed to fetch legal status", err);
-    } finally {
-      setCheckingLegal(false);
     }
   };
 
@@ -56,7 +109,17 @@ export function EventForm() {
   };
 
   const addTier = () => {
-    setTiers([...tiers, { name: "", price: "0.00", quantityAvailable: "50" }]);
+    setTiers([
+      ...tiers,
+      {
+        name: "",
+        price: "0.00",
+        fee: "0.00",
+        quantityAvailable: "50",
+        includedServices: "",
+        ticketTerms: "",
+      },
+    ]);
   };
 
   const removeTier = (index: number) => {
@@ -70,31 +133,56 @@ export function EventForm() {
     setTiers(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent, publish: boolean = false) => {
+  const currentEventData = {
+    title,
+    description,
+    venue,
+    venueStreet,
+    venueZip,
+    venueCity,
+    venueCountry,
+    startDate,
+    endDate,
+    hasEndTime,
+    ageRestriction,
+    accessibilityInfo,
+    houseRules,
+    specialAdmissionConditions,
+    eventTerms,
+    cancellationPolicy,
+    salesStartDate,
+    salesEndDate,
+  };
+
+  const currentFormattedTiers = tiers.map((t) => ({
+    name: t.name || "Standard Pass",
+    priceCents: Math.round(parseFloat(t.price || "0") * 100),
+    feeCents: Math.round(parseFloat(t.fee || "0") * 100),
+    quantityAvailable: parseInt(t.quantityAvailable || "0", 10),
+    includedServices: t.includedServices,
+    ticketTerms: t.ticketTerms,
+  }));
+
+  const handleOpenPublishChecklist = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !startDate || !endDate) {
-      alert("Bitte füllen Sie den Titel und die Daten des Events aus.");
-      return;
-    }
+    const result = validateEventForPublication(organizerProfile, currentEventData, currentFormattedTiers);
+    setValidationResult(result);
+    setIsChecklistOpen(true);
+  };
 
-    if (publish && compliance && !compliance.isCompliant) {
-      alert(
-        `Veröffentlichung blockiert! Ihr Rechtsprofil ist unvollständig (${compliance.missingFields.join(
-          ", "
-        )}). Bitte vervollständigen Sie Ihr Rechtsprofil in den Einstellungen.`
-      );
-      return;
-    }
+  const handleFinalPublish = async () => {
+    await executeSaveEvent(true, true);
+  };
 
+  const handleSaveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeSaveEvent(false, false);
+  };
+
+  const executeSaveEvent = async (publish: boolean, legalChecklistConfirmed: boolean) => {
     setLoading(true);
 
     try {
-      const formattedTiers = tiers.map((t) => ({
-        name: t.name || "Standard Pass",
-        priceCents: Math.round(parseFloat(t.price || "0") * 100),
-        quantityAvailable: parseInt(t.quantityAvailable || "0", 10),
-      }));
-
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,314 +191,507 @@ export function EventForm() {
           slug,
           description,
           venue,
+          venueStreet,
+          venueZip,
+          venueCity,
+          venueCountry,
           bannerUrl,
           startDate,
-          endDate,
+          endDate: hasEndTime ? endDate : startDate,
+          hasEndTime,
+          doorsOpenAt: doorsOpenAt || null,
+          ageRestriction,
+          accessibilityInfo,
+          houseRules,
+          specialAdmissionConditions,
+          eventTerms,
+          cancellationPolicy,
+          salesStartDate: salesStartDate || null,
+          salesEndDate: salesEndDate || null,
           isListedInDirectory,
           isPublished: publish,
-          tiers: formattedTiers,
+          legalChecklistConfirmed,
+          tiers: currentFormattedTiers,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
+        setIsChecklistOpen(false);
         router.push("/organizer/events");
         router.refresh();
       } else {
         alert(data.error || "Event konnte nicht erstellt werden.");
       }
     } catch (err: any) {
-      alert("Fehler: " + err.message);
+      alert("Fehler beim Speichern: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const isBlockedByLegal = compliance ? !compliance.isCompliant : false;
+  const quickValidation = validateEventForPublication(organizerProfile, currentEventData, currentFormattedTiers);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
-      {/* Publication Guard Warning Banner */}
-      {compliance && !compliance.isCompliant && (
-        <div className="p-6 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-bold text-amber-300">
-              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-              <span>Veröffentlichungsschutz aktiv (Publication Guard)</span>
-            </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
-              Event-Publishing Blockiert
-            </span>
-          </div>
-
-          <p className="text-xs text-amber-300/90 leading-relaxed">
-            Gemäß deutsches Recht (§ 312j BGB &amp; TMG) können Sie Events erst veröffentlichen (<span className="font-mono text-amber-200">is_published = true</span>), sobald Ihr Veranstalter-Rechtsprofil vollständig eingerichtet ist.
-          </p>
-
-          <div className="text-xs font-semibold text-amber-200">
-            Fehlende Pflichtangaben:
-            <ul className="list-disc list-inside mt-1 space-y-0.5 font-normal text-amber-300/80">
-              {compliance.missingFields.map((f, i) => (
-                <li key={i}>{f}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="pt-2">
-            <Link
-              href="/organizer/settings/legal"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-amber-500/20"
-            >
-              <ShieldCheck className="w-4 h-4" /> Rechtliches Profil Vervollständigen
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Basic Event Information */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-indigo-400" /> Event Details
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">Event Title *</label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g. Summer Music Festival 2026"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">URL Slug</label>
-            <div className="flex rounded-xl bg-slate-950 border border-slate-800 overflow-hidden text-sm">
-              <span className="px-3 py-2.5 bg-slate-900 text-slate-500 text-xs flex items-center border-r border-slate-800">
-                /e/
+    <>
+      <form className="space-y-8 max-w-4xl">
+        {/* Publication Guard Warning Banner */}
+        {!quickValidation.canPublish && (
+          <div className="p-6 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-amber-300">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                <span>Veröffentlichungsschutz aktiv (Publication Guard)</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+                {quickValidation.missingBlockingFields.length} Angabe(n) fehlen
               </span>
+            </div>
+
+            <p className="text-xs text-amber-300/90 leading-relaxed">
+              Eine Veröffentlichung ist erst möglich, wenn alle erforderlichen Veranstalter-, Event-, Preis- und Rechtstexte vorhanden sind.
+            </p>
+
+            <div className="text-xs font-semibold text-amber-200">
+              Fehlende Pflichtangaben:
+              <ul className="list-disc list-inside mt-1 space-y-0.5 font-normal text-amber-300/80">
+                {quickValidation.missingBlockingFields.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href="/organizer/settings/legal"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-lg shadow-amber-500/20"
+              >
+                <ShieldCheck className="w-4 h-4" /> Rechtliches Profil Vervollständigen
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Section 1: Basic Event Information */}
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-indigo-400" /> 1. Allgemeine Veranstaltungsdaten
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Veranstaltungstitel *</label>
               <input
                 type="text"
                 required
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                className="w-full px-3 py-2.5 bg-transparent text-white focus:outline-none"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="z.B. Summer Music Festival 2026"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">URL-Slug</label>
+              <div className="flex rounded-xl bg-slate-950 border border-slate-800 overflow-hidden font-mono">
+                <span className="px-3 py-2.5 bg-slate-900 text-slate-500 text-xs flex items-center border-r border-slate-800">
+                  /e/
+                </span>
+                <input
+                  type="text"
+                  required
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-transparent text-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Beschreibung (Wesentliche Leistung) *</label>
+              <textarea
+                rows={4}
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Beschreibung der Veranstaltung, des Programms und der enthaltenen Leistungen..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Titelbild URL (Cover Banner)</label>
+              <div className="relative">
+                <Image className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="url"
+                  value={bannerUrl}
+                  onChange={(e) => setBannerUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-slate-300 block mb-1">Description</label>
-          <textarea
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell attendees what your event is about..."
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-          />
-        </div>
+        {/* Section 2: Location & Address */}
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-indigo-400" /> 2. Veranstaltungsort &amp; Vollständige Adresse
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">Venue / City Location</label>
-            <div className="relative">
-              <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="font-semibold text-slate-300 block">Veranstaltungsort Name (Location / Venue) *</label>
               <input
                 type="text"
+                required
                 value={venue}
                 onChange={(e) => setVenue(e.target.value)}
-                placeholder="e.g. Convention Center, San Francisco, CA"
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="z.B. Olympic Hall Berlin oder Club Watergate"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">Cover Image URL</label>
-            <div className="relative">
-              <Image className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="font-semibold text-slate-300 block">Straße &amp; Hausnummer *</label>
               <input
-                type="url"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                type="text"
+                required
+                value={venueStreet}
+                onChange={(e) => setVenueStreet(e.target.value)}
+                placeholder="z.B. Falckensteinstraße 49"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Postleitzahl (PLZ) *</label>
+              <input
+                type="text"
+                required
+                value={venueZip}
+                onChange={(e) => setVenueZip(e.target.value)}
+                placeholder="z.B. 10997"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Stadt / Ort *</label>
+              <input
+                type="text"
+                required
+                value={venueCity}
+                onChange={(e) => setVenueCity(e.target.value)}
+                placeholder="z.B. Berlin"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">Start Date &amp; Time *</label>
-            <input
-              type="datetime-local"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">End Date &amp; Time *</label>
-            <input
-              type="datetime-local"
-              required
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        {/* Directory Visibility Toggle */}
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isListedInDirectory ? "bg-indigo-500/10 text-indigo-400" : "bg-slate-800 text-slate-400"}`}>
-              {isListedInDirectory ? <Globe className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">List in Public GateMate Directory</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {isListedInDirectory ? "Visible on home page search & upcoming event discovery" : "Unlisted (private link / embed widget access only)"}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsListedInDirectory(!isListedInDirectory)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              isListedInDirectory ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
-            }`}
-          >
-            {isListedInDirectory ? "Listed (Public)" : "Unlisted (Private)"}
-          </button>
-        </div>
-      </div>
-
-      {/* Ticket Tiers Section */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Ticket className="w-5 h-5 text-indigo-400" /> Ticket Tiers &amp; Pricing
+        {/* Section 3: Dates, Times & Sales Periods */}
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-400" /> 3. Termine, Uhrzeiten &amp; Verkaufszeitraum
           </h3>
-          <button
-            type="button"
-            onClick={addTier}
-            className="px-3 py-1.5 rounded-lg bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 text-xs font-medium flex items-center gap-1 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Tier
-          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Veranstaltungsbeginn (Datum &amp; Uhrzeit) *</label>
+              <input
+                type="datetime-local"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            {hasEndTime && (
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Veranstaltungsende (Datum &amp; Uhrzeit) *</label>
+                <input
+                  type="datetime-local"
+                  required={hasEndTime}
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            )}
+
+            <div className="md:col-span-2 p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-white">Event hat ein relevantes Enddatum</p>
+                <p className="text-[11px] text-slate-400">
+                  Deaktivieren Sie diese Option für Ausstellungen oder Ganztagesevents ohne feste Enduhrzeit.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={hasEndTime}
+                onChange={(e) => setHasEndTime(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 bg-slate-900 border-slate-700"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Einlassuhrzeit (optional)</label>
+              <input
+                type="datetime-local"
+                value={doorsOpenAt}
+                onChange={(e) => setDoorsOpenAt(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Altersbeschränkung *</label>
+              <select
+                value={ageRestriction}
+                onChange={(e) => setAgeRestriction(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="Keine">Keine Altersbeschränkung (Alle Altersklassen)</option>
+                <option value="Ab 18 Jahren">Ab 18 Jahren (Kein Zutritt für Minderjährige)</option>
+                <option value="Ab 16 Jahren">Ab 16 Jahren (ggf. mit Muttizettel)</option>
+                <option value="Ab 14 Jahren">Ab 14 Jahren</option>
+                <option value="Ab 6 Jahren">Ab 6 Jahren</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {tiers.map((tier, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center gap-3">
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-[10px] font-medium text-slate-400 block mb-1">Tier Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={tier.name}
-                    onChange={(e) => updateTier(idx, "name", e.target.value)}
-                    placeholder="e.g. VIP Access Pass"
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
+        {/* Section 4: Ticket Tiers, Prices & Fees */}
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-indigo-400" /> 4. Ticketkategorien, Preise &amp; Gebühren
+            </h3>
+            <button
+              type="button"
+              onClick={addTier}
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Kategorie Hinzufügen
+            </button>
+          </div>
 
-                <div>
-                  <label className="text-[10px] font-medium text-slate-400 block mb-1">Price (EUR €)</label>
-                  <div className="relative">
-                    <span className="absolute left-2.5 top-1.5 text-xs text-slate-500">€</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={tier.price}
-                      onChange={(e) => updateTier(idx, "price", e.target.value)}
-                      placeholder="49.00"
-                      className="w-full pl-6 pr-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
+          <div className="space-y-4">
+            {tiers.map((tier, idx) => {
+              const basePrice = parseFloat(tier.price || "0");
+              const feePrice = parseFloat(tier.fee || "0");
+              const totalPrice = (basePrice + feePrice).toFixed(2);
+
+              return (
+                <div key={idx} className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                    <span className="font-bold text-white text-sm">Ticketkategorie #{idx + 1}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="px-3 py-1 rounded-xl bg-indigo-500/10 text-indigo-400 font-mono font-bold text-xs">
+                        Gesamtpreis: {totalPrice} € (inkl. {feePrice.toFixed(2)} € Gebühren)
+                      </span>
+                      {tiers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeTier(idx)}
+                          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">Kategorie Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={tier.name}
+                        onChange={(e) => updateTier(idx, "name", e.target.value)}
+                        placeholder="z.B. VIP Pass / Standard Ticket"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">Ticket Grundpreis (EUR €) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={tier.price}
+                        onChange={(e) => updateTier(idx, "price", e.target.value)}
+                        placeholder="49.00"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr (EUR €)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={tier.fee}
+                        onChange={(e) => updateTier(idx, "fee", e.target.value)}
+                        placeholder="2.50"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">Kontingent (Kapazität) *</label>
+                      <input
+                        type="number"
+                        required
+                        value={tier.quantityAvailable}
+                        onChange={(e) => updateTier(idx, "quantityAvailable", e.target.value)}
+                        placeholder="200"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">Enthaltene Leistungen (optional)</label>
+                      <input
+                        type="text"
+                        value={tier.includedServices}
+                        onChange={(e) => updateTier(idx, "includedServices", e.target.value)}
+                        placeholder="z.B. Inkl. 1 Freigetränk & ÖPNV"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-medium text-slate-400 block mb-1">Besondere Ticketbedingungen</label>
+                      <input
+                        type="text"
+                        value={tier.ticketTerms}
+                        onChange={(e) => updateTier(idx, "ticketTerms", e.target.value)}
+                        placeholder="z.B. Personengebunden, nicht übertragbar"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
 
-                <div>
-                  <label className="text-[10px] font-medium text-slate-400 block mb-1">Quantity Capacity</label>
-                  <input
-                    type="number"
-                    required
-                    value={tier.quantityAvailable}
-                    onChange={(e) => updateTier(idx, "quantityAvailable", e.target.value)}
-                    placeholder="100"
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
+        {/* Section 5: Specific Rules & Legal Text Overrides */}
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <FileText className="w-5 h-5 text-indigo-400" /> 5. Event-Bedingungen, Barrierefreiheit &amp; Hausordnung
+          </h3>
 
-              {tiers.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeTier(idx)}
-                  className="p-2 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Informationen zur Barrierefreiheit</label>
+              <textarea
+                rows={2}
+                value={accessibilityInfo}
+                onChange={(e) => setAccessibilityInfo(e.target.value)}
+                placeholder="z.B. Barrierefrei zugänglich, Rollstuhlplätze vorhanden, Behindertentoilette auf Ebene 1"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
-          ))}
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Besondere Einlassbedingungen</label>
+              <textarea
+                rows={2}
+                value={specialAdmissionConditions}
+                onChange={(e) => setSpecialAdmissionConditions(e.target.value)}
+                placeholder="z.B. Ausweispflicht am Eingang, Taschenverbot ab DIN A4"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Hausordnung (Location-Regeln)</label>
+              <textarea
+                rows={2}
+                value={houseRules}
+                onChange={(e) => setHouseRules(e.target.value)}
+                placeholder="z.B. Rauchverbot im gesamten Gebäude, Aufzeichnungsverbot..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Event-spezifische Stornobedingungen</label>
+              <textarea
+                rows={2}
+                value={cancellationPolicy}
+                onChange={(e) => setCancellationPolicy(e.target.value)}
+                placeholder="Überschreibt die allgemeinen Veranstalter-Stornobedingungen für dieses Event..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors w-full sm:w-auto"
-        >
-          Abbrechen
-        </button>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        {/* Action Controls Footer */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
           <button
             type="button"
-            disabled={loading}
-            onClick={(e) => handleSubmit(e, false)}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/20 flex items-center gap-2 transition-all"
+            onClick={() => router.back()}
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors w-full sm:w-auto"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Als Entwurf speichern"}
+            Abbrechen
           </button>
 
-          <button
-            type="button"
-            disabled={loading || isBlockedByLegal}
-            onClick={(e) => handleSubmit(e, true)}
-            className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2 transition-all ${
-              isBlockedByLegal
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Erstelle Event...
-              </>
-            ) : isBlockedByLegal ? (
-              <>
-                <AlertTriangle className="w-4 h-4 text-amber-400" /> Veröffentlichung blockiert
-              </>
-            ) : (
-              "Event Veröffentlichen"
-            )}
-          </button>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleSaveDraft}
+              className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/20 flex items-center gap-2 transition-all"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Als Entwurf speichern"}
+            </button>
+
+            <button
+              type="button"
+              disabled={loading || !quickValidation.canPublish}
+              onClick={handleOpenPublishChecklist}
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2 transition-all ${
+                !quickValidation.canPublish
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
+              }`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Verarbeite...
+                </>
+              ) : !quickValidation.canPublish ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 text-amber-400" /> Veröffentlichung blockiert
+                </>
+              ) : (
+                "Event Veröffentlichen"
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+
+      {/* Interactive Publish Legal Checklist Modal */}
+      <PublishLegalChecklistModal
+        isOpen={isChecklistOpen}
+        onClose={() => setIsChecklistOpen(false)}
+        onConfirmPublish={handleFinalPublish}
+        validation={validationResult}
+        loading={loading}
+      />
+    </>
   );
 }

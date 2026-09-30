@@ -50,6 +50,13 @@
       "when": 1790759307952,
       "tag": "0006_unusual_natasha_romanoff",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790762534801,
+      "tag": "0007_soft_pixie",
+      "breakpoints": true
     }
   ]
 }

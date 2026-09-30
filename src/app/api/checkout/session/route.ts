@@ -3,6 +3,7 @@ import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasOrganizerStr
 import { db } from "@/db";
 import { events, ticketTiers, users, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createOrderLegalSnapshot } from "@/lib/legal-server";
 
 export async function POST(req: Request) {
   try {
@@ -50,12 +51,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const totalCents = tier.priceCents * numQuantity;
+    const totalCents = (tier.priceCents + (tier.feeCents || 0)) * numQuantity;
     const platformFeeCents = Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
 
     const legalProfileSnapshot = JSON.stringify({
       legalName: organizer?.legalName || organizer?.name || "Veranstalter",
       legalForm: organizer?.legalForm || null,
+      responsiblePerson: organizer?.responsiblePerson || null,
       registrationCouncil: organizer?.registrationCouncil || null,
       registrationNumber: organizer?.registrationNumber || null,
       phone: organizer?.phone || null,
@@ -76,6 +78,8 @@ export async function POST(req: Request) {
       organizer?.termsUrl ||
       `AGB von ${organizer?.legalName || organizer?.name || "dem Veranstalter"} wurden beim Ticketkauf am ${new Date().toLocaleDateString("de-DE")} akzeptiert.`;
 
+    const documentVersionsSnapshot = await createOrderLegalSnapshot({ organizer: organizer as any, event, tier });
+
     // 4. Create Order in Database (status: pending)
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     await db.insert(orders).values({
@@ -86,6 +90,7 @@ export async function POST(req: Request) {
       status: "pending",
       termsSnapshot,
       legalProfileSnapshot,
+      documentVersionsSnapshot,
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

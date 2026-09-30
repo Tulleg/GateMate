@@ -5,6 +5,10 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+function isDemoAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
+}
+
 export async function POST(req: Request) {
   try {
     if (!hasPlatformStripeKey()) {
@@ -27,7 +31,7 @@ export async function POST(req: Request) {
     let targetUserId = bodyUserId || cookieStore.get("gatemate_user_id")?.value;
 
     if (!targetUserId) {
-      if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+      if (isDemoAllowed()) {
         targetUserId = "user_organizer_01";
       } else {
         return NextResponse.json({ error: "Benutzer-ID fehlt oder nicht autorisiert" }, { status: 400 });

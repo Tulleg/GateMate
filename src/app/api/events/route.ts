@@ -56,6 +56,9 @@ export async function GET(req: Request) {
   }
 }
 
+import { validateEventForPublication } from "@/lib/validation";
+import { snapshotDocumentVersion } from "@/lib/legal-server";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -82,40 +85,77 @@ export async function POST(req: Request) {
       bannerUrl,
       startDate,
       endDate,
+      hasEndTime = true,
       doorsOpenAt,
       ageRestriction,
+      accessibilityInfo,
+      houseRules,
+      specialAdmissionConditions,
+      eventTerms,
+      cancellationPolicy,
+      salesStartDate,
+      salesEndDate,
+      legalChecklistConfirmed = false,
       isListedInDirectory = true,
       isPublished = false,
       tiers,
     } = body;
 
-    if (!title || !slug || !startDate || !endDate || !tiers || !Array.isArray(tiers)) {
+    if (!title || !slug || !startDate || !tiers || !Array.isArray(tiers)) {
       return NextResponse.json({ error: "Pflichtfelder fehlen oder ungültige Ticket-Kategorien" }, { status: 400 });
     }
 
-    // Publication Guard Check: If publishing, verify legal compliance profile & Stripe payment setup
-    if (isPublished) {
-      const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));
-      const organizer = organizerRecords[0];
+    const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));
+    const organizer = organizerRecords[0];
 
-      const compliance = checkOrganizerLegalCompliance(organizer);
-      if (!compliance.isCompliant) {
+    // Build event data object for validation
+    const eventInput = {
+      title,
+      description,
+      venue,
+      venueStreet,
+      venueZip,
+      venueCity,
+      venueCountry,
+      startDate,
+      endDate,
+      hasEndTime: Boolean(hasEndTime),
+      ageRestriction,
+      accessibilityInfo,
+      houseRules,
+      specialAdmissionConditions,
+      eventTerms,
+      cancellationPolicy,
+      salesStartDate,
+      salesEndDate,
+    };
+
+    const formattedTiersInput = tiers.map((tier: any) => ({
+      name: tier.name,
+      priceCents: Number(tier.priceCents) || 0,
+      feeCents: Number(tier.feeCents) || 0,
+      includedServices: tier.includedServices || null,
+      ticketTerms: tier.ticketTerms || null,
+      quantityAvailable: Number(tier.quantityAvailable) || 0,
+    }));
+
+    // Publication Guard Check: If publishing, verify full compliance via validation engine
+    if (isPublished) {
+      const validation = validateEventForPublication(organizer, eventInput, formattedTiersInput);
+      if (!validation.canPublish) {
         return NextResponse.json(
           {
-            error: `Veröffentlichung blockiert! Ihr Veranstalter-Rechtsprofil ist unvollständig (${compliance.missingFields.join(
-              ", "
-            )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
-            missingFields: compliance.missingFields,
+            error: `Veröffentlichung blockiert! Folgende Angaben fehlen oder sind unvollständig: ${validation.missingBlockingFields.join(", ")}`,
+            validation,
           },
           { status: 400 }
         );
       }
 
-      if (!hasOrganizerStripeAccount(organizer)) {
+      if (!legalChecklistConfirmed) {
         return NextResponse.json(
           {
-            error:
-              "Veröffentlichung blockiert! Sie müssen zuerst ein Stripe-Zahlungskonto (Stripe Connect oder eigene API-Keys) unter /organizer anbinden, bevor Sie ein Event veröffentlichen können.",
+            error: "Veröffentlichung blockiert! Sie müssen die rechtliche Haftungsbestätigung vor der Veröffentlichung anhaken.",
           },
           { status: 400 }
         );
@@ -130,33 +170,59 @@ export async function POST(req: Request) {
       organizerId: cleanOrganizerId,
       title,
       slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-      description,
-      venue,
+      description: description || null,
+      venue: venue || null,
       venueStreet: venueStreet || null,
       venueZip: venueZip || null,
       venueCity: venueCity || null,
       venueCountry: venueCountry || "Deutschland",
       bannerUrl: bannerUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: endDate ? new Date(endDate) : new Date(startDate),
+      hasEndTime: Boolean(hasEndTime),
       doorsOpenAt: doorsOpenAt ? new Date(doorsOpenAt) : null,
       ageRestriction: ageRestriction || null,
+      accessibilityInfo: accessibilityInfo || null,
+      houseRules: houseRules || null,
+      specialAdmissionConditions: specialAdmissionConditions || null,
+      eventTerms: eventTerms || null,
+      cancellationPolicy: cancellationPolicy || null,
+      salesStartDate: salesStartDate ? new Date(salesStartDate) : null,
+      salesEndDate: salesEndDate ? new Date(salesEndDate) : null,
+      legalChecklistConfirmedAt: isPublished && legalChecklistConfirmed ? new Date() : null,
+      legalChecklistConfirmedBy: isPublished && legalChecklistConfirmed ? cleanOrganizerId : null,
       isPublished: Boolean(isPublished),
       isListedInDirectory: Boolean(isListedInDirectory),
     });
 
     // 2. Insert Ticket Tiers
-    const tierRecords = tiers.map((tier: { name: string; priceCents: number; quantityAvailable: number }, idx: number) => ({
+    const tierRecords = formattedTiersInput.map((tier, idx) => ({
       id: `tier_${eventId}_${idx + 1}`,
       eventId: eventId,
-      name: tier.name,
+      name: tier.name || `Kategorie ${idx + 1}`,
       priceCents: tier.priceCents,
+      feeCents: tier.feeCents,
+      includedServices: tier.includedServices,
+      ticketTerms: tier.ticketTerms,
       quantityAvailable: tier.quantityAvailable,
       quantitySold: 0,
     }));
 
     if (tierRecords.length > 0) {
       await db.insert(ticketTiers).values(tierRecords);
+    }
+
+    // 3. Freeze document versions on publication
+    if (isPublished && organizer) {
+      await snapshotDocumentVersion({ organizerId: cleanOrganizerId, documentType: "impressum", content: organizer.impressumContent, url: organizer.impressumUrl });
+      await snapshotDocumentVersion({ organizerId: cleanOrganizerId, documentType: "privacy", content: organizer.privacyContent, url: organizer.privacyUrl });
+      await snapshotDocumentVersion({ organizerId: cleanOrganizerId, documentType: "terms", content: organizer.termsContent, url: organizer.termsUrl });
+      if (eventTerms) {
+        await snapshotDocumentVersion({ organizerId: cleanOrganizerId, eventId, documentType: "event_terms", content: eventTerms });
+      }
+      if (cancellationPolicy) {
+        await snapshotDocumentVersion({ organizerId: cleanOrganizerId, eventId, documentType: "cancellation_policy", content: cancellationPolicy });
+      }
     }
 
     return NextResponse.json({ success: true, eventId, slug });

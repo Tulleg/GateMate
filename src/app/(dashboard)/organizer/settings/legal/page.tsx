@@ -28,6 +28,7 @@ export default function OrganizerLegalSettingsPage() {
   // Form State
   const [legalName, setLegalName] = useState("");
   const [legalForm, setLegalForm] = useState("");
+  const [responsiblePerson, setResponsiblePerson] = useState("");
   const [registrationCouncil, setRegistrationCouncil] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -52,6 +53,8 @@ export default function OrganizerLegalSettingsPage() {
   const [termsUrl, setTermsUrl] = useState("");
   const [termsContent, setTermsContent] = useState("");
 
+  const [cancellationPolicyContent, setCancellationPolicyContent] = useState("");
+  const [eventTermsContent, setEventTermsContent] = useState("");
   const [revocationNoticeCustom, setRevocationNoticeCustom] = useState("");
   const [organizerSlug, setOrganizerSlug] = useState("organizer");
 
@@ -76,6 +79,7 @@ export default function OrganizerLegalSettingsPage() {
       const org = data.organizer || {};
       setLegalName(org.legalName || "");
       setLegalForm(org.legalForm || "");
+      setResponsiblePerson(org.responsiblePerson || "");
       setRegistrationCouncil(org.registrationCouncil || "");
       setRegistrationNumber(org.registrationNumber || "");
       setPhone(org.phone || "");
@@ -99,6 +103,8 @@ export default function OrganizerLegalSettingsPage() {
       setTermsContent(org.termsContent || "");
       setTermsType(org.termsUrl ? "url" : "text");
 
+      setCancellationPolicyContent(org.cancellationPolicyContent || "");
+      setEventTermsContent(org.eventTermsContent || "");
       setRevocationNoticeCustom(org.revocationNoticeCustom || "");
       if (org.organizerSlug) setOrganizerSlug(org.organizerSlug);
 
@@ -124,6 +130,7 @@ export default function OrganizerLegalSettingsPage() {
       const payload = {
         legalName,
         legalForm,
+        responsiblePerson,
         registrationCouncil,
         registrationNumber,
         phone,
@@ -140,6 +147,8 @@ export default function OrganizerLegalSettingsPage() {
         privacyContent: privacyType === "text" ? privacyContent : "",
         termsUrl: termsType === "url" ? termsUrl : "",
         termsContent: termsType === "text" ? termsContent : "",
+        cancellationPolicyContent,
+        eventTermsContent,
         revocationNoticeCustom,
       };
 
@@ -286,12 +295,25 @@ export default function OrganizerLegalSettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Rechtsform (DSA Art. 30 KYTC)</label>
+                <label className="font-semibold text-slate-300 block">Rechtsform (DSA Art. 30 KYTC) *</label>
                 <input
                   type="text"
+                  required
                   placeholder="z.B. GmbH, UG (haftungsbeschränkt), Einzelunternehmen, e.V."
                   value={legalForm}
                   onChange={(e) => setLegalForm(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Verantwortliche Kontaktperson (Vertreten durch / Inhaber) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="z.B. Erika Mustermann (Geschäftsführerin / Inhaberin)"
+                  value={responsiblePerson}
+                  onChange={(e) => setResponsiblePerson(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -604,6 +626,41 @@ export default function OrganizerLegalSettingsPage() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* Document 4: Stornierungs-/Erstattungsbedingungen */}
+            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-400" /> Stornierungs- &amp; Erstattungsbedingungen *
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Informieren Sie Käufer darüber, ob und unter welchen Bedingungen Tickets umgetauscht, storniert oder übertragen werden können.
+              </p>
+              <textarea
+                rows={3}
+                required
+                placeholder="z.B. Tickets sind grundsätzlich von der Rückgabe ausgeschlossen, es sei denn, das Event wird abgesagt..."
+                value={cancellationPolicyContent}
+                onChange={(e) => setCancellationPolicyContent(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+              />
+            </div>
+
+            {/* Document 5: Allgemeine Teilnahmebedingungen */}
+            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <label className="font-semibold text-xs text-white block flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-400" /> Allgemeine Teilnahmebedingungen des Veranstalters (optional)
+              </label>
+              <p className="text-[11px] text-slate-400">
+                Standard-Teilnahmebedingungen für alle Ihre Events (z.B. Verhalten vor Ort, Haftungsausschluss, Bildrechte).
+              </p>
+              <textarea
+                rows={3}
+                placeholder="Optionaler Text für allgemeine Teilnahme- &amp; Verhaltensregeln..."
+                value={eventTermsContent}
+                onChange={(e) => setEventTermsContent(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+              />
             </div>
 
             {/* Custom Revocation Notice */}

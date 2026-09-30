@@ -20,6 +20,7 @@ export const users = pgTable("users", {
   // Organizer Legal Profile & DSA KYTC Compliance (Art. 30 Digital Services Act)
   legalName: text("legal_name"),
   legalForm: text("legal_form"),
+  responsiblePerson: text("responsible_person"),
   registrationCouncil: text("registration_council"),
   registrationNumber: text("registration_number"),
   phone: text("phone"),
@@ -36,6 +37,8 @@ export const users = pgTable("users", {
   privacyContent: text("privacy_content"),
   termsUrl: text("terms_url"),
   termsContent: text("terms_content"),
+  cancellationPolicyContent: text("cancellation_policy_content"),
+  eventTermsContent: text("event_terms_content"),
   revocationNoticeCustom: text("revocation_notice_custom"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
