@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ticket, ArrowLeft, Building2, Mail, Phone, ShieldCheck, Scale } from "lucide-react";
+import { Ticket, ArrowLeft, Building2, Mail, Phone, Scale, Hash } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
+import { getPublishedDocument } from "@/lib/legal-server";
 
 export const metadata: Metadata = {
   title: "Impressum | GateMate Event Ticketing Platform",
   description: "Anbieterkennzeichnung und rechtliche Informationen gemäß § 5 DDG (Telemediengesetz) der Plattform GateMate.",
 };
 
-export default function PlatformImpressumPage() {
+export default async function PlatformImpressumPage() {
+  const doc = await getPublishedDocument({ documentType: "platform_impressum" });
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white">
       {/* Header */}
@@ -33,99 +36,93 @@ export default function PlatformImpressumPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
             <Scale className="w-3.5 h-3.5" /> Anbieterkennzeichnung gemäß § 5 DDG
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform-Impressum</h1>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform-Impressum</h1>
+            {doc && (
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-mono">
+                Version {doc.version}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-400">
             Rechtliche Informationen und Kontaktangaben des Betreibers der Software-Plattform GateMate.
           </p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl">
-          {/* Company Details */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Building2 className="w-5 h-5 text-indigo-400" /> Plattformbetreiber / Diensteanbieter
-            </h2>
-            <div className="text-sm text-slate-300 leading-relaxed space-y-1">
-              <p className="font-semibold text-white">GateMate Ticketing Platforms GmbH</p>
-              <p>Musterstraße 42</p>
-              <p>10115 Berlin, Deutschland</p>
+          {doc?.content ? (
+            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              {doc.content}
             </div>
-          </section>
-
-          {/* Management & Registration */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Scale className="w-5 h-5 text-indigo-400" /> Vertretung &amp; Registereintrag
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-300">
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Vertreten durch</span>
-                <span className="font-semibold text-white">Geschäftsführung GateMate</span>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Handelsregister</span>
-                <span className="font-semibold text-white">Amtsgericht Berlin-Charlottenburg, HRB 123456 B</span>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Umsatzsteuer-ID</span>
-                <span className="font-semibold text-white">DE312345678 (§ 27a UStG)</span>
-              </div>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Inhaltlich Verantwortlicher</span>
-                <span className="font-semibold text-white">GateMate GmbH (§ 18 Abs. 2 MStV)</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Contact */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Mail className="w-5 h-5 text-indigo-400" /> Kontaktmöglichkeiten
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-300">
-                <Mail className="w-5 h-5 text-indigo-400 shrink-0" />
-                <div>
-                  <span className="text-xs text-slate-500 block font-semibold">E-Mail Support</span>
-                  <a href="mailto:support@gatemate.io" className="text-indigo-400 hover:underline font-semibold">
-                    support@gatemate.io
-                  </a>
+          ) : (
+            <>
+              {/* Default Fallback Content */}
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Building2 className="w-5 h-5 text-indigo-400" /> Plattformbetreiber / Diensteanbieter
+                </h2>
+                <div className="text-sm text-slate-300 leading-relaxed space-y-1">
+                  <p className="font-semibold text-white">GateMate Ticketing Platforms GmbH</p>
+                  <p>Musterstraße 42</p>
+                  <p>10115 Berlin, Deutschland</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-300">
-                <Phone className="w-5 h-5 text-indigo-400 shrink-0" />
-                <div>
-                  <span className="text-xs text-slate-500 block font-semibold">Telefon</span>
-                  <span className="font-semibold text-white">+49 (0) 30 12345678</span>
+              </section>
+
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Scale className="w-5 h-5 text-indigo-400" /> Vertretung &amp; Registereintrag
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-300">
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Vertreten durch</span>
+                    <span className="font-semibold text-white">Geschäftsführung GateMate</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Handelsregister</span>
+                    <span className="font-semibold text-white">Amtsgericht Berlin-Charlottenburg, HRB 123456 B</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Umsatzsteuer-ID</span>
+                    <span className="font-semibold text-white">DE312345678 (§ 27a UStG)</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-xs font-semibold text-slate-500 block uppercase mb-1">Inhaltlich Verantwortlicher</span>
+                    <span className="font-semibold text-white">GateMate GmbH (§ 18 Abs. 2 MStV)</span>
+                  </div>
                 </div>
-              </div>
+              </section>
+
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Mail className="w-5 h-5 text-indigo-400" /> Kontaktmöglichkeiten
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-300">
+                    <Mail className="w-5 h-5 text-indigo-400 shrink-0" />
+                    <div>
+                      <span className="text-xs text-slate-500 block font-semibold">E-Mail Support</span>
+                      <a href="mailto:support@gatemate.io" className="text-indigo-400 hover:underline font-semibold">
+                        support@gatemate.io
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-slate-300">
+                    <Phone className="w-5 h-5 text-indigo-400 shrink-0" />
+                    <div>
+                      <span className="text-xs text-slate-500 block font-semibold">Telefon</span>
+                      <span className="font-semibold text-white">+49 (0) 30 12345678</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {doc?.hash && (
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-500 font-mono flex items-center gap-2">
+              <Hash className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> SHA-256 Hash: {doc.hash}
             </div>
-          </section>
-
-          {/* Dispute Resolution & Disclaimer */}
-          <section className="space-y-4 text-xs text-slate-400 leading-relaxed border-t border-slate-800 pt-6">
-            <h3 className="text-sm font-bold text-slate-200">EU-Streitschlichtung &amp; Verbraucherstreitbeilegung</h3>
-            <p>
-              Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-              <a
-                href="https://ec.europa.eu/consumers/odr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-400 hover:underline"
-              >
-                https://ec.europa.eu/consumers/odr
-              </a>
-              . Unsere E-Mail-Adresse finden Sie oben im Impressum.
-            </p>
-            <p>
-              Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-            </p>
-
-            <h3 className="text-sm font-bold text-slate-200 pt-2">Haftungsausschluss (Disclaimer)</h3>
-            <p>
-              GateMate stellt als Software-Plattform die Infrastruktur für Ticketverkäufe und Event-Check-In bereit. Verträge über die Durchführung von Veranstaltungen kommen ausschließlich zwischen den jeweiligen Ticketkäufern und den veranstaltenden Dritten zustande.
-            </p>
-          </section>
+          )}
         </div>
       </main>
 

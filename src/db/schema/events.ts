@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { users } from "./users";
+import { eventTypeEnum } from "./legal-documents";
 
 export const events = pgTable("events", {
   id: text("id").primaryKey(),
@@ -7,6 +8,8 @@ export const events = pgTable("events", {
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
+  eventType: eventTypeEnum("event_type").default("other"),
+  enabledLegalModules: text("enabled_legal_modules"),
   bannerUrl: text("banner_url"),
   venue: text("venue"),
   venueStreet: text("venue_street"),

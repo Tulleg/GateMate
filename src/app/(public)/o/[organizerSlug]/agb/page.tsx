@@ -3,8 +3,9 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileText, Building2 } from "lucide-react";
+import { ArrowLeft, FileText, Building2, Hash } from "lucide-react";
 import { formatLegalAddress } from "@/lib/legal";
+import { getPublishedDocument } from "@/lib/legal-server";
 
 interface PageProps {
   params: Promise<{ organizerSlug: string }>;
@@ -31,12 +32,13 @@ export default async function OrganizerAgbPage({ params }: PageProps) {
     notFound();
   }
 
+  // Fetch published document entry if present
+  const doc = await getPublishedDocument({ organizerId: organizer.id, documentType: "organizer_agb" });
+
   // 302 Redirect if configured as URL
-  if (organizer.legalMode === "url" && organizer.termsUrl && organizer.termsUrl.trim()) {
-    redirect(organizer.termsUrl);
-  }
-  if (organizer.termsUrl && organizer.termsUrl.trim() && (!organizer.termsContent || !organizer.termsContent.trim())) {
-    redirect(organizer.termsUrl);
+  if (doc?.url || (organizer.legalMode === "url" && organizer.termsUrl)) {
+    const redirectTarget = doc?.url || organizer.termsUrl;
+    if (redirectTarget && redirectTarget.trim()) redirect(redirectTarget);
   }
 
   const defaultTermsText = `# Allgemeine Geschäftsbedingungen (AGB)
@@ -54,9 +56,7 @@ ${organizer.zip || ""} ${organizer.city || ""}
 Gemäß § 312g Abs. 2 Nr. 9 BGB besteht bei Dienstleistungen im Zusammenhang mit Freizeitbetätigungen, die für einen spezifischen Termin oder Zeitraum erbracht werden, kein Widerrufsrecht.
 `;
 
-  const contentToRender = organizer.termsContent && organizer.termsContent.trim()
-    ? organizer.termsContent
-    : defaultTermsText;
+  const contentToRender = doc?.content || organizer.termsContent || defaultTermsText;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white pb-20">
@@ -77,14 +77,21 @@ Gemäß § 312g Abs. 2 Nr. 9 BGB besteht bei Dienstleistungen im Zusammenhang mi
       {/* Main Container */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 space-y-8">
         {/* Profile Card */}
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-xl">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-lg">
-            <Building2 className="w-6 h-6" />
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-lg">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">{organizer.legalName || organizer.name}</h1>
+              <p className="text-xs text-slate-400 mt-0.5">{formatLegalAddress(organizer)}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">{organizer.legalName || organizer.name}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">{formatLegalAddress(organizer)}</p>
-          </div>
+          {doc && (
+            <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono text-xs font-bold">
+              Version {doc.version}
+            </span>
+          )}
         </div>
 
         {/* AGB Document Body */}
@@ -92,6 +99,12 @@ Gemäß § 312g Abs. 2 Nr. 9 BGB besteht bei Dienstleistungen im Zusammenhang mi
           <div className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line font-sans">
             {contentToRender}
           </div>
+
+          {doc?.hash && (
+            <div className="pt-4 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex items-center gap-1.5">
+              <Hash className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> SHA-256 Hash: {doc.hash}
+            </div>
+          )}
         </div>
       </main>
     </div>

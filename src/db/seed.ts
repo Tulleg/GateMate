@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { users, events, ticketTiers } from "./schema";
+import { users, events, ticketTiers, legalDocuments } from "./schema";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -134,6 +134,80 @@ Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Nachfolgend informie
           quantitySold: 0,
         }
       ]);
+      // Seed Platform Legal Documents
+      const generateHash = (str: string) => crypto.createHash("sha256").update(str).digest("hex");
+
+      const platformImpressumText = `# Plattform-Impressum GateMate
+
+**Diensteanbieter gemäß § 5 DDG:**  
+GateMate Ticketing Platforms GmbH  
+Musterstraße 42  
+10115 Berlin, Deutschland  
+
+**Vertreten durch:**  
+Geschäftsführung GateMate  
+
+**Handelsregister:**  
+Amtsgericht Berlin-Charlottenburg, HRB 123456 B  
+
+**Umsatzsteuer-ID:**  
+DE312345678  
+
+**Kontakt:**  
+E-Mail: support@gatemate.io  
+`;
+
+      const platformPrivacyText = `# Plattform-Datenschutzerklärung GateMate
+
+GateMate verarbeitet personenbezogene Daten im Rahmen der Bereitstellung der Softwareplattform zur Ticketvermittlung und Veranstaltungsabwicklung.
+
+1. **Geltungsbereich**: Diese Erklärung gilt für die Nutzung der Plattform GateMate.
+2. **Datenverarbeitung**: Wir speichern Nutzerkonto-Daten, Zugriffslogs und Transaktionsdaten.
+`;
+
+      const platformTermsText = `# Plattform-Nutzungsbedingungen GateMate
+
+1. **Vertragsgegenstand**: GateMate stellt Softwareinfrastruktur für Veranstalter und Ticketkäufer zur Verfügung.
+2. **Vermittlerrolle**: Kaufverträge über Veranstaltungen kommen direkt zwischen dem Ticketkäufer und dem jeweiligen Veranstalter zustande.
+`;
+
+      await db.insert(legalDocuments).values([
+        {
+          id: "doc_plat_imp_01",
+          organizerId: null,
+          documentType: "platform_impressum",
+          title: "Plattform-Impressum",
+          content: platformImpressumText,
+          version: 1,
+          status: "published",
+          hash: generateHash(platformImpressumText),
+          publishedAt: new Date(),
+        },
+        {
+          id: "doc_plat_priv_01",
+          organizerId: null,
+          documentType: "platform_privacy",
+          title: "Plattform-Datenschutzerklärung",
+          content: platformPrivacyText,
+          version: 1,
+          status: "published",
+          hash: generateHash(platformPrivacyText),
+          publishedAt: new Date(),
+        },
+        {
+          id: "doc_plat_trm_01",
+          organizerId: null,
+          documentType: "platform_terms",
+          title: "Plattform-Nutzungsbedingungen",
+          content: platformTermsText,
+          version: 1,
+          status: "published",
+          hash: generateHash(platformTermsText),
+          publishedAt: new Date(),
+        },
+      ]);
+
+      console.log(`[SEED SUCCESS] Created Platform Legal Documents.`);
 
       console.log(`[SEED SUCCESS] Created sample event and ticket tiers.`);
     }

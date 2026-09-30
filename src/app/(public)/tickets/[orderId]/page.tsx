@@ -7,6 +7,7 @@ import { CheckCircle2, Calendar, MapPin, Ticket as TicketIcon, Printer, ArrowLef
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "./print-button";
+import { OrderLegalSnapshotModal } from "./order-legal-snapshot-modal";
 
 interface PageProps {
   params: Promise<{ orderId: string }>;
@@ -75,9 +76,9 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
           <p className="text-xs text-slate-300 max-w-md mx-auto">
             Bestellung <span className="font-mono text-emerald-400">{order.id}</span> abgeschlossen. Vertragspartner &amp; Verkäufer ist <strong className="text-white">{legalSellerName}</strong>. Zeigen Sie Ihren QR-Code am Einlass vor.
           </p>
-
-          <div className="pt-2 flex justify-center gap-3">
+          <div className="pt-2 flex justify-center flex-wrap gap-3">
             <PrintButton />
+            <OrderLegalSnapshotModal orderId={order.id} rawSnapshot={order.documentVersionsSnapshot} />
           </div>
         </div>
 

@@ -10,22 +10,36 @@ import {
   AlertTriangle,
   CheckCircle2,
   Save,
-  Globe,
   Loader2,
-  Info,
   ExternalLink,
   BookOpen,
+  History,
+  Layers,
+  Sparkles,
+  Plus,
+  Lock,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
-import { checkOrganizerLegalCompliance, LegalComplianceResult } from "@/lib/legal";
+import {
+  checkOrganizerLegalCompliance,
+  LegalComplianceResult,
+  LEGAL_DOCUMENT_METADATA,
+  LEGAL_MODULES,
+  EVENT_TYPES,
+  LegalDocumentType,
+  EventTypeKey,
+} from "@/lib/legal";
 
 export default function OrganizerLegalSettingsPage() {
+  const [activeTab, setActiveTab] = useState<"profile" | "documents" | "modules">("profile");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Form State
+  // Form State - Master Data
   const [legalName, setLegalName] = useState("");
   const [legalForm, setLegalForm] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
@@ -40,7 +54,7 @@ export default function OrganizerLegalSettingsPage() {
   const [isSmallBusiness, setIsSmallBusiness] = useState(false);
   const [legalMode, setLegalMode] = useState<"url" | "custom_text">("custom_text");
 
-  // Document Modes & Content
+  // Document Content & Versions
   const [impressumType, setImpressumType] = useState<"url" | "text">("text");
   const [impressumUrl, setImpressumUrl] = useState("");
   const [impressumContent, setImpressumContent] = useState("");
@@ -58,6 +72,19 @@ export default function OrganizerLegalSettingsPage() {
   const [revocationNoticeCustom, setRevocationNoticeCustom] = useState("");
   const [organizerSlug, setOrganizerSlug] = useState("organizer");
 
+  // Legal Documents Table List & Version History
+  const [dbDocuments, setDbDocuments] = useState<any[]>([]);
+  const [historyModalDoc, setHistoryModalDoc] = useState<any | null>(null);
+  const [docHistory, setDocHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Event Types & Modules Settings
+  const [selectedEventType, setSelectedEventType] = useState<EventTypeKey>("concert");
+  const [enabledModules, setEnabledModules] = useState<string[]>([
+    "statutory_revocation_exemption",
+    "house_rules_and_safety",
+  ]);
+
   const [compliance, setCompliance] = useState<LegalComplianceResult>({
     isCompliant: false,
     missingFields: [],
@@ -66,6 +93,7 @@ export default function OrganizerLegalSettingsPage() {
 
   useEffect(() => {
     fetchLegalProfile();
+    fetchDocumentsList();
   }, []);
 
   const fetchLegalProfile = async () => {
@@ -120,6 +148,42 @@ export default function OrganizerLegalSettingsPage() {
     }
   };
 
+  const fetchDocumentsList = async () => {
+    try {
+      const res = await fetch(`/api/legal/documents`);
+      const data = await res.json();
+      if (res.ok && data.documents) {
+        setDbDocuments(data.documents);
+      }
+    } catch (e) {
+      console.error("Failed to load documents list", e);
+    }
+  };
+
+  const openHistoryModal = async (doc: any) => {
+    setHistoryModalDoc(doc);
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/legal/documents/${doc.id}`);
+      const data = await res.json();
+      if (res.ok && data.history) {
+        setDocHistory(data.history);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const toggleModule = (moduleKey: string) => {
+    if (enabledModules.includes(moduleKey)) {
+      setEnabledModules(enabledModules.filter((m) => m !== moduleKey));
+    } else {
+      setEnabledModules([...enabledModules, moduleKey]);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -161,14 +225,44 @@ export default function OrganizerLegalSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Fehler beim Speichern");
 
-      setSuccess("Rechtliche Einstellungen erfolgreich gespeichert!");
+      // Publish new document versions for organizer documents
+      await publishDocHelper("organizer_impressum", "Veranstalter-Impressum", impressumContent, impressumUrl);
+      await publishDocHelper("organizer_privacy", "Veranstalter-Datenschutzerklärung", privacyContent, privacyUrl);
+      await publishDocHelper("organizer_agb", "Veranstalter-AGB", termsContent, termsUrl);
+      await publishDocHelper("refund_policy", "Erstattungsbedingungen", cancellationPolicyContent);
+      await publishDocHelper("event_terms", "Teilnahmebedingungen", eventTermsContent);
+      await publishDocHelper("revocation_notice", "Widerrufsinformationen", revocationNoticeCustom);
+
+      setSuccess("Rechtliche Einstellungen und Dokument-Versionen erfolgreich gespeichert!");
       if (data.compliance) {
         setCompliance(data.compliance);
       }
+      fetchDocumentsList();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const publishDocHelper = async (documentType: LegalDocumentType, title: string, content?: string, url?: string) => {
+    if ((!content || !content.trim()) && (!url || !url.trim())) return;
+    try {
+      await fetch("/api/legal/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType,
+          title,
+          content,
+          url,
+          eventType: selectedEventType,
+          applicableModules: enabledModules,
+          status: "published",
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to publish document helper", e);
     }
   };
 
@@ -195,10 +289,10 @@ export default function OrganizerLegalSettingsPage() {
         <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-              Rechtliche Profil-Einstellungen <Scale className="w-6 h-6 text-indigo-400" />
+              Rechtliche Profil- &amp; Dokumenten-Verwaltung <Scale className="w-6 h-6 text-indigo-400" />
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Veranstalter-Stammdaten, Impressum, Datenschutz & § 312j BGB Konformität für Ticket-Verkäufe.
+              Veranstalter-Stammdaten, getrennte Plattform- &amp; Veranstalter-Dokumente, Versionierung und Event-Typ Module.
             </p>
           </div>
 
@@ -230,6 +324,40 @@ export default function OrganizerLegalSettingsPage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-800 gap-2">
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ${
+              activeTab === "profile"
+                ? "border-indigo-500 text-indigo-400 bg-slate-900/60"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Building2 className="w-4 h-4" /> Stammdaten &amp; Aussteller-Profil
+          </button>
+          <button
+            onClick={() => setActiveTab("documents")}
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ${
+              activeTab === "documents"
+                ? "border-indigo-500 text-indigo-400 bg-slate-900/60"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <FileText className="w-4 h-4" /> Rechtstexte &amp; Versionen ({dbDocuments.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("modules")}
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-colors flex items-center gap-2 border-b-2 ${
+              activeTab === "modules"
+                ? "border-indigo-500 text-indigo-400 bg-slate-900/60"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Layers className="w-4 h-4" /> Event-Typen &amp; Rechtsmodule
+          </button>
         </div>
 
         {/* Warning Banner if incomplete */}
@@ -265,421 +393,511 @@ export default function OrganizerLegalSettingsPage() {
         )}
 
         <form onSubmit={handleSave} className="space-y-8">
-          {/* Section 1: Master Data */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <Building2 className="w-5 h-5" />
+          {/* TAB 1: PROFILE & MASTER DATA */}
+          {activeTab === "profile" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Veranstalter Stammdaten (Vertragspartner)</h2>
+                  <p className="text-xs text-slate-400">
+                    Diese Adresse wird Käufern im Checkout und auf PDF-Tickets als rechtlicher Aussteller angezeigt.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Veranstalter Stammdaten (Vertragspartner)</h2>
-                <p className="text-xs text-slate-400">
-                  Diese Adresse wird Käufern im Checkout und auf PDF-Tickets als rechtlicher Aussteller angezeigt.
-                </p>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="font-semibold text-slate-300 block">
-                  Firmenname / Rechtlicher Name der Einzelperson *
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="font-semibold text-slate-300 block">
+                    Firmenname / Rechtlicher Name der Einzelperson *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. Demo Events GmbH oder Max Mustermann Veranstaltungsservice"
+                    value={legalName}
+                    onChange={(e) => setLegalName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Rechtsform (DSA Art. 30 KYTC) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. GmbH, UG (haftungsbeschränkt), Einzelunternehmen, e.V."
+                    value={legalForm}
+                    onChange={(e) => setLegalForm(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Verantwortliche Kontaktperson (Vertreten durch) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. Erika Mustermann (Geschäftsführerin / Inhaberin)"
+                    value={responsiblePerson}
+                    onChange={(e) => setResponsiblePerson(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Telefonnummer für Rückfragen</label>
+                  <input
+                    type="text"
+                    placeholder="z.B. +49 30 12345678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Handelsregister / Amtsgericht (falls eintr.)</label>
+                  <input
+                    type="text"
+                    placeholder="z.B. Amtsgericht Berlin-Charlottenburg"
+                    value={registrationCouncil}
+                    onChange={(e) => setRegistrationCouncil(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Registernummer (HRB / HRA / VR)</label>
+                  <input
+                    type="text"
+                    placeholder="z.B. HRB 123456 B"
+                    value={registrationNumber}
+                    onChange={(e) => setRegistrationNumber(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="font-semibold text-slate-300 block">Straße &amp; Hausnummer *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. Friedrichstraße 100"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Postleitzahl (PLZ) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. 10117"
+                    value={zip}
+                    onChange={(e) => setZip(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Stadt / Ort *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="z.B. Berlin"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Land</label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">USt-IdNr. / Umsatzsteuer-ID (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="z.B. DE123456789"
+                    value={vatId}
+                    onChange={(e) => setVatId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Kleinunternehmer § 19 UStG Checkbox */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="isSmallBusiness"
+                  checked={isSmallBusiness}
+                  onChange={(e) => setIsSmallBusiness(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700"
+                />
+                <label htmlFor="isSmallBusiness" className="text-xs cursor-pointer space-y-0.5">
+                  <span className="font-bold text-white block">
+                    Kleinunternehmerregelung gemäß § 19 UStG anwenden
+                  </span>
+                  <span className="text-slate-400 block">
+                    Wenn aktiviert, wird im Checkout und auf PDF-Rechnungen der Vermerk &quot;Gemäß § 19 UStG wird keine Umsatzsteuer berechnet&quot; angezeigt.
+                  </span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. Demo Events GmbH oder Max Mustermann Veranstaltungsservice"
-                  value={legalName}
-                  onChange={(e) => setLegalName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Rechtsform (DSA Art. 30 KYTC) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. GmbH, UG (haftungsbeschränkt), Einzelunternehmen, e.V."
-                  value={legalForm}
-                  onChange={(e) => setLegalForm(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Verantwortliche Kontaktperson (Vertreten durch / Inhaber) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. Erika Mustermann (Geschäftsführerin / Inhaberin)"
-                  value={responsiblePerson}
-                  onChange={(e) => setResponsiblePerson(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Telefonnummer für Rückfragen</label>
-                <input
-                  type="text"
-                  placeholder="z.B. +49 30 12345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Handelsregister / Amtsgericht (falls eintr.)</label>
-                <input
-                  type="text"
-                  placeholder="z.B. Amtsgericht Berlin-Charlottenburg"
-                  value={registrationCouncil}
-                  onChange={(e) => setRegistrationCouncil(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Registernummer (HRB / HRA / VR)</label>
-                <input
-                  type="text"
-                  placeholder="z.B. HRB 123456 B"
-                  value={registrationNumber}
-                  onChange={(e) => setRegistrationNumber(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="font-semibold text-slate-300 block">Straße &amp; Hausnummer *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. Friedrichstraße 100"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Postleitzahl (PLZ) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. 10117"
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Stadt / Ort *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="z.B. Berlin"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Land</label>
-                <input
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">USt-IdNr. / Umsatzsteuer-ID (optional)</label>
-                <input
-                  type="text"
-                  placeholder="z.B. DE123456789"
-                  value={vatId}
-                  onChange={(e) => setVatId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                />
               </div>
             </div>
+          )}
 
-            {/* Kleinunternehmer § 19 UStG Checkbox */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="isSmallBusiness"
-                checked={isSmallBusiness}
-                onChange={(e) => setIsSmallBusiness(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700"
-              />
-              <label htmlFor="isSmallBusiness" className="text-xs cursor-pointer space-y-0.5">
-                <span className="font-bold text-white block">
-                  Kleinunternehmerregelung gemäß § 19 UStG anwenden
-                </span>
-                <span className="text-slate-400 block">
-                  Wenn aktiviert, wird im Checkout und auf PDF-Rechnungen der Vermerk &quot;Gemäß § 19 UStG wird keine Umsatzsteuer berechnet&quot; angezeigt.
-                </span>
-              </label>
-            </div>
-          </div>
+          {/* TAB 2: VERANSTALTERDOKUMENTE & VERSIONEN */}
+          {activeTab === "documents" && (
+            <div className="space-y-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Veranstalter-Rechtstexte (Impressum, Datenschutz, AGB)</h2>
+                      <p className="text-xs text-slate-400">
+                        Jedes Speichern erzeugt eine neue versionierte Fassung mit SHA-256 Hash.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Section 2: Legal Documents Manager (Impressum, Datenschutz, AGB) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <FileText className="w-5 h-5" />
+                {/* Document 1: Impressum */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-indigo-400" /> Veranstalter-Impressum *
+                    </h3>
+                    <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setImpressumType("text")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          impressumType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Auf GateMate hosten
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImpressumType("url")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          impressumType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Link zur Website
+                      </button>
+                    </div>
+                  </div>
+
+                  {impressumType === "url" ? (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">Impressum URL auf Ihrer Website</label>
+                      <input
+                        type="url"
+                        placeholder="https://ihre-website.de/impressum"
+                        value={impressumUrl}
+                        onChange={(e) => setImpressumUrl(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">Impressum Inhalt (Markdown / Text)</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Angaben gemäß § 5 DDG..."
+                        value={impressumContent}
+                        onChange={(e) => setImpressumContent(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Document 2: Datenschutz */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" /> Veranstalter-Datenschutzerklärung *
+                    </h3>
+                    <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPrivacyType("text")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          privacyType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Auf GateMate hosten
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPrivacyType("url")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          privacyType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Link zur Website
+                      </button>
+                    </div>
+                  </div>
+
+                  {privacyType === "url" ? (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">Datenschutz URL auf Ihrer Website</label>
+                      <input
+                        type="url"
+                        placeholder="https://ihre-website.de/datenschutz"
+                        value={privacyUrl}
+                        onChange={(e) => setPrivacyUrl(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">Datenschutzerklärung Inhalt (Markdown / Text)</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Informationen zur Verarbeitung personenbezogener Daten..."
+                        value={privacyContent}
+                        onChange={(e) => setPrivacyContent(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Document 3: AGB */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-400" /> Veranstalter-AGB *
+                    </h3>
+                    <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setTermsType("text")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          termsType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Auf GateMate hosten
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTermsType("url")}
+                        className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                          termsType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Link zur Website
+                      </button>
+                    </div>
+                  </div>
+
+                  {termsType === "url" ? (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">AGB URL auf Ihrer Website</label>
+                      <input
+                        type="url"
+                        placeholder="https://ihre-website.de/agb"
+                        value={termsUrl}
+                        onChange={(e) => setTermsUrl(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5 text-xs">
+                      <label className="font-semibold text-slate-300">AGB Inhalt (Markdown / Text)</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Allgemeine Geschäftsbedingungen für den Ticketkauf..."
+                        value={termsContent}
+                        onChange={(e) => setTermsContent(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Document 4: Erstattungsbedingungen */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-amber-400" /> Erstattungsbedingungen *
+                  </h3>
+                  <textarea
+                    rows={3}
+                    placeholder="Tickets sind grundsätzlich von der Rückgabe ausgeschlossen..."
+                    value={cancellationPolicyContent}
+                    onChange={(e) => setCancellationPolicyContent(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+                  />
+                </div>
+
+                {/* Document 5: Teilnahmebedingungen */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-cyan-400" /> Teilnahmebedingungen
+                  </h3>
+                  <textarea
+                    rows={3}
+                    placeholder="Besondere Hinweise für die Teilnahme..."
+                    value={eventTermsContent}
+                    onChange={(e) => setEventTermsContent(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
+                  />
+                </div>
               </div>
+
+              {/* Version History Table */}
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <History className="w-5 h-5 text-indigo-400" /> Publizierte Dokument-Versionen
+                </h3>
+                {dbDocuments.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic">Noch keine versionierten Dokumente in der Datenbank gespeichert.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400">
+                          <th className="py-2.5 px-3">Dokumenttyp</th>
+                          <th className="py-2.5 px-3">Titel</th>
+                          <th className="py-2.5 px-3">Version</th>
+                          <th className="py-2.5 px-3">Status</th>
+                          <th className="py-2.5 px-3">SHA-256 Hash</th>
+                          <th className="py-2.5 px-3 text-right">Historie</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {dbDocuments.map((doc) => (
+                          <tr key={doc.id} className="hover:bg-slate-800/40 transition-colors">
+                            <td className="py-2.5 px-3 font-mono text-[11px] text-indigo-400">{doc.documentType}</td>
+                            <td className="py-2.5 px-3 font-semibold text-white">{doc.title}</td>
+                            <td className="py-2.5 px-3 font-mono">v{doc.version}</td>
+                            <td className="py-2.5 px-3">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {doc.status}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400 truncate max-w-[150px]">
+                              {doc.hash}
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => openHistoryModal(doc)}
+                                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold flex items-center gap-1 ml-auto"
+                              >
+                                <Eye className="w-3 h-3 text-indigo-400" /> Versionen
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: EVENT TYPES & MODULES */}
+          {activeTab === "modules" && (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8">
               <div>
-                <h2 className="text-lg font-bold text-white">Rechtliche Dokumente (Impressum, Datenschutz, AGB)</h2>
-                <p className="text-xs text-slate-400">
-                  Verlinken Sie Ihre eigene Website oder hosten Sie die Texte direkt auf GateMate unter <span className="font-mono text-indigo-400">/o/{organizerSlug}/...</span>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-indigo-400" /> Event-Kategorien &amp; Optionale Rechtsmodule
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Die Plattform behauptet nicht automatisch pauschale Pflichten, wenn diese vom konkreten Veranstaltungstyp abhängen. Wählen Sie die passenden Bausteine.
                 </p>
               </div>
-            </div>
 
-            {/* Global Legal Page Quick Links preview */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center gap-3 text-xs">
-              <span className="font-bold text-slate-300">Öffentliche Links:</span>
-              <Link
-                href={`/o/${organizerSlug}/impressum`}
-                target="_blank"
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-indigo-400 hover:text-white flex items-center gap-1 font-mono text-[11px]"
-              >
-                /o/{organizerSlug}/impressum <ExternalLink className="w-3 h-3" />
-              </Link>
-              <Link
-                href={`/o/${organizerSlug}/datenschutz`}
-                target="_blank"
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-indigo-400 hover:text-white flex items-center gap-1 font-mono text-[11px]"
-              >
-                /o/{organizerSlug}/datenschutz <ExternalLink className="w-3 h-3" />
-              </Link>
-              <Link
-                href={`/o/${organizerSlug}/agb`}
-                target="_blank"
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-indigo-400 hover:text-white flex items-center gap-1 font-mono text-[11px]"
-              >
-                /o/{organizerSlug}/agb <ExternalLink className="w-3 h-3" />
-              </Link>
-            </div>
-
-            {/* Document 1: Impressum */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-indigo-400" /> Impressum *
-                </h3>
-                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setImpressumType("text")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      impressumType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Auf GateMate hosten
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImpressumType("url")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      impressumType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Link zur Website
-                  </button>
+              {/* Event Category Selector */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-300 block">Veranstaltungstyp wählen</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {Object.values(EVENT_TYPES).map((et) => {
+                    const isSelected = selectedEventType === et.key;
+                    return (
+                      <div
+                        key={et.key}
+                        onClick={() => {
+                          setSelectedEventType(et.key);
+                          // Auto apply recommended modules
+                          const newMods = Array.from(new Set([...enabledModules, ...et.recommendedModules]));
+                          setEnabledModules(newMods);
+                        }}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-indigo-600/10 border-indigo-500 text-white"
+                            : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                        }`}
+                      >
+                        <p className="font-bold text-sm text-white">{et.label}</p>
+                        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{et.description}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {impressumType === "url" ? (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">Impressum URL auf Ihrer Website</label>
-                  <input
-                    type="url"
-                    placeholder="https://ihre-website.de/impressum"
-                    value={impressumUrl}
-                    onChange={(e) => setImpressumUrl(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">Impressum Inhalt (Markdown / Text)</label>
-                  <textarea
-                    rows={5}
-                    placeholder="Angaben gemäß § 5 TMG..."
-                    value={impressumContent}
-                    onChange={(e) => setImpressumContent(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Document 2: Datenschutz */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Datenschutzerklärung *
+              {/* Modules Toggles */}
+              <div className="space-y-4 border-t border-slate-800 pt-6">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400" /> Aktivierte Rechtsbausteine (Module) für {EVENT_TYPES[selectedEventType]?.label}
                 </h3>
-                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setPrivacyType("text")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      privacyType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Auf GateMate hosten
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPrivacyType("url")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      privacyType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Link zur Website
-                  </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.values(LEGAL_MODULES).map((mod) => {
+                    const isChecked = enabledModules.includes(mod.key);
+                    return (
+                      <div
+                        key={mod.key}
+                        onClick={() => toggleModule(mod.key)}
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                          isChecked
+                            ? "bg-slate-950 border-indigo-500/80 shadow-md"
+                            : "bg-slate-950/50 border-slate-800/80 opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-700 bg-slate-900 focus:ring-indigo-500"
+                        />
+                        <div className="space-y-1">
+                          <p className="font-bold text-xs text-white">{mod.label}</p>
+                          <p className="text-[11px] text-slate-400">{mod.description}</p>
+                          <p className="text-[10px] text-indigo-300/80 italic border-l-2 border-indigo-500/40 pl-2 mt-1">
+                            &quot;{mod.defaultText}&quot;
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {privacyType === "url" ? (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">Datenschutz URL auf Ihrer Website</label>
-                  <input
-                    type="url"
-                    placeholder="https://ihre-website.de/datenschutz"
-                    value={privacyUrl}
-                    onChange={(e) => setPrivacyUrl(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">Datenschutzerklärung Inhalt (Markdown / Text)</label>
-                  <textarea
-                    rows={5}
-                    placeholder="Informationen zur Verarbeitung personenbezogener Daten..."
-                    value={privacyContent}
-                    onChange={(e) => setPrivacyContent(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
-                  />
-                </div>
-              )}
             </div>
-
-            {/* Document 3: AGB */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-purple-400" /> Allgemeine Geschäftsbedingungen (AGB)
-                </h3>
-                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setTermsType("text")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      termsType === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Auf GateMate hosten
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTermsType("url")}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      termsType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Link zur Website
-                  </button>
-                </div>
-              </div>
-
-              {termsType === "url" ? (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">AGB URL auf Ihrer Website</label>
-                  <input
-                    type="url"
-                    placeholder="https://ihre-website.de/agb"
-                    value={termsUrl}
-                    onChange={(e) => setTermsUrl(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-300">AGB Inhalt (Markdown / Text)</label>
-                  <textarea
-                    rows={5}
-                    placeholder="Allgemeine Geschäftsbedingungen für den Ticketkauf..."
-                    value={termsContent}
-                    onChange={(e) => setTermsContent(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Document 4: Stornierungs-/Erstattungsbedingungen */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-400" /> Stornierungs- &amp; Erstattungsbedingungen *
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Informieren Sie Käufer darüber, ob und unter welchen Bedingungen Tickets umgetauscht, storniert oder übertragen werden können.
-              </p>
-              <textarea
-                rows={3}
-                required
-                placeholder="z.B. Tickets sind grundsätzlich von der Rückgabe ausgeschlossen, es sei denn, das Event wird abgesagt..."
-                value={cancellationPolicyContent}
-                onChange={(e) => setCancellationPolicyContent(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
-              />
-            </div>
-
-            {/* Document 5: Allgemeine Teilnahmebedingungen */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <label className="font-semibold text-xs text-white block flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-400" /> Allgemeine Teilnahmebedingungen des Veranstalters (optional)
-              </label>
-              <p className="text-[11px] text-slate-400">
-                Standard-Teilnahmebedingungen für alle Ihre Events (z.B. Verhalten vor Ort, Haftungsausschluss, Bildrechte).
-              </p>
-              <textarea
-                rows={3}
-                placeholder="Optionaler Text für allgemeine Teilnahme- &amp; Verhaltensregeln..."
-                value={eventTermsContent}
-                onChange={(e) => setEventTermsContent(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs"
-              />
-            </div>
-
-            {/* Custom Revocation Notice */}
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <label className="font-semibold text-xs text-slate-300 block">
-                Zusätzlicher / Spezifischer Widerrufsbelehrungs-Hinweis (optional)
-              </label>
-              <p className="text-[11px] text-slate-400">
-                Standardmäßig wird im Checkout der gesetzliche Hinweis gemäß § 312g Abs. 2 Nr. 9 BGB angezeigt (&quot;Kein Widerrufsrecht bei datierten Freizeitveranstaltungen&quot;).
-              </p>
-              <textarea
-                rows={2}
-                placeholder="Optionaler individueller Zusatz-Hinweis zur Stornierung..."
-                value={revocationNoticeCustom}
-                onChange={(e) => setRevocationNoticeCustom(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Submit Button */}
           <div className="flex justify-end">
@@ -690,16 +908,64 @@ export default function OrganizerLegalSettingsPage() {
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
+                  <Loader2 className="w-4 h-4 animate-spin" /> Speichere &amp; Publizierte Versionen...
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" /> Rechtliche Angaben Speichern
+                  <Save className="w-4 h-4" /> Rechtliche Angaben &amp; Versionen Speichern
                 </>
               )}
             </button>
           </div>
         </form>
+
+        {/* History Modal */}
+        {historyModalDoc && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="font-bold text-lg text-white">Versionshistorie: {historyModalDoc.title}</h3>
+                  <p className="text-xs text-indigo-400 font-mono">{historyModalDoc.documentType}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHistoryModalDoc(null)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                >
+                  Schließen
+                </button>
+              </div>
+
+              {historyLoading ? (
+                <div className="py-8 flex justify-center text-slate-400 text-xs gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-400" /> Lade Historie...
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                  {docHistory.map((h) => (
+                    <div key={h.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-white">Version {h.version}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {new Date(h.createdAt).toLocaleString("de-DE")}
+                        </span>
+                      </div>
+                      <p className="font-mono text-[10px] text-slate-400 break-all bg-slate-900 p-2 rounded-lg border border-slate-800">
+                        SHA-256 Hash: {h.hash}
+                      </p>
+                      {h.content && (
+                        <div className="p-3 rounded-xl bg-slate-900/60 text-slate-300 text-[11px] font-mono max-h-32 overflow-y-auto whitespace-pre-wrap">
+                          {h.content}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

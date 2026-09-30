@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { cookies } from "next/headers";
+import { eq } from "drizzle-orm";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -26,3 +28,17 @@ export const auth = betterAuth({
     },
   },
 });
+
+export async function getCurrentUser() {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("gatemate_user_id")?.value;
+    if (!userId) return null;
+
+    const userRecords = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+    return userRecords[0] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
