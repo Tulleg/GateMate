@@ -19,9 +19,11 @@ interface CheckoutWidgetProps {
   eventTitle: string;
   tiers: Tier[];
   organizer?: OrganizerLegalProfile | null;
+  isCancelled?: boolean;
+  cancelReason?: string | null;
 }
 
-export function CheckoutWidget({ eventId, eventTitle, tiers, organizer }: CheckoutWidgetProps) {
+export function CheckoutWidget({ eventId, eventTitle, tiers, organizer, isCancelled, cancelReason }: CheckoutWidgetProps) {
   const [selectedTierId, setSelectedTierId] = useState<string>(tiers[0]?.id || "");
   const [quantity, setQuantity] = useState<number>(1);
   const [buyerName, setBuyerName] = useState<string>("");
@@ -39,6 +41,10 @@ export function CheckoutWidget({ eventId, eventTitle, tiers, organizer }: Checko
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCancelled) {
+      alert("Dieses Event wurde storniert. Es können keine Tickets mehr erworben werden.");
+      return;
+    }
     if (!buyerName || !buyerEmail) {
       alert("Bitte geben Sie Ihren Namen und Ihre E-Mail-Adresse ein.");
       return;
@@ -71,6 +77,36 @@ export function CheckoutWidget({ eventId, eventTitle, tiers, organizer }: Checko
       setLoading(false);
     }
   };
+
+  if (isCancelled) {
+    return (
+      <div className="bg-slate-900 border border-red-800/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="flex items-center gap-3 text-red-400 border-b border-red-900/50 pb-4">
+          <div className="p-2.5 rounded-2xl bg-red-500/10 border border-red-500/20">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white">Ticketverkauf Gestoppt</h3>
+            <p className="text-xs text-red-400 mt-0.5">Veranstaltung wurde storniert</p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-red-950/40 border border-red-800/60 text-xs text-red-200 space-y-2">
+          <p className="font-semibold text-red-300">Dieses Event findet nicht statt.</p>
+          <p className="text-red-300/80">
+            Grund: <span className="font-semibold text-white">{cancelReason || "Veranstaltung abgesagt"}</span>
+          </p>
+        </div>
+
+        <button
+          disabled
+          className="w-full py-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-base cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2"
+        >
+          <Lock className="w-5 h-5 text-slate-500" /> Ticketkauf nicht verfügbar
+        </button>
+      </div>
+    );
+  }
 
   if (!tiers || tiers.length === 0) {
     return (

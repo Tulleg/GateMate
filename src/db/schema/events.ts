@@ -13,6 +13,9 @@ export const events = pgTable("events", {
   endDate: timestamp("end_date").notNull(),
   isPublished: boolean("is_published").default(false).notNull(),
   isListedInDirectory: boolean("is_listed_in_directory").default(true).notNull(),
+  isCancelled: boolean("is_cancelled").default(false).notNull(),
+  cancelReason: text("cancel_reason"),
+  cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { tickets, checkInLogs, ticketTiers, orders } from "@/db/schema";
+import { tickets, checkInLogs, ticketTiers, orders, events } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyTicketJwt } from "@/lib/qr";
 
@@ -19,6 +19,18 @@ export async function POST(req: Request, { params }: RouteParams) {
     const cookieStore = await cookies();
     const activeUserId = scannedByUserId || cookieStore.get("gatemate_user_id")?.value || "gate_scanner";
 
+    // 0. Check if Event itself is cancelled
+    const eventRecords = await db.select().from(events).where(eq(events.id, eventId));
+    const currentEvent = eventRecords[0];
+    if (currentEvent?.isCancelled) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `EVENT CANCELLED / STORNIERT (${currentEvent.cancelReason || "Absage"})`,
+        },
+        { status: 400 }
+      );
+    }
 
     if (!token && !ticketId) {
       return NextResponse.json({ success: false, message: "Missing token or ticketId parameter" }, { status: 400 });

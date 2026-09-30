@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Code, Ticket, QrCode, Calendar, MapPin } from "lucide-react";
+import { ExternalLink, Code, Ticket, QrCode, Calendar, MapPin, Edit3 } from "lucide-react";
 import { EmbedModal } from "@/components/dashboard/embed-modal";
 import { formatCurrency } from "@/lib/utils";
 
@@ -24,6 +24,8 @@ interface EventItem {
   startDate: string | Date;
   endDate: string | Date;
   isPublished: boolean;
+  isCancelled?: boolean;
+  cancelReason?: string | null;
   tiers: Tier[];
   eventRevenue: number;
   eventSold: number;
@@ -55,9 +57,15 @@ export function EventsList({ events }: { events: EventItem[] }) {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-white">{evt.title}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold">
-                      Published
-                    </span>
+                    {evt.isCancelled ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-semibold">
+                        Storniert
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold">
+                        Published
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-400 flex items-center gap-3 mt-1">
                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-500" /> {evt.venue || "Online Venue"}</span>
@@ -69,6 +77,12 @@ export function EventsList({ events }: { events: EventItem[] }) {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 flex-wrap">
+                <Link
+                  href={`/organizer/events/${evt.id}/edit`}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors"
+                >
+                  <Edit3 className="w-4 h-4 text-amber-400" /> Bearbeiten
+                </Link>
                 <Link
                   href={`/check-in/${evt.id}`}
                   className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors"

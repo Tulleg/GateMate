@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { events, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { CheckoutWidget } from "@/components/public/checkout-widget";
-import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User } from "lucide-react";
+import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const banner = event.bannerUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87";
 
   return {
-    title: `${event.title} | GateMate Tickets`,
+    title: `${event.title} ${event.isCancelled ? "(STORNIERT) " : ""}| GateMate Tickets`,
     description: event.description || `Get official tickets for ${event.title} at ${event.venue || "Venue"}.`,
     openGraph: {
       title: `${event.title} - Official Tickets`,
@@ -90,6 +90,29 @@ export default async function PublicEventPage({ params }: PageProps) {
 
       {/* Main Content Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-12">
+        {/* Event Cancellation Alert Banner */}
+        {event.isCancelled && (
+          <div className="p-6 rounded-3xl bg-red-950/70 border border-red-800/80 text-red-200 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-3 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
+              <Ban className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-white tracking-tight">VERANSTALTUNG ABGESAGT / STORNIERT</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-bold uppercase">
+                  Absage
+                </span>
+              </div>
+              <p className="text-sm text-red-200/90">
+                Grund der Stornierung: <span className="font-bold text-white">{event.cancelReason || "Keine näheren Angaben."}</span>
+              </p>
+              <p className="text-xs text-red-300/80">
+                Ticketkäufe wurden gestoppt. Bereites erworbene Tickets wurden storniert und erstatten.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Banner Hero Image */}
         {event.bannerUrl && (
           <div className="w-full h-64 sm:h-96 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl relative">
@@ -102,8 +125,13 @@ export default async function PublicEventPage({ params }: PageProps) {
           {/* Left Column: Event Details */}
           <div className="lg:col-span-7 space-y-8">
             <div className="space-y-4">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold inline-flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5" /> Official Event Ticket
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 ${
+                event.isCancelled
+                  ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                  : "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
+              }`}>
+                {event.isCancelled ? <Ban className="w-3.5 h-3.5 text-red-400" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                {event.isCancelled ? "Event Storniert" : "Official Event Ticket"}
               </span>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
                 {event.title}
@@ -161,7 +189,14 @@ export default async function PublicEventPage({ params }: PageProps) {
           {/* Right Column: Sticky Checkout Widget */}
           <div className="lg:col-span-5">
             <div className="sticky top-24">
-              <CheckoutWidget eventId={event.id} eventTitle={event.title} tiers={tiers} organizer={organizer} />
+              <CheckoutWidget
+                eventId={event.id}
+                eventTitle={event.title}
+                tiers={tiers}
+                organizer={organizer}
+                isCancelled={Boolean(event.isCancelled)}
+                cancelReason={event.cancelReason}
+              />
             </div>
           </div>
         </div>
