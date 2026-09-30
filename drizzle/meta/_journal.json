@@ -36,6 +36,13 @@
       "when": 1790747173426,
       "tag": "0004_daily_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790757505018,
+      "tag": "0005_curvy_deadpool",
+      "breakpoints": true
     }
   ]
 }
