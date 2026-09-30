@@ -28,7 +28,7 @@ export interface OrganizerLegalProfile {
   [key: string]: any;
 }
 
-export type PlatformDocumentType = "platform_impressum" | "platform_privacy" | "platform_terms";
+export type PlatformDocumentType = "platform_impressum" | "platform_privacy" | "platform_terms" | "platform_avv";
 export type OrganizerDocumentType =
   | "organizer_impressum"
   | "organizer_privacy"
@@ -159,6 +159,12 @@ export const LEGAL_DOCUMENT_METADATA: Record<LegalDocumentType, LegalDocumentMet
     title: "Plattform-Nutzungsbedingungen",
     scope: "platform",
     description: "Nutzungsbedingungen der SaaS-Plattform GateMate.",
+  },
+  platform_avv: {
+    type: "platform_avv",
+    title: "Plattform-AVV (Auftragsverarbeitung gem. Art. 28 DSGVO)",
+    scope: "platform",
+    description: "Vertrag zur Auftragsverarbeitung zwischen GateMate (Auftragsverarbeiter) und dem Veranstalter (Verantwortlicher).",
   },
   organizer_impressum: {
     type: "organizer_impressum",

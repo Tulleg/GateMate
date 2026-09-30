@@ -103,6 +103,10 @@ export default function RegisterPage() {
           >
             {loading ? "Konto wird erstellt..." : "Registrieren"} <ArrowRight className="w-4 h-4" />
           </button>
+          
+          <p className="text-[11px] text-slate-500 text-center leading-relaxed mt-2">
+            Mit der Registrierung akzeptieren Sie die Plattform-Nutzungsbedingungen, die Datenschutzerklärung sowie den <span className="text-slate-300 font-semibold">Vertrag zur Auftragsverarbeitung (AVV gem. Art. 28 DSGVO)</span>.
+          </p>
         </form>
 
         <div className="text-center text-xs text-slate-400">

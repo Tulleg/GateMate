@@ -29,6 +29,7 @@ export default function PlatformLegalAdminPage() {
   const [impressumContent, setImpressumContent] = useState("");
   const [privacyContent, setPrivacyContent] = useState("");
   const [termsContent, setTermsContent] = useState("");
+  const [avvContent, setAvvContent] = useState("");
 
   const [documents, setDocuments] = useState<any[]>([]);
 
@@ -50,10 +51,18 @@ export default function PlatformLegalAdminPage() {
       const imp = docs.find((d: any) => d.documentType === "platform_impressum");
       const priv = docs.find((d: any) => d.documentType === "platform_privacy");
       const trm = docs.find((d: any) => d.documentType === "platform_terms");
+      const avv = docs.find((d: any) => d.documentType === "platform_avv");
 
       if (imp) setImpressumContent(imp.content || "");
       if (priv) setPrivacyContent(priv.content || "");
       if (trm) setTermsContent(trm.content || "");
+      if (avv) {
+        setAvvContent(avv.content || "");
+      } else {
+        setAvvContent(
+          "Vertrag zur Auftragsverarbeitung (AVV) gemäß Art. 28 DSGVO\n\n1. Gegenstand & Dauer der Verarbeitung\nGateMate (Auftragsverarbeiter) verarbeitet im Auftrag des Veranstalters (Verantwortlicher) personenbezogene Daten der Ticketkäufer (Namen, E-Mail, Bestell- und Ticketdaten) ausschließlich zum Zweck der Bereitstellung der SaaS-Ticketingplattform, der Ticketausstellung und der Einlasskontrolle.\n\n2. Pflichten von GateMate\n- Datenverarbeitung erfolgt ausschließlich nach Weisung des Veranstalters.\n- Alle Mitarbeiter sind zur Vertraulichkeit verpflichtet.\n- Technische und organisatorische Maßnahmen (TOMs) werden auf dem aktuellen Stand der Technik aufrechterhalten.\n- Unterstützung des Veranstalters bei Betroffenenrechten (Art. 15-22 DSGVO).\n\n3. Technische & Organisatorische Maßnahmen (TOMs)\n- Verschlüsselung der Datenübertragung (TLS 1.3 / HTTPS).\n- Zugriffsbeschränkungen & Rollenkonzept (RBAC).\n- Tägliche Backups & Zugriffsprotokollierung."
+        );
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -72,8 +81,9 @@ export default function PlatformLegalAdminPage() {
       await savePlatformDoc("platform_impressum", "Plattform-Impressum", impressumContent);
       await savePlatformDoc("platform_privacy", "Plattform-Datenschutzerklärung", privacyContent);
       await savePlatformDoc("platform_terms", "Plattform-Nutzungsbedingungen", termsContent);
+      await savePlatformDoc("platform_avv", "Plattform-AVV (Auftragsverarbeitung gem. Art. 28 DSGVO)", avvContent);
 
-      setSuccess("Plattform-Dokumente erfolgreich aktualisiert & versioniert!");
+      setSuccess("Plattform-Dokumente & AVV erfolgreich aktualisiert & versioniert!");
       fetchPlatformDocs();
     } catch (err: any) {
       setError(err.message);
@@ -126,7 +136,7 @@ export default function PlatformLegalAdminPage() {
               Plattform-Rechtstexte (Superadmin) <Lock className="w-6 h-6 text-indigo-400" />
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Verwaltung der zentralen Plattformdokumente (Impressum, Datenschutz, Nutzungsbedingungen von GateMate).
+              Verwaltung der zentralen Plattformdokumente (Impressum, Datenschutz, Nutzungsbedingungen &amp; AVV von GateMate).
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -191,13 +201,30 @@ export default function PlatformLegalAdminPage() {
           {/* Document 3: Plattform-Nutzungsbedingungen */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-purple-400" /> Plattform-Nutzungsbedingungen
+              <FileText className="w-5 h-5 text-purple-400" /> Plattform-Nutzungsbedingungen (SaaS AGB)
             </h2>
             <textarea
               rows={6}
               value={termsContent}
               onChange={(e) => setTermsContent(e.target.value)}
               placeholder="Nutzungsbedingungen der SaaS Plattform..."
+              className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 font-mono text-xs focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* Document 4: Plattform-AVV */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-cyan-400" /> Plattform-AVV (Auftragsverarbeitungsvertrag gem. Art. 28 DSGVO)
+            </h2>
+            <p className="text-xs text-slate-400">
+              Vertragliche Vereinbarung zwischen GateMate (Auftragsverarbeiter) und dem Veranstalter (Verantwortlicher). Wird bei der Registrierung / AGB-Bestätigung des Veranstalters automatisch abgeschlossen.
+            </p>
+            <textarea
+              rows={8}
+              value={avvContent}
+              onChange={(e) => setAvvContent(e.target.value)}
+              placeholder="Vertrag zur Auftragsverarbeitung (AVV) gemäß Art. 28 DSGVO..."
               className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 font-mono text-xs focus:ring-2 focus:ring-indigo-500"
             />
           </div>

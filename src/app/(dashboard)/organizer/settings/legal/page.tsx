@@ -408,6 +408,22 @@ export default function OrganizerLegalSettingsPage() {
                 </div>
               </div>
 
+              {/* AVV Agreement Status Card */}
+              <div className="p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <ShieldCheck className="w-4.5 h-4.5 text-indigo-400" />
+                    Vertrag zur Auftragsverarbeitung (AVV gem. Art. 28 DSGVO)
+                  </h3>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Vertrag Aktiv
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Mit der Registrierung auf GateMate und der Akzeptanz der Plattform-AGB wurde der Vertrag zur Auftragsverarbeitung (AVV gemäß Art. 28 Abs. 3 DSGVO) zwischen Ihnen als Verantwortlichem und GateMate als Auftragsverarbeiter elektronisch wirksam geschlossen.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="font-semibold text-slate-300 block">
