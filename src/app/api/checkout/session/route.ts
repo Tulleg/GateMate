@@ -53,6 +53,29 @@ export async function POST(req: Request) {
     const totalCents = tier.priceCents * numQuantity;
     const platformFeeCents = Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
 
+    const legalProfileSnapshot = JSON.stringify({
+      legalName: organizer?.legalName || organizer?.name || "Veranstalter",
+      legalForm: organizer?.legalForm || null,
+      registrationCouncil: organizer?.registrationCouncil || null,
+      registrationNumber: organizer?.registrationNumber || null,
+      phone: organizer?.phone || null,
+      street: organizer?.street || null,
+      zip: organizer?.zip || null,
+      city: organizer?.city || null,
+      country: organizer?.country || "Deutschland",
+      vatId: organizer?.vatId || null,
+      isSmallBusiness: Boolean(organizer?.isSmallBusiness),
+      impressumUrl: organizer?.impressumUrl || null,
+      privacyUrl: organizer?.privacyUrl || null,
+      termsUrl: organizer?.termsUrl || null,
+      purchasedAt: new Date().toISOString(),
+    });
+
+    const termsSnapshot =
+      organizer?.termsContent ||
+      organizer?.termsUrl ||
+      `AGB von ${organizer?.legalName || organizer?.name || "dem Veranstalter"} wurden beim Ticketkauf am ${new Date().toLocaleDateString("de-DE")} akzeptiert.`;
+
     // 4. Create Order in Database (status: pending)
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     await db.insert(orders).values({
@@ -61,6 +84,8 @@ export async function POST(req: Request) {
       customerEmail: buyerEmail,
       totalCents: totalCents,
       status: "pending",
+      termsSnapshot,
+      legalProfileSnapshot,
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

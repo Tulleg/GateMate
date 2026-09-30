@@ -305,6 +305,35 @@ export function CheckoutWidget({
             <p className="text-[11px] text-slate-400 text-right">{taxNotice}</p>
           </div>
 
+          {/* Terms Acceptance & Privacy Notice (§ 305 Abs. 2 BGB) */}
+          <div className="text-[11px] text-slate-400 text-center leading-relaxed px-1">
+            Mit Klick auf &quot;Zahlungspflichtig bestellen&quot; akzeptieren Sie die{" "}
+            <Link
+              href={`/o/${organizerSlug}/agb`}
+              target="_blank"
+              className="text-indigo-400 hover:underline font-semibold"
+            >
+              AGB von {legalName}
+            </Link>{" "}
+            und nehmen die{" "}
+            <Link
+              href={`/o/${organizerSlug}/datenschutz`}
+              target="_blank"
+              className="text-indigo-400 hover:underline font-semibold"
+            >
+              Datenschutzhinweise
+            </Link>{" "}
+            sowie die{" "}
+            <Link
+              href="/agb"
+              target="_blank"
+              className="text-indigo-400 hover:underline font-semibold"
+            >
+              GateMate Nutzungsbedingungen
+            </Link>{" "}
+            zur Kenntnis.
+          </div>
+
           <button
             type="submit"
             disabled={loading}

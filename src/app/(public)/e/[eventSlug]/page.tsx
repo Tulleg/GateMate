@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { events, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { CheckoutWidget } from "@/components/public/checkout-widget";
-import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban } from "lucide-react";
+import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban, Clock, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -177,14 +177,19 @@ export default async function PublicEventPage({ params }: PageProps) {
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Date & Time</h4>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Datum &amp; Uhrzeit</h4>
                   <p className="text-sm font-bold text-white mt-1">
-                    {new Date(event.startDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                    {new Date(event.startDate).toLocaleDateString("de-DE", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {new Date(event.startDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} -{" "}
-                    {new Date(event.endDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(event.startDate).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} -{" "}
+                    {new Date(event.endDate).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr
                   </p>
+                  {event.doorsOpenAt && (
+                    <p className="text-[11px] text-indigo-300 mt-1 font-semibold flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> Einlass ab: {new Date(event.doorsOpenAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -193,9 +198,18 @@ export default async function PublicEventPage({ params }: PageProps) {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Venue Location</h4>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Veranstaltungsort</h4>
                   <p className="text-sm font-bold text-white mt-1">{event.venue || "Online Event"}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Verified Entry Location</p>
+                  {(event.venueStreet || event.venueCity) && (
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {[event.venueStreet, [event.venueZip, event.venueCity].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+                  {event.ageRestriction && (
+                    <p className="text-[11px] text-amber-300 mt-1 font-semibold flex items-center gap-1">
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-400" /> Altersbeschränkung: {event.ageRestriction}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

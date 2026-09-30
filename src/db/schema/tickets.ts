@@ -11,7 +11,10 @@ export const orders = pgTable("orders", {
   customerEmail: text("customer_email").notNull(),
   totalCents: integer("total_cents").notNull(),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
   status: orderStatusEnum("status").default("pending").notNull(),
+  termsSnapshot: text("terms_snapshot"),
+  legalProfileSnapshot: text("legal_profile_snapshot"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
