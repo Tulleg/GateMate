@@ -5,6 +5,7 @@ import { users, orders, tickets, ticketTiers, events } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { generateSignedTicketJwt } from "@/lib/qr";
 import { sendTicketConfirmationEmail } from "@/lib/email";
+import { formatLegalAddress } from "@/lib/legal";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
@@ -146,6 +147,11 @@ export async function POST(req: Request) {
             const currentEvent = eventRecords[0];
             const currentTier = tierRecords[0];
 
+            const organizerRecords = currentEvent?.organizerId
+              ? await db.select().from(users).where(eq(users.id, currentEvent.organizerId))
+              : [];
+            const organizer = organizerRecords[0];
+
             await sendTicketConfirmationEmail({
               buyerEmail: targetEmail,
               buyerName: buyerName || session.customer_details?.name || "Kunde",
@@ -156,6 +162,10 @@ export async function POST(req: Request) {
               ticketCount: numQty,
               tierName: currentTier?.name || "Standard Ticket",
               totalCents: orderRecord?.totalCents || session.amount_total || 0,
+              organizerLegalName: organizer?.legalName || organizer?.name || "Veranstalter",
+              organizerAddress: formatLegalAddress(organizer),
+              organizerVatId: organizer?.vatId,
+              isSmallBusiness: organizer?.isSmallBusiness,
             });
           } catch (mailErr: any) {
             console.error("Failed to trigger Resend confirmation email:", mailErr?.message || mailErr);

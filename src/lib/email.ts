@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { formatTaxDisclosure, formatLegalAddress, OrganizerLegalProfile } from "@/lib/legal";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -16,6 +17,10 @@ export interface TicketConfirmationEmailParams {
   ticketCount: number;
   tierName?: string;
   totalCents: number;
+  organizerLegalName?: string | null;
+  organizerAddress?: string | null;
+  organizerVatId?: string | null;
+  isSmallBusiness?: boolean | null;
 }
 
 export interface PasswordResetEmailParams {
@@ -47,6 +52,10 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
     ticketCount,
     tierName,
     totalCents,
+    organizerLegalName,
+    organizerAddress,
+    organizerVatId,
+    isSmallBusiness,
   } = params;
 
   if (!resend) {
@@ -70,6 +79,9 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
 
   const formattedVenue = venue || "Online / TBD";
   const formattedPrice = formatEur(totalCents);
+  const displayLegalName = organizerLegalName || "dem Veranstalter";
+  const displayAddress = organizerAddress || "";
+  const taxDisclosureText = formatTaxDisclosure(isSmallBusiness);
 
   const html = `
     <!DOCTYPE html>
@@ -103,9 +115,30 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
         </div>
 
         <p>Hallo <strong>${buyerName}</strong>,</p>
-        <p>vielen Dank für deinen Ticketkauf! Deine Bestellung für <strong>${eventTitle}</strong> ist bestätigt.</p>
+        <p>vielen Dank für Ihre Ticketbestellung bei <strong>${displayLegalName}</strong>!</p>
+        <p style="font-size: 13px; color: #94a3b8;">Vertragspartner für diese Buchung ist <strong>${displayLegalName}</strong>${displayAddress ? ` (${displayAddress})` : ""}.</p>
 
         <div class="details-card">
+          <div class="detail-row">
+            <span class="detail-label">Veranstalter / Verkäufer:</span>
+            <span class="detail-value">${displayLegalName}</span>
+          </div>
+          ${
+            displayAddress
+              ? `<div class="detail-row">
+            <span class="detail-label">Veranstalteradresse:</span>
+            <span class="detail-value">${displayAddress}</span>
+          </div>`
+              : ""
+          }
+          ${
+            organizerVatId
+              ? `<div class="detail-row">
+            <span class="detail-label">USt-ID:</span>
+            <span class="detail-value">${organizerVatId}</span>
+          </div>`
+              : ""
+          }
           <div class="detail-row">
             <span class="detail-label">Event:</span>
             <span class="detail-value">${eventTitle}</span>
@@ -128,16 +161,16 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
           </div>
           <div class="detail-row">
             <span class="detail-label">Gesamtbetrag:</span>
-            <span class="detail-value">${formattedPrice}</span>
+            <span class="detail-value">${formattedPrice} <span style="font-size: 11px; font-weight: normal; color: #94a3b8;">(${taxDisclosureText})</span></span>
           </div>
         </div>
 
-        <p>Du kannst deine digitalen QR-Tickets jederzeit auf deiner persönlichen Ticket-Seite aufrufen, als PDF herunterladen oder in die Wallet speichern:</p>
+        <p>Sie können Ihre digitalen QR-Tickets jederzeit auf Ihrer persönlichen Ticket-Seite aufrufen, als PDF herunterladen oder in die Wallet speichern:</p>
 
         <a href="${ticketPageUrl}" class="btn" target="_blank">Jetzt Digitales Ticket & QR-Code Öffnen →</a>
 
         <div class="footer">
-          GateMate – Mobile Event Ticketing & Express QR Gates<br>
+          GateMate agiert ausschließlich als technischer Dienstleister und Vermittler im Auftrag von ${displayLegalName}.<br>
           Bestell-ID: ${orderId} &bull; ${buyerEmail}
         </div>
       </div>
