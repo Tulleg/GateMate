@@ -7,7 +7,7 @@ interface UserItem {
   id: string;
   email: string;
   name: string | null;
-  role: "superadmin" | "organizer" | "attendee";
+  role: "superadmin" | "organizer";
   organizerSlug: string | null;
   stripeConnectedAccountId: string | null;
   createdAt: string;
@@ -27,7 +27,7 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"superadmin" | "organizer" | "attendee">("organizer");
+  const [newRole, setNewRole] = useState<"superadmin" | "organizer">("organizer");
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -173,7 +173,6 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
             <option value="all">Alle Rollen ({usersList.length})</option>
             <option value="superadmin">Superadmins</option>
             <option value="organizer">Organizers</option>
-            <option value="attendee">Attendees / Käufer</option>
           </select>
         </div>
 
@@ -234,7 +233,6 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
                       >
                         <option value="superadmin">superadmin</option>
                         <option value="organizer">organizer</option>
-                        <option value="attendee">attendee</option>
                       </select>
                     </td>
                     <td className="p-4 text-slate-400">
@@ -338,7 +336,7 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
               <User className="w-5 h-5 text-indigo-400" /> Benutzer manuell anlegen
             </h3>
             <p className="text-xs text-slate-400">
-              Erstellen Sie einen neuen Plattform-Benutzer (Superadmin, Organizer oder Käufer).
+              Erstellen Sie einen neuen Plattform-Benutzer (Superadmin oder Organizer).
             </p>
 
             {createError && (
@@ -395,7 +393,6 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
                 >
                   <option value="organizer">organizer (Veranstalter)</option>
                   <option value="superadmin">superadmin (Root Admin)</option>
-                  <option value="attendee">attendee (Käufer / Gast)</option>
                 </select>
               </div>
 

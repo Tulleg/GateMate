@@ -1,4 +1,4 @@
-export type SystemRole = "superadmin" | "organizer" | "attendee";
+export type SystemRole = "superadmin" | "organizer";
 
 export type OrgRole = "owner" | "admin" | "scanner";
 

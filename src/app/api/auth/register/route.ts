@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const userRole = role === "attendee" ? "attendee" : "organizer";
+    const userRole = role === "superadmin" ? "superadmin" : "organizer";
     const userId = `usr_${crypto.randomUUID().replace(/-/g, "").substring(0, 16)}`;
     const passwordHash = hashPassword(password);
 

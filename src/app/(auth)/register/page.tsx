@@ -10,7 +10,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"organizer" | "attendee">("organizer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +22,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role: "organizer" }),
       });
 
       const data = await res.json();
@@ -95,18 +94,6 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="font-semibold text-slate-300">Konto-Typ</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "organizer" | "attendee")}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="organizer">Event-Veranstalter</option>
-              <option value="attendee">Ticket-Käufer / Besucher</option>
-            </select>
           </div>
 
           <button

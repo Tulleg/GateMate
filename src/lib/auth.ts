@@ -22,7 +22,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
-        defaultValue: "attendee",
+        defaultValue: "organizer",
         required: true,
       },
     },

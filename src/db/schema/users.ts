@@ -1,12 +1,12 @@
 import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
 
-export const systemRoleEnum = pgEnum("system_role", ["superadmin", "organizer", "attendee"]);
+export const systemRoleEnum = pgEnum("system_role", ["superadmin", "organizer"]);
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
-  role: systemRoleEnum("role").default("attendee").notNull(),
+  role: systemRoleEnum("role").default("organizer").notNull(),
   stripeConnectedAccountId: text("stripe_connected_account_id"),
   stripePublishableKey: text("stripe_publishable_key"),
   stripeSecretKey: text("stripe_secret_key"),

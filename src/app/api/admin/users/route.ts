@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     const userId = `user_${role || "user"}_${crypto.randomBytes(6).toString("hex")}`;
     const passwordHash = hashPassword(password);
-    const userRole = (role === "superadmin" || role === "organizer") ? role : "attendee";
+    const userRole = role === "superadmin" ? "superadmin" : "organizer";
     const slug = userRole === "organizer"
       ? (organizerSlug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""))
       : null;
@@ -86,7 +86,7 @@ export async function PATCH(req: Request) {
 
     const updateData: Record<string, any> = { updatedAt: new Date() };
 
-    if (role && ["superadmin", "organizer", "attendee"].includes(role)) {
+    if (role && ["superadmin", "organizer"].includes(role)) {
       updateData.role = role;
     }
 
