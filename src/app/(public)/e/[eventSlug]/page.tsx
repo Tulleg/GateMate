@@ -113,6 +113,29 @@ export default async function PublicEventPage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Event Draft Mode Alert Banner */}
+        {!event.isPublished && !event.isCancelled && (
+          <div className="p-6 rounded-3xl bg-amber-950/60 border border-amber-800/70 text-amber-200 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+              <AlertOctagon className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-white tracking-tight">ENTWURFSMODUS (VORSCHAU)</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase">
+                  Entwurf
+                </span>
+              </div>
+              <p className="text-sm text-amber-200/90">
+                Dieses Event wurde noch nicht offiziell veröffentlicht.
+              </p>
+              <p className="text-xs text-amber-300/80">
+                Der Ticketkauf ist deaktiviert, solange sich das Event im Entwurfsmodus befindet.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Banner Hero Image */}
         {event.bannerUrl && (
           <div className="w-full h-64 sm:h-96 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl relative">
@@ -196,6 +219,7 @@ export default async function PublicEventPage({ params }: PageProps) {
                 organizer={organizer}
                 isCancelled={Boolean(event.isCancelled)}
                 cancelReason={event.cancelReason}
+                isPublished={Boolean(event.isPublished)}
               />
             </div>
           </div>

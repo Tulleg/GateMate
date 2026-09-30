@@ -69,27 +69,40 @@ export async function POST(req: Request) {
       }
     }
 
-    const { title, slug, description, venue, bannerUrl, startDate, endDate, isListedInDirectory = true, tiers } = body;
+    const {
+      title,
+      slug,
+      description,
+      venue,
+      bannerUrl,
+      startDate,
+      endDate,
+      isListedInDirectory = true,
+      isPublished = false,
+      tiers,
+    } = body;
 
     if (!title || !slug || !startDate || !endDate || !tiers || !Array.isArray(tiers)) {
       return NextResponse.json({ error: "Pflichtfelder fehlen oder ungültige Ticket-Kategorien" }, { status: 400 });
     }
 
-    // Publication Guard Check: Fetch organizer and check legal compliance
-    const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));
-    const organizer = organizerRecords[0];
+    // Publication Guard Check: If publishing, verify legal compliance profile
+    if (isPublished) {
+      const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));
+      const organizer = organizerRecords[0];
 
-    const compliance = checkOrganizerLegalCompliance(organizer);
-    if (!compliance.isCompliant) {
-      return NextResponse.json(
-        {
-          error: `Veröffentlichung blockiert! Ihr Veranstalter-Rechtsprofil ist unvollständig (${compliance.missingFields.join(
-            ", "
-          )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
-          missingFields: compliance.missingFields,
-        },
-        { status: 400 }
-      );
+      const compliance = checkOrganizerLegalCompliance(organizer);
+      if (!compliance.isCompliant) {
+        return NextResponse.json(
+          {
+            error: `Veröffentlichung blockiert! Ihr Veranstalter-Rechtsprofil ist unvollständig (${compliance.missingFields.join(
+              ", "
+            )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
+            missingFields: compliance.missingFields,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const eventId = `evt_${Date.now()}`;
@@ -105,7 +118,7 @@ export async function POST(req: Request) {
       bannerUrl: bannerUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87",
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      isPublished: true,
+      isPublished: Boolean(isPublished),
       isListedInDirectory: Boolean(isListedInDirectory),
     });
 

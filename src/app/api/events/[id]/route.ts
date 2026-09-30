@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { events, ticketTiers, orders } from "@/db/schema";
+import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
+import { checkOrganizerLegalCompliance } from "@/lib/legal";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -80,12 +81,31 @@ export async function PUT(req: Request, { params }: RouteParams) {
       startDate,
       endDate,
       isListedInDirectory = true,
-      isPublished = true,
+      isPublished = false,
       tiers,
     } = body;
 
     if (!title || !slug || !startDate || !endDate) {
       return NextResponse.json({ error: "Pflichtfelder fehlen (Titel, Slug, Start- & Enddatum)" }, { status: 400 });
+    }
+
+    // Publication Guard Check: If publishing event, check legal compliance profile
+    if (isPublished) {
+      const organizerRecords = await db.select().from(users).where(eq(users.id, existingEvent.organizerId));
+      const organizer = organizerRecords[0];
+
+      const compliance = checkOrganizerLegalCompliance(organizer);
+      if (!compliance.isCompliant) {
+        return NextResponse.json(
+          {
+            error: `Veröffentlichung blockiert! Ihr Veranstalter-Rechtsprofil ist unvollständig (${compliance.missingFields.join(
+              ", "
+            )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
+            missingFields: compliance.missingFields,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-");

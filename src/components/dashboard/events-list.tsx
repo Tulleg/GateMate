@@ -61,9 +61,13 @@ export function EventsList({ events }: { events: EventItem[] }) {
                       <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-semibold">
                         Storniert
                       </span>
-                    ) : (
+                    ) : evt.isPublished ? (
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold">
-                        Published
+                        Veröffentlicht
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">
+                        Entwurf
                       </span>
                     )}
                   </div>

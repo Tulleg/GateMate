@@ -70,14 +70,14 @@ export function EventForm() {
     setTiers(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, publish: boolean = false) => {
     e.preventDefault();
     if (!title || !startDate || !endDate) {
       alert("Bitte füllen Sie den Titel und die Daten des Events aus.");
       return;
     }
 
-    if (compliance && !compliance.isCompliant) {
+    if (publish && compliance && !compliance.isCompliant) {
       alert(
         `Veröffentlichung blockiert! Ihr Rechtsprofil ist unvollständig (${compliance.missingFields.join(
           ", "
@@ -107,10 +107,10 @@ export function EventForm() {
           startDate,
           endDate,
           isListedInDirectory,
+          isPublished: publish,
           tiers: formattedTiers,
         }),
       });
-
 
       const data = await res.json();
       if (data.success) {
@@ -368,35 +368,48 @@ export function EventForm() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors"
+          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors w-full sm:w-auto"
         >
-          Cancel
+          Abbrechen
         </button>
-        <button
-          type="submit"
-          disabled={loading || isBlockedByLegal}
-          className={`px-6 py-2.5 rounded-xl font-medium text-xs shadow-lg flex items-center gap-2 transition-all ${
-            isBlockedByLegal
-              ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-              : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
-          }`}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Erstelle Event...
-            </>
-          ) : isBlockedByLegal ? (
-            <>
-              <AlertTriangle className="w-4 h-4 text-amber-400" /> Veröffentlichung blockiert
-            </>
-          ) : (
-            "Publish Event"
-          )}
-        </button>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={(e) => handleSubmit(e, false)}
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/20 flex items-center gap-2 transition-all"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Als Entwurf speichern"}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading || isBlockedByLegal}
+            onClick={(e) => handleSubmit(e, true)}
+            className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2 transition-all ${
+              isBlockedByLegal
+                ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Erstelle Event...
+              </>
+            ) : isBlockedByLegal ? (
+              <>
+                <AlertTriangle className="w-4 h-4 text-amber-400" /> Veröffentlichung blockiert
+              </>
+            ) : (
+              "Event Veröffentlichen"
+            )}
+          </button>
+        </div>
       </div>
     </form>
   );

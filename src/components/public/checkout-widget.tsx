@@ -21,9 +21,18 @@ interface CheckoutWidgetProps {
   organizer?: OrganizerLegalProfile | null;
   isCancelled?: boolean;
   cancelReason?: string | null;
+  isPublished?: boolean;
 }
 
-export function CheckoutWidget({ eventId, eventTitle, tiers, organizer, isCancelled, cancelReason }: CheckoutWidgetProps) {
+export function CheckoutWidget({
+  eventId,
+  eventTitle,
+  tiers,
+  organizer,
+  isCancelled,
+  cancelReason,
+  isPublished = true,
+}: CheckoutWidgetProps) {
   const [selectedTierId, setSelectedTierId] = useState<string>(tiers[0]?.id || "");
   const [quantity, setQuantity] = useState<number>(1);
   const [buyerName, setBuyerName] = useState<string>("");
@@ -43,6 +52,10 @@ export function CheckoutWidget({ eventId, eventTitle, tiers, organizer, isCancel
     e.preventDefault();
     if (isCancelled) {
       alert("Dieses Event wurde storniert. Es können keine Tickets mehr erworben werden.");
+      return;
+    }
+    if (!isPublished) {
+      alert("Dieses Event befindet sich im Entwurfsmodus. Es können noch keine Tickets erworben werden.");
       return;
     }
     if (!buyerName || !buyerEmail) {
@@ -103,6 +116,36 @@ export function CheckoutWidget({ eventId, eventTitle, tiers, organizer, isCancel
           className="w-full py-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-base cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2"
         >
           <Lock className="w-5 h-5 text-slate-500" /> Ticketkauf nicht verfügbar
+        </button>
+      </div>
+    );
+  }
+
+  if (!isPublished) {
+    return (
+      <div className="bg-slate-900 border border-amber-800/60 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="flex items-center gap-3 text-amber-400 border-b border-amber-900/50 pb-4">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white">Event im Entwurf</h3>
+            <p className="text-xs text-amber-400 mt-0.5">Noch nicht veröffentlicht</p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-xs text-amber-200 space-y-2">
+          <p className="font-semibold text-amber-300">Vorschau für Veranstalter</p>
+          <p className="text-amber-300/80">
+            Der Ticketverkauf wird aktiviert, sobald der Veranstalter das Event veröffentlicht.
+          </p>
+        </div>
+
+        <button
+          disabled
+          className="w-full py-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-base cursor-not-allowed border border-slate-700 flex items-center justify-center gap-2"
+        >
+          <Lock className="w-5 h-5 text-slate-500" /> Ticketkauf deaktiviert (Entwurf)
         </button>
       </div>
     );

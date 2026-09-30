@@ -344,29 +344,56 @@ export function EditEventForm({ eventId }: EditEventFormProps) {
           </div>
 
           {/* Visibility Controls */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${isListedInDirectory ? "bg-indigo-500/10 text-indigo-400" : "bg-slate-800 text-slate-400"}`}>
-                {isListedInDirectory ? <Globe className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isPublished ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                  {isPublished ? <CheckCircle2 className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Veröffentlichungs-Status</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {isPublished ? "Event ist veröffentlicht & aktiv" : "Event ist ein Entwurf (nicht öffentlich)"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-bold text-white">GateMate Katalog-Sichtbarkeit</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {isListedInDirectory ? "Öffentlich auf der Startseite gelistet" : "Nicht gelistet (nur per Direktlink erreichbar)"}
-                </p>
-              </div>
+
+              <button
+                type="button"
+                disabled={isCancelled}
+                onClick={() => setIsPublished(!isPublished)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  isPublished ? "bg-emerald-600 text-white" : "bg-amber-600/20 text-amber-300 border border-amber-500/30"
+                } disabled:opacity-50`}
+              >
+                {isPublished ? "Veröffentlicht" : "Entwurf"}
+              </button>
             </div>
 
-            <button
-              type="button"
-              disabled={isCancelled}
-              onClick={() => setIsListedInDirectory(!isListedInDirectory)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                isListedInDirectory ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
-              } disabled:opacity-50`}
-            >
-              {isListedInDirectory ? "Öffentlich" : "Privat / Ungelistet"}
-            </button>
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isListedInDirectory ? "bg-indigo-500/10 text-indigo-400" : "bg-slate-800 text-slate-400"}`}>
+                  {isListedInDirectory ? <Globe className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">GateMate Katalog-Sichtbarkeit</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {isListedInDirectory ? "Öffentlich im Katalog gelistet" : "Ungelistet (nur per Direktlink)"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={isCancelled}
+                onClick={() => setIsListedInDirectory(!isListedInDirectory)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  isListedInDirectory ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+                } disabled:opacity-50`}
+              >
+                {isListedInDirectory ? "Gelistet" : "Ungelistet"}
+              </button>
+            </div>
           </div>
         </div>
 
