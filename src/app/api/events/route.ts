@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkOrganizerLegalCompliance } from "@/lib/legal";
+import { hasOrganizerStripeAccount } from "@/lib/stripe";
 
 export async function GET(req: Request) {
   try {
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Pflichtfelder fehlen oder ungültige Ticket-Kategorien" }, { status: 400 });
     }
 
-    // Publication Guard Check: If publishing, verify legal compliance profile
+    // Publication Guard Check: If publishing, verify legal compliance profile & Stripe payment setup
     if (isPublished) {
       const organizerRecords = await db.select().from(users).where(eq(users.id, cleanOrganizerId));
       const organizer = organizerRecords[0];
@@ -99,6 +100,16 @@ export async function POST(req: Request) {
               ", "
             )}). Bitte füllen Sie das Rechtsprofil unter /organizer/settings/legal aus.`,
             missingFields: compliance.missingFields,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!hasOrganizerStripeAccount(organizer)) {
+        return NextResponse.json(
+          {
+            error:
+              "Veröffentlichung blockiert! Sie müssen zuerst ein Stripe-Zahlungskonto (Stripe Connect oder eigene API-Keys) unter /organizer anbinden, bevor Sie ein Event veröffentlichen können.",
           },
           { status: 400 }
         );

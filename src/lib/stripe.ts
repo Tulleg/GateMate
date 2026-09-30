@@ -37,9 +37,17 @@ export function getOrganizerStripeClient(organizer?: { stripeSecretKey?: string 
   };
 }
 
+export function hasOrganizerStripeAccount(organizer?: { stripeSecretKey?: string | null; stripeConnectedAccountId?: string | null } | null): boolean {
+  if (!organizer) return false;
+  const hasDirectKey = Boolean(organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0);
+  const hasConnectedAccount = Boolean(organizer.stripeConnectedAccountId && organizer.stripeConnectedAccountId.trim().length > 0);
+  return hasDirectKey || hasConnectedAccount;
+}
+
 export function getOrganizerWebhookSecret(organizer?: { stripeWebhookSecret?: string | null } | null): string | undefined {
   if (organizer?.stripeWebhookSecret && organizer.stripeWebhookSecret.trim().length > 0) {
     return organizer.stripeWebhookSecret.trim();
   }
   return process.env.STRIPE_WEBHOOK_SECRET;
 }
+

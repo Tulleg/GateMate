@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasPlatformStripeKey } from "@/lib/stripe";
+import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
 import { db } from "@/db";
 import { events, ticketTiers, users, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -40,11 +40,11 @@ export async function POST(req: Request) {
     // Determine Stripe Client and method
     const { client: activeStripe, isDirectKey } = getOrganizerStripeClient(organizer);
 
-    if (!isDirectKey && !organizer?.stripeConnectedAccountId && !hasPlatformStripeKey()) {
+    if (!hasOrganizerStripeAccount(organizer)) {
       return NextResponse.json(
         {
           error:
-            "Der Veranstalter hat bisher keine Stripe Zahlungsdaten hinterlegt und auf dem Server ist kein Plattform-Key gesetzt.",
+            "Ticketkauf derzeit nicht möglich: Der Veranstalter hat noch kein Zahlungskonto eingerichtet.",
         },
         { status: 400 }
       );
