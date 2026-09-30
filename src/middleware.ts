@@ -12,6 +12,14 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Protect /organizer routes: superadmins must access superadmin portal (/admin)
+  if (pathname.startsWith("/organizer")) {
+    const roleCookie = request.cookies.get("gatemate_role")?.value;
+    if (roleCookie === "superadmin") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+  }
+
   // Header propagation for embed & iframe routes with CSP frame-ancestors restriction
   if (pathname.startsWith("/embed/")) {
     const response = NextResponse.next();

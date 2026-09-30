@@ -12,6 +12,11 @@ export const dynamic = "force-dynamic";
 
 export default async function OrganizerEventsPage() {
   const cookieStore = await cookies();
+  const role = cookieStore.get("gatemate_role")?.value;
+  if (role === "superadmin") {
+    redirect("/admin");
+  }
+
   let organizerId = cookieStore.get("gatemate_user_id")?.value;
 
   if (!organizerId) {
