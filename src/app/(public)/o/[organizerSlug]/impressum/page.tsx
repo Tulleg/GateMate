@@ -41,16 +41,17 @@ export default async function OrganizerImpressumPage({ params }: PageProps) {
 
   const defaultImpressumText = `# Impressum
 
-**Angaben gemäß § 5 TMG / Anbieterkennzeichnung**
+**Angaben gemäß § 5 DDG / Art. 30 DSA (KYTC)**
 
 ${organizer.legalName || organizer.name || "Veranstalter"}  
-${organizer.street || ""}  
+${organizer.legalForm ? `Rechtsform: ${organizer.legalForm}\n` : ""}${organizer.street || ""}  
 ${organizer.zip || ""} ${organizer.city || ""}  
 ${organizer.country || "Deutschland"}  
 
 **Kontakt:**  
 E-Mail: ${organizer.email || "kontakt@gatemate.io"}  
-
+${organizer.phone ? `Telefon: ${organizer.phone}\n` : ""}
+${organizer.registrationCouncil || organizer.registrationNumber ? `**Registereintrag:**\n${[organizer.registrationCouncil, organizer.registrationNumber].filter(Boolean).join(", ")}\n` : ""}
 ${organizer.vatId ? `**Umsatzsteuer-ID:**\nUmsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz: ${organizer.vatId}` : ""}
 ${organizer.isSmallBusiness ? "\n**Umsatzsteuer-Hinweis:**\nGemäß § 19 UStG wird keine Umsatzsteuer berechnet." : ""}
 `;

@@ -17,8 +17,12 @@ export const users = pgTable("users", {
   bio: text("bio"),
   emailVerified: boolean("email_verified").default(false),
   image: text("image"),
-  // Organizer Legal Profile
+  // Organizer Legal Profile & DSA KYTC Compliance (Art. 30 Digital Services Act)
   legalName: text("legal_name"),
+  legalForm: text("legal_form"),
+  registrationCouncil: text("registration_council"),
+  registrationNumber: text("registration_number"),
+  phone: text("phone"),
   street: text("street"),
   zip: text("zip"),
   city: text("city"),

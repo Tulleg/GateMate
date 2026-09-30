@@ -1,5 +1,9 @@
 export interface OrganizerLegalProfile {
   legalName?: string | null;
+  legalForm?: string | null;
+  registrationCouncil?: string | null;
+  registrationNumber?: string | null;
+  phone?: string | null;
   street?: string | null;
   zip?: string | null;
   city?: string | null;

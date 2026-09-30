@@ -53,6 +53,10 @@ export async function PUT(req: Request) {
 
     const {
       legalName,
+      legalForm,
+      registrationCouncil,
+      registrationNumber,
+      phone,
       street,
       zip,
       city,
@@ -71,6 +75,10 @@ export async function PUT(req: Request) {
 
     const updateData = {
       legalName: legalName || null,
+      legalForm: legalForm || null,
+      registrationCouncil: registrationCouncil || null,
+      registrationNumber: registrationNumber || null,
+      phone: phone || null,
       street: street || null,
       zip: zip || null,
       city: city || null,

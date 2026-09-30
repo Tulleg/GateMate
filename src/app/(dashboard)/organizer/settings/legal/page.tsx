@@ -27,6 +27,10 @@ export default function OrganizerLegalSettingsPage() {
 
   // Form State
   const [legalName, setLegalName] = useState("");
+  const [legalForm, setLegalForm] = useState("");
+  const [registrationCouncil, setRegistrationCouncil] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
   const [zip, setZip] = useState("");
   const [city, setCity] = useState("");
@@ -71,6 +75,10 @@ export default function OrganizerLegalSettingsPage() {
 
       const org = data.organizer || {};
       setLegalName(org.legalName || "");
+      setLegalForm(org.legalForm || "");
+      setRegistrationCouncil(org.registrationCouncil || "");
+      setRegistrationNumber(org.registrationNumber || "");
+      setPhone(org.phone || "");
       setStreet(org.street || "");
       setZip(org.zip || "");
       setCity(org.city || "");
@@ -115,7 +123,10 @@ export default function OrganizerLegalSettingsPage() {
     try {
       const payload = {
         legalName,
-
+        legalForm,
+        registrationCouncil,
+        registrationNumber,
+        phone,
         street,
         zip,
         city,
@@ -270,6 +281,50 @@ export default function OrganizerLegalSettingsPage() {
                   placeholder="z.B. Demo Events GmbH oder Max Mustermann Veranstaltungsservice"
                   value={legalName}
                   onChange={(e) => setLegalName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Rechtsform (DSA Art. 30 KYTC)</label>
+                <input
+                  type="text"
+                  placeholder="z.B. GmbH, UG (haftungsbeschränkt), Einzelunternehmen, e.V."
+                  value={legalForm}
+                  onChange={(e) => setLegalForm(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Telefonnummer für Rückfragen</label>
+                <input
+                  type="text"
+                  placeholder="z.B. +49 30 12345678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Handelsregister / Amtsgericht (falls eintr.)</label>
+                <input
+                  type="text"
+                  placeholder="z.B. Amtsgericht Berlin-Charlottenburg"
+                  value={registrationCouncil}
+                  onChange={(e) => setRegistrationCouncil(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-300 block">Registernummer (HRB / HRA / VR)</label>
+                <input
+                  type="text"
+                  placeholder="z.B. HRB 123456 B"
+                  value={registrationNumber}
+                  onChange={(e) => setRegistrationNumber(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
