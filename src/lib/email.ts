@@ -109,14 +109,14 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">🎟️ GateMate</div>
-          <h1 class="title">Bestellbestätigung & Tickets</h1>
+          <div class="logo">🎟️ GateMate Ticket-Service</div>
+          <h1 class="title">Bestellbestätigung im Auftrag von ${displayLegalName}</h1>
           <div class="badge">Zahlung Erfolgreich</div>
         </div>
 
         <p>Hallo <strong>${buyerName}</strong>,</p>
         <p>vielen Dank für Ihre Ticketbestellung bei <strong>${displayLegalName}</strong>!</p>
-        <p style="font-size: 13px; color: #94a3b8;">Vertragspartner für diese Buchung ist <strong>${displayLegalName}</strong>${displayAddress ? ` (${displayAddress})` : ""}.</p>
+        <p style="font-size: 13px; color: #94a3b8;">Vertragspartner und Verkäufer für diese Buchung ist <strong>${displayLegalName}</strong>${displayAddress ? ` (${displayAddress})` : ""}.</p>
 
         <div class="details-card">
           <div class="detail-row">
@@ -165,7 +165,7 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
           </div>
         </div>
 
-        <p>Sie können Ihre digitalen QR-Tickets jederzeit auf Ihrer persönlichen Ticket-Seite aufrufen, als PDF herunterladen oder in die Wallet speichern:</p>
+        <p>Sie können Ihre digitalen QR-Tickets jederzeit auf Ihrer persönlichen Ticket-Seite aufrufen, als PDF herunterladen oder ausdrucken:</p>
 
         <a href="${ticketPageUrl}" class="btn" target="_blank">Jetzt Digitales Ticket & QR-Code Öffnen →</a>
 
@@ -182,7 +182,7 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
     const data = await resend.emails.send({
       from: DEFAULT_FROM,
       to: [buyerEmail],
-      subject: `Deine Tickets für ${eventTitle} 🎟️`,
+      subject: `Deine Tickets für ${eventTitle} (Verkäufer: ${displayLegalName}) 🎟️`,
       html,
     });
 

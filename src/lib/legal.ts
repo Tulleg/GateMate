@@ -38,7 +38,15 @@ export const STATUTORY_WITHDRAWAL_NOTICE =
   "Hinweis zum Widerrufsrecht: Bei Dienstleistungen im Zusammenhang mit Freizeitbetätigungen zu einem spezifischen Termin besteht kein Widerrufsrecht (§ 312g Abs. 2 Nr. 9 BGB).";
 
 export const GATEMATE_PLATFORM_DISCLAIMER =
-  "GateMate agiert ausschließlich als technischer Dienstleister und Vermittler.";
+  "GateMate agiert ausschließlich als technischer Dienstleister und Vermittler im Auftrag des Veranstalters.";
+
+export const GATEMATE_PLATFORM_DISCLAIMER_EXTENDED =
+  "GateMate ist reine technische Infrastruktur und Vermittler. Der Kaufvertrag über Ticket und Event-Teilnahme kommt ausschließlich direkt zwischen dem Ticketkäufer und dem jeweiligen Veranstalter zustande.";
+
+export function getOrganizerSellerLabel(organizer?: OrganizerLegalProfile | null): string {
+  return organizer?.legalName || organizer?.name || "Veranstalter";
+}
+
 
 export function checkOrganizerLegalCompliance(organizer?: OrganizerLegalProfile | null): LegalComplianceResult {
   if (!organizer) {

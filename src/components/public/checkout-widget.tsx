@@ -295,14 +295,42 @@ export function CheckoutWidget({
           </div>
         </div>
 
-        {/* Price Breakdown & Final German Button-Lösung Submit Button (§ 312j BGB) */}
+        {/* Price Breakdown & Pre-Checkout Summary (§ 312j BGB) */}
         <div className="pt-4 border-t border-slate-800 space-y-4">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Gesamtbetrag ({quantity} Ticket{quantity > 1 ? "s" : ""})</span>
-              <span className="text-2xl font-extrabold text-white">{formatCurrency(totalPriceCents)}</span>
+          {/* Detailed Order Summary Box */}
+          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+            <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-2">
+              <span>Bestellzusammenfassung</span>
+              <span className="text-[10px] text-indigo-400 font-normal">Vor Absenden prüfen</span>
+            </h4>
+
+            <div className="space-y-1.5 pt-1">
+              <div className="flex justify-between text-slate-300">
+                <span>Veranstaltung:</span>
+                <span className="font-semibold text-white truncate max-w-[200px]">{eventTitle}</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>Vertragspartner &amp; Verkäufer:</span>
+                <span className="font-semibold text-white truncate max-w-[200px]">{legalName}</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span>Ticketkategorie:</span>
+                <span className="font-semibold text-white">{selectedTier?.name} ({quantity}x)</span>
+              </div>
+              <div className="flex justify-between text-slate-400 text-[11px]">
+                <span>Einzelpreis:</span>
+                <span>{formatCurrency(unitPrice)}</span>
+              </div>
+              <div className="flex justify-between text-slate-400 text-[11px]">
+                <span>Vorverkaufs- / Systemgebühr:</span>
+                <span>{formatCurrency(0)} (Inkludiert)</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800 font-bold">
+                <span className="text-white">Gesamtpreis:</span>
+                <span className="text-xl font-extrabold text-indigo-400">{formatCurrency(totalPriceCents)}</span>
+              </div>
+              <p className="text-[10px] text-slate-400 text-right">{taxNotice}</p>
             </div>
-            <p className="text-[11px] text-slate-400 text-right">{taxNotice}</p>
           </div>
 
           {/* Terms Acceptance & Privacy Notice (§ 305 Abs. 2 BGB) */}
@@ -321,7 +349,7 @@ export function CheckoutWidget({
               target="_blank"
               className="text-indigo-400 hover:underline font-semibold"
             >
-              Datenschutzhinweise
+              Datenschutzerklärung des Veranstalters
             </Link>{" "}
             sowie die{" "}
             <Link

@@ -3,12 +3,14 @@ import { db } from "@/db";
 import { events, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { CheckoutWidget } from "@/components/public/checkout-widget";
-import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban, Clock, ShieldAlert } from "lucide-react";
+import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban, Clock, ShieldAlert, Building2, FileText, Info } from "lucide-react";
+import { formatLegalAddress, getOrganizerSellerLabel, GATEMATE_PLATFORM_DISCLAIMER_EXTENDED } from "@/lib/legal";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ eventSlug: string }>;
+  searchParams?: Promise<{ canceled?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -29,15 +31,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://gatemate.io";
   const eventUrl = `${appUrl}/e/${event.slug}`;
   const banner = event.bannerUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87";
+  const sellerName = getOrganizerSellerLabel(organizer);
 
   return {
-    title: `${event.title} ${event.isCancelled ? "(STORNIERT) " : ""}| GateMate Tickets`,
-    description: event.description || `Get official tickets for ${event.title} at ${event.venue || "Venue"}.`,
+    title: `${event.title} ${event.isCancelled ? "(STORNIERT) " : ""}| Offizieller Ticketverkauf - ${sellerName}`,
+    description: event.description || `Offizieller Ticketverkauf des Veranstalters ${sellerName} für ${event.title} in ${event.venue || "Location"}.`,
     openGraph: {
-      title: `${event.title} - Official Tickets`,
-      description: event.description || `Get tickets for ${event.title}. Hosted by ${organizer?.name || "GateMate"}.`,
+      title: `${event.title} - Offizielle Tickets (Veranstalter: ${sellerName})`,
+      description: event.description || `Tickets für ${event.title}. Verkäufer und Vertragspartner: ${sellerName}.`,
       url: eventUrl,
-      siteName: "GateMate",
+      siteName: "GateMate Ticketing Service",
       images: [
         {
           url: banner,
@@ -50,15 +53,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${event.title} | GateMate`,
-      description: event.description || `Get tickets for ${event.title}.`,
+      title: `${event.title} | Ticketverkauf: ${sellerName}`,
+      description: event.description || `Offizieller Ticketverkauf für ${event.title}.`,
       images: [banner],
     },
   };
 }
 
-export default async function PublicEventPage({ params }: PageProps) {
+export default async function PublicEventPage({ params, searchParams }: PageProps) {
   const { eventSlug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const isCheckoutCanceled = resolvedSearchParams.canceled === "true";
 
   // 1. Fetch Event by slug
   const eventRecords = await db.select().from(events).where(eq(events.slug, eventSlug));
@@ -73,23 +78,40 @@ export default async function PublicEventPage({ params }: PageProps) {
 
   // 3. Fetch Organizer info
   const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
-  const organizer = organizerRecords[0] || { name: "GateMate Organizer", organizerSlug: "demo-organizer" };
+  const organizer = organizerRecords[0] || { name: "Veranstalter", organizerSlug: "demo-organizer" };
+  const organizerLegalName = getOrganizerSellerLabel(organizer);
+  const organizerAddress = formatLegalAddress(organizer);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white pb-20">
       {/* Header Bar */}
       <header className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-medium transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to GateMate
+          <ArrowLeft className="w-4 h-4" /> Startseite
         </Link>
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Ticket className="w-5 h-5 text-indigo-400" />
-          <span className="font-bold text-white text-base">GateMate Tickets</span>
+          <span className="font-bold text-white text-base">GateMate <span className="text-xs text-slate-400 font-normal">| Technical Infrastructure</span></span>
         </Link>
       </header>
 
       {/* Main Content Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-12">
+        {/* Checkout Canceled Notice Banner */}
+        {isCheckoutCanceled && (
+          <div className="p-5 rounded-3xl bg-blue-950/60 border border-blue-800/70 text-blue-200 shadow-2xl flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30 shrink-0">
+              <Info className="w-6 h-6" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-base font-bold text-white">Bestellvorgang abgebrochen</h3>
+              <p className="text-xs text-blue-200/90">
+                Sie haben den Bezahlvorgang bei Stripe abgebrochen. Es wurden keine Tickets reserviert und keine Zahlungen abgebucht. Sie können Ihre Bestellung jederzeit erneut starten.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Event Cancellation Alert Banner */}
         {event.isCancelled && (
           <div className="p-6 rounded-3xl bg-red-950/70 border border-red-800/80 text-red-200 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -154,20 +176,42 @@ export default async function PublicEventPage({ params }: PageProps) {
                   : "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
               }`}>
                 {event.isCancelled ? <Ban className="w-3.5 h-3.5 text-red-400" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                {event.isCancelled ? "Event Storniert" : "Official Event Ticket"}
+                {event.isCancelled ? "Event Storniert" : "Offizieller Ticketverkauf des Veranstalters"}
               </span>
               <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
                 {event.title}
               </h1>
-              <p className="text-xs text-slate-400 flex items-center gap-2">
-                Hosted by{" "}
-                <Link
-                  href={organizer.organizerSlug ? `/o/${organizer.organizerSlug}` : "#"}
-                  className="text-white font-semibold hover:text-indigo-400 flex items-center gap-1 transition-colors"
-                >
-                  <User className="w-3.5 h-3.5 text-indigo-400" /> {organizer.name}
-                </Link>
-              </p>
+
+              {/* Explicit Legal Seller & Contract Partner Notice (§ 312j BGB) */}
+              <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-indigo-300">
+                  <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span>Vertragspartner &amp; Verkäufer dieser Tickets:</span>
+                </div>
+                <div className="pl-6 space-y-1 text-slate-200">
+                  <p className="font-semibold text-white text-sm">
+                    {organizerLegalName}
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    {organizerAddress}
+                    {organizer?.vatId && ` • USt-ID: ${organizer.vatId}`}
+                  </p>
+                  <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-medium">
+                    <Link
+                      href={organizer.organizerSlug ? `/o/${organizer.organizerSlug}/impressum` : `/o/${organizer.organizerSlug}`}
+                      className="text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Impressum des Veranstalters
+                    </Link>
+                    <Link
+                      href={organizer.organizerSlug ? `/o/${organizer.organizerSlug}/agb` : `/agb`}
+                      className="text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Veranstalter AGB
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Date & Location Info Cards */}
@@ -216,10 +260,16 @@ export default async function PublicEventPage({ params }: PageProps) {
 
             {/* Event Description */}
             <div className="bg-slate-900/60 border border-slate-800 p-6 rounded-3xl space-y-3">
-              <h3 className="text-base font-bold text-white">About This Event</h3>
+              <h3 className="text-base font-bold text-white">Beschreibung der Veranstaltung</h3>
               <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
-                {event.description || "Join us for an incredible live experience."}
+                {event.description || "Für diese Veranstaltung liegt keine gesonderte Beschreibung vor."}
               </p>
+            </div>
+
+            {/* Platform Role Disclaimer Notice */}
+            <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 text-[11px] text-slate-400 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+              <p>{GATEMATE_PLATFORM_DISCLAIMER_EXTENDED}</p>
             </div>
           </div>
 
@@ -242,3 +292,4 @@ export default async function PublicEventPage({ params }: PageProps) {
     </div>
   );
 }
+

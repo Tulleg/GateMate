@@ -95,6 +95,7 @@ export async function POST(req: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const stripeAccountId = organizer?.stripeConnectedAccountId;
+    const organizerLegalName = organizer?.legalName || organizer?.name || "Veranstalter";
 
     // 5. Build Stripe Checkout Session options
     const sessionOptions: any = {
@@ -104,8 +105,8 @@ export async function POST(req: Request) {
           price_data: {
             currency: "eur",
             product_data: {
-              name: `${event.title} - ${tier.name}`,
-              description: `Entry pass for ${event.title} at ${event.venue || "Venue"}`,
+              name: `${event.title} - ${tier.name} (Verkäufer: ${organizerLegalName})`,
+              description: `Eintrittskarte für ${event.title}. Vertragspartner & Verkäufer: ${organizerLegalName}`,
               images: event.bannerUrl ? [event.bannerUrl] : [],
             },
             unit_amount: tier.priceCents,
@@ -115,6 +116,11 @@ export async function POST(req: Request) {
       ],
       mode: "payment",
       customer_email: buyerEmail,
+      custom_text: {
+        submit: {
+          message: `Vertragspartner und Verkäufer dieser Tickets ist ${organizerLegalName}. GateMate agiert ausschließlich als technischer Dienstleister.`,
+        },
+      },
       metadata: {
         orderId,
         eventId: event.id,
@@ -123,6 +129,7 @@ export async function POST(req: Request) {
         buyerEmail,
         buyerName,
         organizerId: event.organizerId,
+        organizerLegalName,
       },
       success_url: `${appUrl}/tickets/${orderId}?success=true`,
       cancel_url: `${appUrl}/e/${event.slug}?canceled=true`,
@@ -133,9 +140,14 @@ export async function POST(req: Request) {
       sessionOptions.payment_intent_data = {
         application_fee_amount: platformFeeCents,
         on_behalf_of: stripeAccountId,
+        description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
         transfer_data: {
           destination: stripeAccountId,
         },
+      };
+    } else {
+      sessionOptions.payment_intent_data = {
+        description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
       };
     }
 

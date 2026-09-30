@@ -57,11 +57,11 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
       {/* Header (Hidden when printing) */}
       <header className="px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-between print:hidden">
         <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-xs font-medium transition-colors">
-          <ArrowLeft className="w-4 h-4" /> GateMate Home
+          <ArrowLeft className="w-4 h-4" /> Startseite
         </Link>
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <TicketIcon className="w-5 h-5 text-indigo-400" />
-          <span className="font-bold text-white text-base">GateMate Digital Passes</span>
+          <span className="font-bold text-white text-base">GateMate <span className="text-xs text-slate-400 font-normal">| Digital Ticket Pass</span></span>
         </Link>
       </header>
 
@@ -71,9 +71,9 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Payment Confirmed &amp; Tickets Issued!</h1>
+          <h1 className="text-2xl font-extrabold text-white">Zahlung Bestätigt &amp; Tickets Ausgestellt!</h1>
           <p className="text-xs text-slate-300 max-w-md mx-auto">
-            Order <span className="font-mono text-emerald-400">{order.id}</span> complete. Present your QR code ticket at the event gate for instant mobile check-in.
+            Bestellung <span className="font-mono text-emerald-400">{order.id}</span> abgeschlossen. Vertragspartner &amp; Verkäufer ist <strong className="text-white">{legalSellerName}</strong>. Zeigen Sie Ihren QR-Code am Einlass vor.
           </p>
 
           <div className="pt-2 flex justify-center gap-3">
@@ -84,12 +84,12 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
         {/* Printable Ticket Passes List */}
         <div className="space-y-6">
           <h2 className="text-lg font-bold text-white print:text-black flex items-center gap-2">
-            <TicketIcon className="w-5 h-5 text-indigo-400 print:hidden" /> Entry Passes ({processedTickets.length})
+            <TicketIcon className="w-5 h-5 text-indigo-400 print:hidden" /> Eintrittskarten ({processedTickets.length})
           </h2>
 
           {processedTickets.length === 0 ? (
             <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center text-slate-400 text-sm">
-              Your tickets are currently being generated. Please refresh the page in a few seconds.
+              Ihre Tickets werden derzeit generiert. Bitte laden Sie die Seite in wenigen Sekunden neu.
             </div>
           ) : (
             processedTickets.map((ticket, idx) => (
@@ -105,31 +105,31 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
                   <div className="space-y-4 text-center sm:text-left flex-1">
                     <div>
                       <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-mono font-bold uppercase print:border-black print:text-black">
-                        Pass #{idx + 1} &bull; {ticket.status.toUpperCase()}
+                        Ticket #{idx + 1} &bull; {ticket.status.toUpperCase()}
                       </span>
                       <h3 className="text-2xl font-extrabold text-white mt-2 print:text-black">
-                        {event?.title || "GateMate Event"}
+                        {event?.title || "Veranstaltung"}
                       </h3>
                     </div>
 
                     <div className="space-y-1.5 text-xs text-slate-300 print:text-black">
                       <p className="flex items-center justify-center sm:justify-start gap-1.5">
                         <Calendar className="w-4 h-4 text-indigo-400 print:hidden" />
-                        <span>{event?.startDate ? new Date(event.startDate).toLocaleString() : "Date TBD"}</span>
+                        <span>{event?.startDate ? new Date(event.startDate).toLocaleString("de-DE") : "Datum folgt"}</span>
                       </p>
                       <p className="flex items-center justify-center sm:justify-start gap-1.5">
                         <MapPin className="w-4 h-4 text-purple-400 print:hidden" />
-                        <span>{event?.venue || "Online Venue"}</span>
+                        <span>{event?.venue || "Online / TBD"}</span>
                       </p>
                     </div>
 
                     <div className="pt-2 border-t border-slate-800/80 print:border-gray-300 grid grid-cols-2 gap-4 text-xs">
                       <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-semibold print:text-gray-600">Attendee Name</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-semibold print:text-gray-600">Teilnehmer</p>
                         <p className="font-bold text-white print:text-black mt-0.5">{ticket.attendeeName}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-semibold print:text-gray-600">Ticket Tier</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-semibold print:text-gray-600">Kategorie</p>
                         <p className="font-bold text-indigo-400 print:text-black mt-0.5">{ticket.tierName}</p>
                       </div>
                     </div>
@@ -144,7 +144,7 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                {/* Issuer / Legal Seller Section & Platform Disclaimer (Requirement 6) */}
+                {/* Issuer / Legal Seller Section & Platform Disclaimer */}
                 <div className="pt-4 border-t border-slate-800/80 print:border-gray-300 space-y-2 text-[11px]">
                   <div className="flex items-start gap-2 text-slate-300 print:text-black">
                     <Building2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 print:hidden" />
