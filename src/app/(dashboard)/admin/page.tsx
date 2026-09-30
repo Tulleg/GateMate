@@ -169,45 +169,6 @@ export default async function SuperAdminDashboard() {
             </table>
           </div>
         </div>
-
-        {/* Section 2: Platform Active Events */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-400" /> Platform Active Events Overview
-            </h2>
-            <span className="text-xs text-slate-400">{allEvents.length} Event(s)</span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="p-3">Event Title</th>
-                  <th className="p-3">Slug</th>
-                  <th className="p-3">Venue</th>
-                  <th className="p-3">Start Date</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {allEvents.map((evt) => (
-                  <tr key={evt.id} className="hover:bg-slate-800/30">
-                    <td className="p-3 font-semibold text-white">{evt.title}</td>
-                    <td className="p-3 text-indigo-400 font-mono">/e/{evt.slug}</td>
-                    <td className="p-3 text-slate-300">{evt.venue || "Online / TBD"}</td>
-                    <td className="p-3 text-slate-400">{new Date(evt.startDate).toLocaleDateString()}</td>
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {evt.isPublished ? "Published" : "Draft"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </main>
     </div>
   );
