@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, json } from "drizzle-orm/pg-core";
 
 export const systemRoleEnum = pgEnum("system_role", ["superadmin", "organizer"]);
 
@@ -7,6 +7,11 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
   role: systemRoleEnum("role").default("organizer").notNull(),
+  // Onboarding Workflow State Management
+  onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
+  onboardingStep: text("onboarding_step").default("stripe_connect").notNull(), // 'stripe_connect' | 'legal_info' | 'agb_terms' | 'completed'
+  stripeAccountType: text("stripe_account_type").default("express"), // 'express' | 'custom_keys'
+  stripeAccountId: text("stripe_account_id"),
   stripeConnectedAccountId: text("stripe_connected_account_id"),
   stripePublishableKey: text("stripe_publishable_key"),
   stripeSecretKey: text("stripe_secret_key"),
@@ -18,6 +23,12 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   image: text("image"),
   // Organizer Legal Profile & DSA KYTC Compliance (Art. 30 Digital Services Act)
+  legalCompanyName: text("legal_company_name"),
+  legalVatId: text("legal_vat_id"),
+  legalAddress: json("legal_address"),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  privacyAcceptedAt: timestamp("privacy_accepted_at"),
+  avvAcceptedAt: timestamp("avv_accepted_at"),
   legalName: text("legal_name"),
   legalForm: text("legal_form"),
   responsiblePerson: text("responsible_person"),

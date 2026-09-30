@@ -32,7 +32,12 @@ export default async function OrganizerDashboardPage() {
 
   // Fetch organizer user record
   const organizerRecords = await db.select().from(users).where(eq(users.id, organizerId));
-  const organizer = organizerRecords[0] || { id: organizerId, stripeConnectedAccountId: null, stripeSecretKey: null };
+  const organizer = organizerRecords[0] || { id: organizerId, stripeConnectedAccountId: null, stripeSecretKey: null, onboardingCompleted: false };
+
+  // Strict onboarding check: redirect if not completed
+  if (organizerRecords[0] && !organizerRecords[0].onboardingCompleted && process.env.ENABLE_DEMO_ACCOUNTS !== "true") {
+    redirect("/onboarding");
+  }
 
   // Check if Stripe is connected and onboarding completed
   let isStripeConnected = false;

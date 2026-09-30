@@ -72,6 +72,7 @@ export async function POST(req: Request) {
     cookieStore.set("gatemate_user_id", user.id, { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
     cookieStore.set("gatemate_user_email", user.email, { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
     cookieStore.set("gatemate_user_name", user.name || "", { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
+    cookieStore.set("gatemate_onboarding_completed", String(Boolean(user.onboardingCompleted)), { path: "/", maxAge, httpOnly: true, secure: isProd, sameSite: "lax" });
 
     return NextResponse.json({
       success: true,
@@ -81,6 +82,8 @@ export async function POST(req: Request) {
         name: user.name,
         role: user.role,
         organizerSlug: user.organizerSlug,
+        onboardingCompleted: Boolean(user.onboardingCompleted),
+        onboardingStep: user.onboardingStep || "stripe_connect",
       },
     });
   } catch (error: any) {

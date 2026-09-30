@@ -569,3 +569,77 @@ export function validateEventForPublication(
     missingBlockingFields: blockingIssues.map((i) => i.label),
   };
 }
+
+// ==========================================
+// ONBOARDING ZOD SCHEMAS
+// ==========================================
+import { z } from "zod";
+
+export const onboardingStep1Schema = z.discriminatedUnion("stripeAccountType", [
+  z.object({
+    stripeAccountType: z.literal("express"),
+  }),
+  z.object({
+    stripeAccountType: z.literal("custom_keys"),
+    stripePublishableKey: z
+      .string()
+      .trim()
+      .min(1, "Bitte gib deinen Publishable Key ein.")
+      .startsWith("pk_", "Ein Publishable Key muss mit 'pk_' beginnen."),
+    stripeSecretKey: z
+      .string()
+      .trim()
+      .min(1, "Bitte gib deinen Secret Key ein.")
+      .refine(
+        (val) => val.startsWith("sk_") || val.startsWith("rk_"),
+        "Ein Secret Key muss mit 'sk_' oder 'rk_' beginnen."
+      ),
+  }),
+]);
+
+export type OnboardingStep1Input = z.infer<typeof onboardingStep1Schema>;
+
+export const onboardingStep2Schema = z.object({
+  legalCompanyName: z
+    .string()
+    .trim()
+    .min(2, "Firmenname / Rechnungsname muss mindestens 2 Zeichen lang sein."),
+  legalVatId: z
+    .string()
+    .trim()
+    .min(3, "Steuernummer / USt-IdNr. ist erforderlich."),
+  street: z
+    .string()
+    .trim()
+    .min(3, "Straße und Hausnummer sind erforderlich."),
+  zip: z
+    .string()
+    .trim()
+    .min(3, "Postleitzahl ist erforderlich."),
+  city: z
+    .string()
+    .trim()
+    .min(2, "Ort / Stadt ist erforderlich."),
+  country: z
+    .string()
+    .trim()
+    .min(2, "Land ist erforderlich.")
+    .default("Deutschland"),
+});
+
+export type OnboardingStep2Input = z.infer<typeof onboardingStep2Schema>;
+
+export const onboardingStep3Schema = z.object({
+  termsAccepted: z
+    .boolean()
+    .refine((val) => val === true, "Du musst den AGB zustimmen."),
+  privacyAccepted: z
+    .boolean()
+    .refine((val) => val === true, "Du musst der Datenschutzerklärung zustimmen."),
+  avvAccepted: z
+    .boolean()
+    .refine((val) => val === true, "Du musst dem Auftragsverarbeitungsvertrag (AVV) zustimmen."),
+});
+
+export type OnboardingStep3Input = z.infer<typeof onboardingStep3Schema>;
+

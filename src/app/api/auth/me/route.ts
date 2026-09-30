@@ -19,6 +19,9 @@ export async function GET() {
     }
 
     const u = userRecords[0];
+    const isProd = process.env.NODE_ENV === "production";
+    cookieStore.set("gatemate_onboarding_completed", String(Boolean(u.onboardingCompleted)), { path: "/", maxAge: 60 * 60 * 24 * 7, httpOnly: true, secure: isProd, sameSite: "lax" });
+
     return NextResponse.json({
       authenticated: true,
       user: {
@@ -28,6 +31,8 @@ export async function GET() {
         role: u.role,
         organizerSlug: u.organizerSlug,
         legalName: u.legalName,
+        onboardingCompleted: Boolean(u.onboardingCompleted),
+        onboardingStep: u.onboardingStep || "stripe_connect",
       },
     });
   } catch (error: any) {
