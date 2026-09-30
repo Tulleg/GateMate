@@ -6,7 +6,7 @@ import { users, events, ticketTiers, orders, tickets } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
-import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2 } from "lucide-react";
+import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2, Scale } from "lucide-react";
 
 import { CreateOrganizerModal } from "@/components/dashboard/create-organizer-modal";
 import { revalidatePath } from "next/cache";
@@ -67,6 +67,12 @@ export default async function SuperAdminDashboard() {
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
             >
               <Users className="w-4 h-4 text-indigo-400" /> Userverwaltung
+            </Link>
+            <Link
+              href="/admin/legal"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+            >
+              <Scale className="w-4 h-4 text-emerald-400" /> Plattform-Rechtstexte
             </Link>
             <CreateOrganizerModal />
           </div>

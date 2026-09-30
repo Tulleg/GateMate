@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import {
@@ -13,6 +14,8 @@ import {
   AlertTriangle,
   History,
   Lock,
+  Shield,
+  Users,
 } from "lucide-react";
 import { LEGAL_DOCUMENT_METADATA } from "@/lib/legal";
 
@@ -117,7 +120,7 @@ export default function PlatformLegalAdminPage() {
 
       <main className="flex-1 p-8 space-y-8 overflow-y-auto max-w-5xl">
         {/* Header */}
-        <div className="border-b border-slate-800/80 pb-6 flex items-center justify-between">
+        <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
               Plattform-Rechtstexte (Superadmin) <Lock className="w-6 h-6 text-indigo-400" />
@@ -125,6 +128,20 @@ export default function PlatformLegalAdminPage() {
             <p className="text-sm text-slate-400 mt-1">
               Verwaltung der zentralen Plattformdokumente (Impressum, Datenschutz, Nutzungsbedingungen von GateMate).
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors shrink-0"
+            >
+              <Shield className="w-4 h-4 text-red-400" /> Superadmin Portal
+            </Link>
+            <Link
+              href="/admin/users"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors shrink-0"
+            >
+              <Users className="w-4 h-4 text-indigo-400" /> Userverwaltung
+            </Link>
           </div>
         </div>
 

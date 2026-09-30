@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { UserManagementTable } from "@/components/dashboard/user-management-table";
-import { Users, ShieldCheck, Shield } from "lucide-react";
+import { Users, ShieldCheck, Shield, Scale } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,16 +39,32 @@ export default async function AdminUsersPage() {
 
       <main className="flex-1 p-8 space-y-8 overflow-y-auto">
         {/* Page Header */}
-        <div className="border-b border-slate-800/80 pb-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Userverwaltung &amp; Rechtesteuerung</h1>
-            <span className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Platform Admin
-            </span>
+        <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-extrabold tracking-tight text-white">Userverwaltung &amp; Rechtesteuerung</h1>
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" /> Platform Admin
+              </span>
+            </div>
+            <p className="text-sm text-slate-400 mt-1">
+              Zentrale Verwaltung aller Plattform-Benutzer, Systemrollen (Superadmin, Organizer) und Zugangsdaten.
+            </p>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Zentrale Verwaltung aller Plattform-Benutzer, Systemrollen (Superadmin, Organizer) und Zugangsdaten.
-          </p>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+            >
+              <Shield className="w-4 h-4 text-red-400" /> Superadmin Portal
+            </Link>
+            <Link
+              href="/admin/legal"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+            >
+              <Scale className="w-4 h-4 text-emerald-400" /> Plattform-Rechtstexte
+            </Link>
+          </div>
         </div>
 
         {/* User Role Metrics */}

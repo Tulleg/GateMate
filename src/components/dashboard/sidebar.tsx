@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Ticket, LayoutDashboard, Calendar, QrCode, Shield, PlusCircle, Settings, Scale, LogOut } from "lucide-react";
+import { Ticket, LayoutDashboard, Calendar, QrCode, Shield, PlusCircle, Settings, Scale, LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -56,10 +56,8 @@ export function Sidebar() {
 
   const adminNavItems = [
     { name: "Superadmin Portal", href: "/admin", icon: Shield },
-    { name: "Overview", href: "/organizer", icon: LayoutDashboard },
-    { name: "My Events", href: "/organizer/events", icon: Calendar },
-    { name: "Gate Check-In", href: "/organizer/events", icon: QrCode },
-    { name: "Settings", href: "/organizer/settings", icon: Settings },
+    { name: "User- & Rollenverwaltung", href: "/admin/users", icon: Users },
+    { name: "Plattform-Rechtstexte", href: "/admin/legal", icon: Scale },
   ];
 
   const navItems = isAdmin ? adminNavItems : organizerNavItems;

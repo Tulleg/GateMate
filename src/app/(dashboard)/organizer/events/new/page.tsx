@@ -1,7 +1,16 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { EventForm } from "@/components/dashboard/event-form";
 
-export default function CreateEventPage() {
+export default async function CreateEventPage() {
+  const cookieStore = await cookies();
+  const role = cookieStore.get("gatemate_role")?.value;
+
+  if (role === "superadmin") {
+    redirect("/admin");
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-50">
       <Sidebar />
