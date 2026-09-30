@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { events, ticketTiers, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { EventSearch } from "@/components/public/event-search";
+import { PlatformFooter } from "@/components/public/platform-footer";
 import { Ticket, ShieldCheck, Zap, QrCode, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -141,9 +142,7 @@ export default async function LandingPage() {
         </div>
       </main>
 
-      <footer className="py-6 border-t border-slate-800 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} GateMate Inc. All rights reserved.
-      </footer>
+      <PlatformFooter />
     </div>
   );
 }
