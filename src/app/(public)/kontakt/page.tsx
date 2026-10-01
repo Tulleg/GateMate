@@ -35,39 +35,40 @@ export default function ContactPage() {
             <MessageSquare className="w-3.5 h-3.5" /> Direkter Plattform-Support
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
-            Kontakt &amp; Anfragen
+            Plattform-Kontakt &amp; Anfragen
           </h1>
           <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">
-            Hast du Fragen zur Event-Erstellung, zu deinen Tickets, Abrechnungen oder benötigst Unterstützung als Veranstalter? Schreibe uns direkt eine Nachricht – unser Plattform-Team hilft dir gerne weiter.
+            Hast du Fragen zum Onboarding als Veranstalter, zu technischen Plattformfunktionen oder Abrechnungen? Nutze unser Formular für Anfragen an den Plattformbetreiber.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Organizer Responsibility Notice Box */}
+        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-slate-300 space-y-2">
+          <h3 className="font-bold text-amber-400 text-sm flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-amber-400" /> Wichtiger Hinweis für Ticketkäufer
+          </h3>
+          <p className="text-slate-300 leading-relaxed">
+            <strong>GateMate agiert ausschließlich als technischer Dienstleister und Software-Plattform für Veranstalter.</strong> Bei allen Fragen zu Veranstaltungen, Ticket-Rückgaben, Einlassbedingungen, Event-Absagen oder Rechnungen ist <strong>ausschließlich der jeweilige Veranstalter</strong> dein Vertragspartner und Ansprechpartner. Kontaktdaten findest du auf der jeweiligen Event-Seite sowie im Impressum des Veranstalters.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Quick Info Cards */}
           <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <Mail className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-bold text-white text-sm">Direkte E-Mail</h3>
-            <p className="text-xs text-slate-400">
-              Du erreichst unser Support-Team auch direkt per E-Mail unter:
-            </p>
-            <p className="text-xs font-mono text-indigo-400 font-bold">support@gatemate.io</p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-bold text-white text-sm">Veranstalter Support</h3>
+            <h3 className="font-bold text-white text-sm">Veranstalter &amp; Plattform Support</h3>
             <p className="text-xs text-slate-400">
-              Hilfe bei Stripe-Connect, Auszahlungen oder Event-Einstellungen.
+              Unterstützung bei Stripe-Connect, Auszahlungs-Setups, Account-Fragen und technischen Plattformeinstellungen.
             </p>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
             <HelpCircle className="w-5 h-5 text-purple-400" />
-            <h3 className="font-bold text-white text-sm">DSA-Meldungen</h3>
+            <h3 className="font-bold text-white text-sm">Meldung rechtswidriger Inhalte</h3>
             <p className="text-xs text-slate-400">
-              Für Rechtsverletzungen nutze unser{" "}
+              Für gemeldete Urheberrechts-, Betrugs- oder Rechtsverletzungen nutze unser elektronisches{" "}
               <Link href="/notice-and-action" className="text-purple-400 underline font-semibold">
-                DSA Meldeformular
+                DSA Meldeformular gemäß Art. 16 DSA
               </Link>.
             </p>
           </div>

@@ -71,11 +71,11 @@ export function ContactForm() {
             name="category"
             className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="general">Allgemeine Anfrage / Fragen zur Plattform</option>
-            <option value="organizer_support">Veranstalter Support & Onboarding</option>
-            <option value="buyer_support">Ticketkäufer Fragen & Hilfe</option>
-            <option value="billing">Abrechnung & Stripe Payments</option>
-            <option value="legal_dsa">Rechtliches & Datenschutz</option>
+            <option value="general">Allgemeine Anfrage / Plattform-Software</option>
+            <option value="organizer_support">Veranstalter Support &amp; Onboarding</option>
+            <option value="buyer_support">Technisches Problem mit der Webseite / Plattform</option>
+            <option value="billing">Abrechnung &amp; Stripe Payments (Veranstalter)</option>
+            <option value="legal_dsa">Rechtliches &amp; Datenschutz</option>
             <option value="other">Sonstiges</option>
           </select>
         </div>
