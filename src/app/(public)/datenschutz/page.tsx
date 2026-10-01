@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ticket, ArrowLeft, Lock, ShieldCheck, Database, FileText, CheckCircle2 } from "lucide-react";
+import { Ticket, ArrowLeft, Lock, ShieldCheck, Database, FileText, CheckCircle2, Hash } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
+import { getPublishedDocument } from "@/lib/legal-server";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GateMate Event Ticketing Platform",
   description: "Informationen zur Verarbeitung personenbezogener Daten gemäß Art. 13 DSGVO auf der Plattform GateMate.",
 };
 
-export default function PlatformDatenschutzPage() {
+export default async function PlatformDatenschutzPage() {
+  const doc = await getPublishedDocument({ documentType: "platform_privacy" });
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white">
       {/* Header */}
@@ -33,85 +36,103 @@ export default function PlatformDatenschutzPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
             <Lock className="w-3.5 h-3.5" /> Datenschutz nach Art. 13 DSGVO
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform-Datenschutzerklärung</h1>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform-Datenschutzerklärung</h1>
+            {doc && (
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-mono">
+                Version {doc.version}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-400">
             Transparente Informationen über die Erhebung, Verarbeitung und Nutzung personenbezogener Daten auf gatemate.io.
           </p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl text-slate-300 text-sm leading-relaxed">
-          {/* Section 1 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <ShieldCheck className="w-5 h-5 text-indigo-400" /> 1. Verantwortlicher
-            </h2>
-            <p>
-              Verantwortlicher im Sinne der Datenschutz-Grundverordnung (DSGVO) und anderer nationaler Datenschutzgesetze ist:
-            </p>
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs space-y-1">
-              <p className="font-bold text-white text-sm">GateMate Ticketing Platforms GmbH</p>
-              <p>Musterstraße 42, 10115 Berlin, Deutschland</p>
-              <p>E-Mail: <a href="mailto:privacy@gatemate.io" className="text-indigo-400 hover:underline font-semibold">privacy@gatemate.io</a></p>
+          {doc?.content ? (
+            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              {doc.content}
             </div>
-          </section>
+          ) : (
+            <>
+              {/* Fallback Content */}
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <ShieldCheck className="w-5 h-5 text-indigo-400" /> 1. Verantwortlicher
+                </h2>
+                <p>
+                  Verantwortlicher im Sinne der Datenschutz-Grundverordnung (DSGVO) und anderer nationaler Datenschutzgesetze ist:
+                </p>
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs space-y-1">
+                  <p className="font-bold text-white text-sm">GateMate Ticketing Platforms GmbH</p>
+                  <p>Musterstraße 42, 10115 Berlin, Deutschland</p>
+                  <p>E-Mail: <a href="mailto:privacy@gatemate.io" className="text-indigo-400 hover:underline font-semibold">privacy@gatemate.io</a></p>
+                </div>
+              </section>
 
-          {/* Section 2 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Database className="w-5 h-5 text-indigo-400" /> 2. Erhebung und Speicherung personenbezogener Daten
-            </h2>
-            <p>
-              Beim Aufrufen unserer Website gatemate.io werden durch den auf Ihrem Endgerät zum Einsatz kommenden Browser automatisch Informationen an den Server unserer Website gesendet.
-            </p>
-            <ul className="list-disc pl-5 space-y-2 text-xs text-slate-400">
-              <li>IP-Adresse des anfragenden Rechners, Datum und Uhrzeit des Zugriffs</li>
-              <li>Name und URL der abgerufenen Datei</li>
-              <li>Website, von der aus der Zugriff erfolgt (Referrer-URL)</li>
-              <li>Verwendeter Browser und ggf. das Betriebssystem Ihres Rechners</li>
-            </ul>
-            <p className="pt-2">
-              Rechtsgrundlage für die Datenverarbeitung ist Art. 6 Abs. 1 S. 1 lit. f DSGVO (berechtigtes Interesse an der Gewährleistung eines reibungslosen Verbindungsaufbaus und der Systemsicherheit).
-            </p>
-          </section>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Database className="w-5 h-5 text-indigo-400" /> 2. Erhebung und Speicherung personenbezogener Daten
+                </h2>
+                <p>
+                  Beim Aufrufen unserer Website gatemate.io werden durch den auf Ihrem Endgerät zum Einsatz kommenden Browser automatisch Informationen an den Server unserer Website gesendet.
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-xs text-slate-400">
+                  <li>IP-Adresse des anfragenden Rechners, Datum und Uhrzeit des Zugriffs</li>
+                  <li>Name und URL der abgerufenen Datei</li>
+                  <li>Website, von der aus der Zugriff erfolgt (Referrer-URL)</li>
+                  <li>Verwendeter Browser und ggf. das Betriebssystem Ihres Rechners</li>
+                </ul>
+                <p className="pt-2">
+                  Rechtsgrundlage für die Datenverarbeitung ist Art. 6 Abs. 1 S. 1 lit. f DSGVO (berechtigtes Interesse an der Gewährleistung eines reibungslosen Verbindungsaufbaus und der Systemsicherheit).
+                </p>
+              </section>
 
-          {/* Section 3 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <FileText className="w-5 h-5 text-indigo-400" /> 3. Datenverarbeitung bei Ticketkauf &amp; Zahlungsabwicklung
-            </h2>
-            <p>
-              Im Rahmen des Ticketkaufs verarbeiten wir personenbezogene Daten (Name, E-Mail-Adresse, Bestelldaten), um die Erstellung und Zustellung der digitalen QR-Tickets durchzuführen (Art. 6 Abs. 1 lit. b DSGVO).
-            </p>
-            <p>
-              Zahlungsdaten werden direkt über den Zahlungsdienstleister <strong>Stripe Payments Europe, Ltd.</strong> abgewickelt. GateMate speichert selbst keine vollständigen Kreditkartendaten. Soweit bei Stripe Connect Destination Charges genutzt werden, erfolgt die Abwicklung im Namen des jeweiligen Veranstalters.
-            </p>
-          </section>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <FileText className="w-5 h-5 text-indigo-400" /> 3. Datenverarbeitung bei Ticketkauf &amp; Zahlungsabwicklung
+                </h2>
+                <p>
+                  Im Rahmen des Ticketkaufs verarbeiten wir personenbezogene Daten (Name, E-Mail-Adresse, Bestelldaten), um die Erstellung und Zustellung der digitalen QR-Tickets durchzuführen (Art. 6 Abs. 1 lit. b DSGVO).
+                </p>
+                <p>
+                  Zahlungsdaten werden direkt über den Zahlungsdienstleister <strong>Stripe Payments Europe, Ltd.</strong> abgewickelt. GateMate speichert selbst keine vollständigen Kreditkartendaten. Soweit bei Stripe Connect Destination Charges genutzt werden, erfolgt die Abwicklung im Namen des jeweiligen Veranstalters.
+                </p>
+              </section>
 
-          {/* Section 4 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <CheckCircle2 className="w-5 h-5 text-indigo-400" /> 4. Ihre Rechte als betroffene Person
-            </h2>
-            <p>Sie haben gemäß DSGVO folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="font-bold text-white block">Recht auf Auskunft (Art. 15 DSGVO)</span>
-                <span className="text-slate-400">Auskunft über Ihre von uns verarbeiteten personenbezogenen Daten.</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="font-bold text-white block">Recht auf Berichtigung (Art. 16 DSGVO)</span>
-                <span className="text-slate-400">Unverzügliche Berichtigung unrichtiger oder Vervollständigung Ihrer Daten.</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="font-bold text-white block">Recht auf Löschung (Art. 17 DSGVO)</span>
-                <span className="text-slate-400">Löschung Ihrer bei uns gespeicherten personenbezogenen Daten.</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="font-bold text-white block">Beschwerderecht (Art. 77 DSGVO)</span>
-                <span className="text-slate-400">Beschwerde bei einer zuständigen Datenschutz-Aufsichtsbehörde.</span>
-              </div>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <CheckCircle2 className="w-5 h-5 text-indigo-400" /> 4. Ihre Rechte als betroffene Person
+                </h2>
+                <p>Sie haben gemäß DSGVO folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="font-bold text-white block">Recht auf Auskunft (Art. 15 DSGVO)</span>
+                    <span className="text-slate-400">Auskunft über Ihre von uns verarbeiteten personenbezogenen Daten.</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="font-bold text-white block">Recht auf Berichtigung (Art. 16 DSGVO)</span>
+                    <span className="text-slate-400">Unverzügliche Berichtigung unrichtiger oder Vervollständigung Ihrer Daten.</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="font-bold text-white block">Recht auf Löschung (Art. 17 DSGVO)</span>
+                    <span className="text-slate-400">Löschung Ihrer bei uns gespeicherten personenbezogenen Daten.</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="font-bold text-white block">Beschwerderecht (Art. 77 DSGVO)</span>
+                    <span className="text-slate-400">Beschwerde bei einer zuständigen Datenschutz-Aufsichtsbehörde.</span>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {doc?.hash && (
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-500 font-mono flex items-center gap-2">
+              <Hash className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> SHA-256 Hash: {doc.hash}
             </div>
-          </section>
+          )}
         </div>
       </main>
 
@@ -119,3 +140,4 @@ export default function PlatformDatenschutzPage() {
     </div>
   );
 }
+

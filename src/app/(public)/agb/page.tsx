@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ticket, ArrowLeft, ShieldCheck, FileText, Building2, Scale, AlertCircle } from "lucide-react";
+import { Ticket, ArrowLeft, ShieldCheck, FileText, Building2, Scale, AlertCircle, Hash } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
+import { getPublishedDocument } from "@/lib/legal-server";
 
 export const metadata: Metadata = {
   title: "AGB & Nutzungsbedingungen | GateMate Event Ticketing Platform",
   description: "Allgemeine Nutzungsbedingungen für die Software-Plattform GateMate und Rollentrennung zwischen Plattform und Veranstalter.",
 };
 
-export default function PlatformAGBPage() {
+export default async function PlatformAGBPage() {
+  const doc = await getPublishedDocument({ documentType: "platform_terms" });
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white">
       {/* Header */}
@@ -33,7 +36,14 @@ export default function PlatformAGBPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" /> Allgemeine Nutzungsbedingungen
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform AGB &amp; Nutzungsbedingungen</h1>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Plattform AGB &amp; Nutzungsbedingungen</h1>
+            {doc && (
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-mono">
+                Version {doc.version}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-400">
             Regelungen zur Nutzung der GateMate Software-Plattform für Ticketkäufer und Veranstalter.
           </p>
@@ -51,57 +61,68 @@ export default function PlatformAGBPage() {
             </p>
           </div>
 
-          {/* Section 1 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Building2 className="w-5 h-5 text-indigo-400" /> § 1 Geltungsbereich &amp; Vertragsgegenstand
-            </h2>
-            <p>
-              Diese Allgemeinen Nutzungsbedingungen gelten für die Nutzung der Software-Plattform GateMate (gatemate.io).
-            </p>
-            <p>
-              GateMate bietet Veranstaltern eine technische Lösung zur Erstellung von Event-Seiten, zum Verkauf von Eintrittskarten sowie zur Einlasskontrolle mittels QR-Code-Scanning an.
-            </p>
-          </section>
+          {doc?.content ? (
+            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              {doc.content}
+            </div>
+          ) : (
+            <>
+              {/* Fallback Content */}
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Building2 className="w-5 h-5 text-indigo-400" /> § 1 Geltungsbereich &amp; Vertragsgegenstand
+                </h2>
+                <p>
+                  Diese Allgemeinen Nutzungsbedingungen gelten für die Nutzung der Software-Plattform GateMate (gatemate.io).
+                </p>
+                <p>
+                  GateMate bietet Veranstaltern eine technische Lösung zur Erstellung von Event-Seiten, zum Verkauf von Eintrittskarten sowie zur Einlasskontrolle mittels QR-Code-Scanning an.
+                </p>
+              </section>
 
-          {/* Section 2 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Scale className="w-5 h-5 text-indigo-400" /> § 2 Rolle der Plattform &amp; Vertragsbeziehungen
-            </h2>
-            <p>
-              (1) Beim Kauf von Eintrittskarten über die Plattform kommt ein Kaufvertrag ausschließlich zwischen dem Ticketkäufer und dem veranstaltenden Unternehmen/Organisator zustande.
-            </p>
-            <p>
-              (2) GateMate ist nicht Veranstalter der angebotenen Events, übernimmt keine Gewährleistung für die Durchführung oder Qualität der Veranstaltungen und haftet nicht für Event-Absagen oder Terminverschiebungen durch den Veranstalter.
-            </p>
-          </section>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <Scale className="w-5 h-5 text-indigo-400" /> § 2 Rolle der Plattform &amp; Vertragsbeziehungen
+                </h2>
+                <p>
+                  (1) Beim Kauf von Eintrittskarten über die Plattform kommt ein Kaufvertrag ausschließlich zwischen dem Ticketkäufer und dem veranstaltenden Unternehmen/Organisator zustande.
+                </p>
+                <p>
+                  (2) GateMate ist nicht Veranstalter der angebotenen Events, übernimmt keine Gewährleistung für die Durchführung oder Qualität der Veranstaltungen und haftet nicht für Event-Absagen oder Terminverschiebungen durch den Veranstalter.
+                </p>
+              </section>
 
-          {/* Section 3 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <FileText className="w-5 h-5 text-indigo-400" /> § 3 Zahlungsabwicklung &amp; Gebühren
-            </h2>
-            <p>
-              (1) Die Zahlungsabwicklung für Ticketverkäufe erfolgt direkt über das Stripe-Konto (Stripe Connect oder Direct Key Integration) des jeweiligen Veranstalters.
-            </p>
-            <p>
-              (2) Etwaige Plattform- und Vermittlungsgebühren werden im Zahlungsfluss transparent ausgewiesen und gemäß Vereinbarung mit dem Veranstalter abgerechnet.
-            </p>
-          </section>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <FileText className="w-5 h-5 text-indigo-400" /> § 3 Zahlungsabwicklung &amp; Gebühren
+                </h2>
+                <p>
+                  (1) Die Zahlungsabwicklung für Ticketverkäufe erfolgt direkt über das Stripe-Konto (Stripe Connect oder Direct Key Integration) des jeweiligen Veranstalters.
+                </p>
+                <p>
+                  (2) Etwaige Plattform- und Vermittlungsgebühren werden im Zahlungsfluss transparent ausgewiesen und gemäß Vereinbarung mit dem Veranstalter abgerechnet.
+                </p>
+              </section>
 
-          {/* Section 4 */}
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <ShieldCheck className="w-5 h-5 text-indigo-400" /> § 4 Pflichten der Veranstalter
-            </h2>
-            <p>
-              (1) Veranstalter verpflichten sich, auf ihren Event-Seiten ein eigenes, vollständiges Impressum sowie alle gesetzlich erforderlichen Pflichtangaben (insbesondere Verbraucherinformationen und Widerrufsbelehrungen nach § 312g BGB) bereitzustellen.
-            </p>
-            <p>
-              (2) Veranstalter sind verpflichtet, vor der Veröffentlichung von Events ein eigenes Stripe-Zahlungskonto anzubinden.
-            </p>
-          </section>
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <ShieldCheck className="w-5 h-5 text-indigo-400" /> § 4 Pflichten der Veranstalter
+                </h2>
+                <p>
+                  (1) Veranstalter verpflichten sich, auf ihren Event-Seiten ein eigenes, vollständiges Impressum sowie alle gesetzlich erforderlichen Pflichtangaben (insbesondere Verbraucherinformationen und Widerrufsbelehrungen nach § 312g BGB) bereitzustellen.
+                </p>
+                <p>
+                  (2) Veranstalter sind verpflichtet, vor der Veröffentlichung von Events ein eigenes Stripe-Zahlungskonto anzubinden.
+                </p>
+              </section>
+            </>
+          )}
+
+          {doc?.hash && (
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-500 font-mono flex items-center gap-2">
+              <Hash className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> SHA-256 Hash: {doc.hash}
+            </div>
+          )}
         </div>
       </main>
 
@@ -109,3 +130,4 @@ export default function PlatformAGBPage() {
     </div>
   );
 }
+

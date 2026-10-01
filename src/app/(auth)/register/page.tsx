@@ -105,7 +105,19 @@ export default function RegisterPage() {
           </button>
           
           <p className="text-[11px] text-slate-500 text-center leading-relaxed mt-2">
-            Mit der Registrierung akzeptieren Sie die Plattform-Nutzungsbedingungen, die Datenschutzerklärung sowie den <span className="text-slate-300 font-semibold">Vertrag zur Auftragsverarbeitung (AVV gem. Art. 28 DSGVO)</span>.
+            Mit der Registrierung akzeptieren Sie die{" "}
+            <Link href="/agb" target="_blank" className="text-slate-300 font-semibold underline hover:text-indigo-400">
+              Plattform-Nutzungsbedingungen
+            </Link>
+            , die{" "}
+            <Link href="/datenschutz" target="_blank" className="text-slate-300 font-semibold underline hover:text-indigo-400">
+              Datenschutzerklärung
+            </Link>{" "}
+            sowie den{" "}
+            <Link href="/avv" target="_blank" className="text-slate-300 font-semibold underline hover:text-indigo-400">
+              Vertrag zur Auftragsverarbeitung (AVV gem. Art. 28 DSGVO)
+            </Link>
+            .
           </p>
         </form>
 

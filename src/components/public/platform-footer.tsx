@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Ticket, ShieldCheck, FileText, Lock, ShieldAlert, Mail } from "lucide-react";
+import { Ticket, ShieldCheck, FileText, Lock, ShieldAlert, Mail, FileCheck } from "lucide-react";
 
 export function PlatformFooter() {
   return (
@@ -30,6 +30,9 @@ export function PlatformFooter() {
             </Link>
             <Link href="/agb" className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-slate-500" /> AGB &amp; Nutzungsbedingungen
+            </Link>
+            <Link href="/avv" className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+              <FileCheck className="w-3.5 h-3.5 text-slate-500" /> AVV (Art. 28 DSGVO)
             </Link>
             <Link href="/notice-and-action" className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> Inhalte melden (DSA)
