@@ -11,11 +11,11 @@ import { Ticket, ShieldCheck, Zap, QrCode, ArrowRight } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "GateMate | Discover Events & Mobile QR Ticketing",
-  description: "Discover upcoming live events, purchase verified tickets with instant Stripe checkout, and check in seamlessly with cryptographic mobile QR passes.",
+  title: "GateMate | Events entdecken & Mobile QR-Tickets",
+  description: "Entdecken Sie bevorstehende Live-Events, kaufen Sie verifizierte Tickets mit sofortigem Stripe-Checkout und checken Sie nahtlos mit kryptographischen mobilen QR-Pässen ein.",
   openGraph: {
-    title: "GateMate | Modern Event Ticketing Platform",
-    description: "Discover upcoming events, purchase tickets with instant payouts, and scan QR passes.",
+    title: "GateMate | Moderne Event-Ticketing-Plattform",
+    description: "Entdecken Sie bevorstehende Events, kaufen Sie Tickets mit direkter Auszahlung und scannen Sie QR-Passes.",
     url: "https://gatemate.io",
     siteName: "GateMate",
     images: [
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "GateMate | Discover Events & Mobile QR Ticketing",
-    description: "Discover upcoming live events and purchase verified tickets.",
+    title: "GateMate | Events entdecken & Mobile QR-Tickets",
+    description: "Entdecken Sie bevorstehende Live-Events und kaufen Sie verifizierte Tickets.",
   },
 };
 
@@ -62,7 +62,7 @@ export default async function LandingPage() {
         venue: event.venue,
         bannerUrl: event.bannerUrl,
         startDate: event.startDate,
-        organizerName: organizer?.name || "GateMate Organizer",
+        organizerName: organizer?.name || "GateMate Veranstalter",
         organizerSlug: organizer?.organizerSlug || "demo-organizer",
         lowestPriceCents,
       };
@@ -85,11 +85,11 @@ export default async function LandingPage() {
               href="/organizer"
               className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
             >
-              Organizer Hub
+              Veranstalter-Hub
             </Link>
           ) : (
             <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors">
-              Sign In
+              Anmelden
             </Link>
           )}
         </nav>
@@ -100,16 +100,16 @@ export default async function LandingPage() {
         {/* Hero Banner */}
         <div className="text-center max-w-3xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 text-indigo-400" /> Multi-Tenant Event Ticketing & QR Check-In
+            <Zap className="w-3.5 h-3.5 text-indigo-400" /> Multi-Tenant Event-Ticketing & QR-Check-In
           </div>
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-            Discover Live Events & <br />
+            Entdecke Live-Events & <br />
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Mobile QR Tickets
+              Mobile QR-Tickets
             </span>
           </h1>
           <p className="text-base text-slate-400 max-w-2xl mx-auto">
-            Book verified tickets instantly with direct Stripe payouts. Receive cryptographic digital passes ready for gate scanning.
+            Buche verifizierte Tickets sofort mit direkter Stripe-Auszahlung. Erhalte kryptographische digitale Passes bereit für den Gate-Check-in.
           </p>
         </div>
 
@@ -120,23 +120,23 @@ export default async function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
             <ShieldCheck className="w-8 h-8 text-indigo-400" />
-            <h3 className="text-lg font-semibold text-white">Stripe Express Payouts</h3>
+            <h3 className="text-lg font-semibold text-white">Stripe Express Auszahlungen</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Direct splits & instant payouts straight to organizer bank accounts with zero hold times.
+              Direkte Auszahlungen ohne Wartezeiten direkt auf das Bankkonto des Veranstalters.
             </p>
           </div>
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
             <QrCode className="w-8 h-8 text-purple-400" />
-            <h3 className="text-lg font-semibold text-white">Cryptographic QR Passes</h3>
+            <h3 className="text-lg font-semibold text-white">Kryptographische QR-Passes</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Signed JWT QR tokens with atomic check-in validation and offline PWA camera scanner.
+              Signierte JWT-QR-Tokens mit atomarer Einlassverifizierung und offline-fähigem PWA-Kamera-Scanner.
             </p>
           </div>
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
             <Ticket className="w-8 h-8 text-cyan-400" />
-            <h3 className="text-lg font-semibold text-white">Embeddable Widgets</h3>
+            <h3 className="text-lg font-semibold text-white">Einbettbare Widgets</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              1-click shareable checkout URLs and iframe widget code for any custom website.
+              1-Klick teilbare Checkout-URLs und Iframe-Widget-Code für jede eigene Website.
             </p>
           </div>
         </div>

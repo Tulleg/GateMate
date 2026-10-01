@@ -249,7 +249,7 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
                   ? "Stripe Dashboard verwalten"
                   : connectedAccountId && !detailsSubmitted
                   ? "Onboarding fortsetzen"
-                  : "Connect Stripe Express"}{" "}
+                  : "Stripe Express verbinden"}{" "}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

@@ -402,7 +402,7 @@ export default function CheckInScannerPage() {
                     <QrCode className="w-12 h-12" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-white">Camera Check-In Ready</h3>
+                    <h3 className="font-bold text-base text-white">Kamera-Check-in bereit</h3>
                     <p className="text-xs text-slate-400 mt-1">
                       Kamera auf den QR-Code des Tickets richten.
                     </p>

@@ -80,7 +80,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     const tierRecords = await db.select().from(ticketTiers).where(eq(ticketTiers.id, ticket.ticketTierId));
     const tier = tierRecords[0];
-    const tierName = tier?.name || "General Admission";
+    const tierName = tier?.name || "Standard-Eintritt";
 
     // 3. Handle Duplicate / Already Used Ticket
     if (ticket.status === "used") {

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GateMate | Multi-Tenant Event Ticketing & QR Check-In",
-  description: "Modern, secure event ticketing platform with real-time mobile QR check-in and Stripe Connect payouts.",
+  title: "GateMate | Multi-Tenant Event-Ticketing & QR-Check-In",
+  description: "Moderne, sichere Event-Ticketing-Plattform mit Echtzeit Mobile-QR-Check-In und Stripe Connect Auszahlungen.",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="de" className="dark">
       <body className="font-sans bg-slate-950 text-slate-50 min-h-screen antialiased">
         {children}
       </body>

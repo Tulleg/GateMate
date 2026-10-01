@@ -91,7 +91,7 @@ export function StripeConnectCard({ userId, isConnected, accountId }: StripeConn
             </>
           ) : (
             <>
-              Connect Stripe Express <ArrowRight className="w-4 h-4" />
+              Stripe Express verbinden <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>

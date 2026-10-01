@@ -47,7 +47,7 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
 
       return {
         ...tkt,
-        tierName: tier?.name || "General Admission",
+        tierName: tier?.name || "Standard-Eintritt",
         qrDataUrl,
       };
     })

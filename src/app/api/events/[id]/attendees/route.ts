@@ -51,7 +51,7 @@ export async function GET(req: Request, { params }: RouteParams) {
           attendeeName: record.attendeeName,
           attendeeEmail: record.customerEmail,
           status: record.status,
-          tierName: tier?.name || "General Admission",
+          tierName: tier?.name || "Standard-Eintritt",
         };
       })
     );

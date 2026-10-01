@@ -138,7 +138,7 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-[11px] font-bold text-indigo-300 border border-slate-800">
-                        From {formatCurrency(evt.lowestPriceCents)}
+                        Ab {formatCurrency(evt.lowestPriceCents)}
                       </div>
                     </div>
 
@@ -150,11 +150,11 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
                       <div className="space-y-1.5 text-xs text-slate-400">
                         <p className="flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>{new Date(evt.startDate).toLocaleDateString()}</span>
+                          <span>{new Date(evt.startDate).toLocaleDateString("de-DE")}</span>
                         </p>
                         <p className="flex items-center gap-2">
                           <MapPin className="w-3.5 h-3.5 text-purple-400" />
-                          <span>{evt.venue || "Online / TBD"}</span>
+                          <span>{evt.venue || "Online / Noch offen"}</span>
                         </p>
                       </div>
                     </div>
@@ -165,7 +165,7 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
                       href={`/e/${evt.slug}`}
                       className="w-full py-3 rounded-2xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 border border-indigo-500/20 hover:border-transparent transition-all"
                     >
-                      Get Tickets <ExternalLink className="w-3.5 h-3.5" />
+                      Tickets buchen <ExternalLink className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>

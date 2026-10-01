@@ -45,9 +45,9 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
         </button>
 
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-white">Share & Embed Event</h2>
+          <h2 className="text-xl font-bold text-white">Event teilen &amp; einbetten</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Promote <span className="text-indigo-400 font-semibold">{eventTitle}</span> with direct checkout links or website widgets.
+            Bewerben Sie <span className="text-indigo-400 font-semibold">{eventTitle}</span> mit direkten Checkout-Links oder Website-Widgets.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
                 : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
-            <ExternalLink className="w-4 h-4" /> Shareable Link
+            <ExternalLink className="w-4 h-4" /> Teilbarer Link
           </button>
           <button
             onClick={() => setActiveTab("iframe")}
@@ -71,7 +71,7 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
                 : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
-            <Code className="w-4 h-4" /> Embed Widget (&lt;iframe&gt;)
+            <Code className="w-4 h-4" /> Einbettungs-Widget (&lt;iframe&gt;)
           </button>
         </div>
 
@@ -79,7 +79,7 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
         {activeTab === "link" ? (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-slate-300 mb-1.5 block">Public Event Checkout Page URL</label>
+              <label className="text-xs font-medium text-slate-300 mb-1.5 block">URL der öffentlichen Ticket-Seite</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -93,24 +93,24 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
                 >
                   {copiedLink ? (
                     <>
-                      <Check className="w-4 h-4" /> Copied!
+                      <Check className="w-4 h-4" /> Kopiert!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" /> Copy
+                      <Copy className="w-4 h-4" /> Kopieren
                     </>
                   )}
                 </button>
               </div>
             </div>
             <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-800/80 text-[11px] text-slate-400">
-              Share this URL directly in social media posts, email newsletters, or marketing campaigns.
+              Teilen Sie diese URL direkt in Social-Media-Posts, E-Mail-Newslettern oder Marketingkampagnen.
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-slate-300 mb-1.5 block">HTML Iframe Embed Code</label>
+              <label className="text-xs font-medium text-slate-300 mb-1.5 block">HTML-Iframe-Code zum Einbetten</label>
               <div className="relative">
                 <textarea
                   readOnly
@@ -124,11 +124,11 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
                 >
                   {copiedEmbed ? (
                     <>
-                      <Check className="w-3.5 h-3.5" /> Copied Code!
+                      <Check className="w-3.5 h-3.5" /> Code kopiert!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5" /> Copy Code
+                      <Copy className="w-3.5 h-3.5" /> Code kopieren
                     </>
                   )}
                 </button>
@@ -137,7 +137,7 @@ export function EmbedModal({ isOpen, onClose, eventId, eventSlug, eventTitle }: 
 
             {/* Preview Box */}
             <div>
-              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Live Widget Preview</label>
+              <label className="text-xs font-medium text-slate-400 mb-1.5 block">Live-Vorschau des Widgets</label>
               <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950 h-36 relative">
                 <iframe src={embedUrl} className="w-full h-full border-0 pointer-events-none opacity-90"></iframe>
               </div>

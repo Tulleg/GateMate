@@ -71,7 +71,7 @@ export function EventForm() {
   // Ticket Tiers
   const [tiers, setTiers] = useState<TicketTierInput[]>([
     {
-      name: "General Admission",
+      name: "Standard-Eintritt",
       price: "49.00",
       fee: "2.50",
       quantityAvailable: "200",

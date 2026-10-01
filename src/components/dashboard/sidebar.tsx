@@ -46,13 +46,13 @@ export function Sidebar() {
   };
 
   const organizerNavItems = [
-    { name: "Overview", href: "/organizer", icon: LayoutDashboard },
-    { name: "My Events", href: "/organizer/events", icon: Calendar },
+    { name: "Übersicht", href: "/organizer", icon: LayoutDashboard },
+    { name: "Meine Events", href: "/organizer/events", icon: Calendar },
     { name: "Buchungen & Exporte", href: "/organizer/bookings", icon: Receipt },
-    { name: "Create Event", href: "/organizer/events/new", icon: PlusCircle },
+    { name: "Event erstellen", href: "/organizer/events/new", icon: PlusCircle },
     { name: "Gate Check-In", href: "/organizer/events", icon: QrCode },
     { name: "Rechtliches & Impressum", href: "/organizer/settings/legal", icon: Scale },
-    { name: "Settings", href: "/organizer/settings", icon: Settings },
+    { name: "Einstellungen", href: "/organizer/settings", icon: Settings },
   ];
 
   const adminNavItems = [
@@ -79,7 +79,7 @@ export function Sidebar() {
           </div>
           <div>
             <h2 className="font-bold text-white text-lg leading-none">GateMate</h2>
-            <p className="text-xs text-slate-400 mt-1">{isAdmin ? "Admin Portal" : "Organizer Hub"}</p>
+            <p className="text-xs text-slate-400 mt-1">{isAdmin ? "Admin-Portal" : "Veranstalter-Hub"}</p>
           </div>
         </Link>
 

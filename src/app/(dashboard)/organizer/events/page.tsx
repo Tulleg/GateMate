@@ -58,16 +58,16 @@ export default async function OrganizerEventsPage() {
       <main className="flex-1 p-8 space-y-8 overflow-y-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Event Management</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">Event-Verwaltung</h1>
             <p className="text-sm text-slate-400 mt-1">
-              Create events, configure ticket tiers, grab iframe widgets, and launch gate scanners.
+              Events erstellen, Ticket-Kategorien konfigurieren, Iframe-Widgets nutzen und Gate-Scanner starten.
             </p>
           </div>
           <Link
             href="/organizer/events/new"
             className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all self-start md:self-auto"
           >
-            <PlusCircle className="w-4 h-4" /> Create New Event
+            <PlusCircle className="w-4 h-4" /> Neues Event erstellen
           </Link>
         </div>
 

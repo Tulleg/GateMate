@@ -39,7 +39,7 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
               type="text"
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
-              placeholder="Search by event title or keyword..."
+              placeholder="Event-Titel oder Stichwort suchen..."
               className="w-full pl-12 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -50,7 +50,7 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
               type="text"
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
-              placeholder="Search city, venue, or location..."
+              placeholder="Stadt, Veranstaltungsort oder Ort suchen..."
               className="w-full pl-12 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -61,8 +61,8 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Upcoming Public Events</h2>
-            <p className="text-xs text-slate-400 mt-1">Discover & buy tickets for verified live experiences.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Kommende Veranstaltungen</h2>
+            <p className="text-xs text-slate-400 mt-1">Entdecken Sie Live-Events & kaufen Sie verifizierte Tickets.</p>
           </div>
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400">
             {filteredEvents.length} Event{filteredEvents.length !== 1 ? "s" : ""}
@@ -72,8 +72,8 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
         {filteredEvents.length === 0 ? (
           <div className="py-16 text-center bg-slate-900/40 rounded-3xl border border-slate-800 space-y-3">
             <Ticket className="w-12 h-12 text-slate-600 mx-auto" />
-            <p className="text-base font-semibold text-slate-300">No events found matching your search</p>
-            <p className="text-xs text-slate-500">Try adjusting your title or location keywords.</p>
+            <p className="text-base font-semibold text-slate-300">Keine Events für Ihre Suche gefunden</p>
+            <p className="text-xs text-slate-500">Versuchen Sie, Ihre Suchbegriffe anzupassen.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -91,7 +91,7 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-[11px] font-bold text-indigo-300 border border-slate-800">
-                      From {formatCurrency(evt.lowestPriceCents)}
+                      Ab {formatCurrency(evt.lowestPriceCents)}
                     </div>
                   </div>
 
@@ -112,11 +112,11 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
                     <div className="space-y-2 text-xs text-slate-400 border-t border-slate-800/80 pt-3">
                       <p className="flex items-center gap-2">
                         <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span>{new Date(evt.startDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                        <span>{new Date(evt.startDate).toLocaleDateString("de-DE", { weekday: "short", month: "short", day: "numeric" })}</span>
                       </p>
                       <p className="flex items-center gap-2 truncate">
                         <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                        <span className="truncate">{evt.venue || "Online / TBD"}</span>
+                        <span className="truncate">{evt.venue || "Online / Noch offen"}</span>
                       </p>
                     </div>
                   </div>
@@ -128,7 +128,7 @@ export function EventSearch({ events }: { events: PublicEventCard[] }) {
                     href={`/e/${evt.slug}`}
                     className="w-full py-3 rounded-2xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white font-bold text-xs flex items-center justify-center gap-2 border border-indigo-500/20 hover:border-transparent transition-all"
                   >
-                    Get Tickets <ArrowRight className="w-4 h-4" />
+                    Tickets sichern <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
