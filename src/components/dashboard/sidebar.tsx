@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Ticket, LayoutDashboard, Calendar, QrCode, Shield, PlusCircle, Settings, Scale, LogOut, Users } from "lucide-react";
+import { Ticket, LayoutDashboard, Calendar, QrCode, Shield, PlusCircle, Settings, Scale, LogOut, Users, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -48,6 +48,7 @@ export function Sidebar() {
   const organizerNavItems = [
     { name: "Overview", href: "/organizer", icon: LayoutDashboard },
     { name: "My Events", href: "/organizer/events", icon: Calendar },
+    { name: "Buchungen & Exporte", href: "/organizer/bookings", icon: Receipt },
     { name: "Create Event", href: "/organizer/events/new", icon: PlusCircle },
     { name: "Gate Check-In", href: "/organizer/events", icon: QrCode },
     { name: "Rechtliches & Impressum", href: "/organizer/settings/legal", icon: Scale },
