@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
 import { db } from "@/db";
 import { events, ticketTiers, users, orders } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import { createOrderLegalSnapshot } from "@/lib/legal-server";
+import { cleanupExpiredOrders } from "@/lib/orders-cleanup";
 
 export async function POST(req: Request) {
   try {
+    // 0. Auto-clean expired pending reservations before processing checkout
+    await cleanupExpiredOrders();
+
     const { eventId, tierId, quantity = 1, buyerEmail, buyerName } = await req.json();
 
     if (!eventId || !tierId || !buyerEmail || !buyerName) {
@@ -29,9 +33,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Ticket tier not found" }, { status: 404 });
     }
 
-    // Check capacity
-    if (tier.quantitySold + numQuantity > tier.quantityAvailable) {
-      return NextResponse.json({ error: "Requested quantity exceeds remaining ticket capacity" }, { status: 400 });
+    // Calculate active pending reserved tickets for this tier
+    const reservedRecords = await db
+      .select({
+        totalReserved: sql<number>`COALESCE(SUM(${orders.quantity}), 0)`,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.ticketTierId, tier.id),
+          eq(orders.status, "pending"),
+          gt(orders.expiresAt, new Date())
+        )
+      );
+
+    const activeReservedQuantity = Number(reservedRecords[0]?.totalReserved || 0);
+
+    // Check total capacity including active pending reservations
+    if (tier.quantitySold + activeReservedQuantity + numQuantity > tier.quantityAvailable) {
+      return NextResponse.json(
+        {
+          error:
+            "Ticketkauf derzeit nicht möglich: Das verfügbare Kontingent ist aktuell durch ausstehende Kaufvorgänge reserviert. Bitte versuche es in wenigen Minuten erneut.",
+        },
+        { status: 400 }
+      );
     }
 
     // 3. Fetch Organizer
@@ -84,14 +110,21 @@ export async function POST(req: Request) {
     const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || null;
     const userAgent = req.headers.get("user-agent") || null;
 
+    // 30 Minutes Reservation Window
+    const RESERVATION_MINUTES = 30;
+    const expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
+
     // 4. Create Order in Database (status: pending)
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     await db.insert(orders).values({
       id: orderId,
       eventId: event.id,
+      ticketTierId: tier.id,
+      quantity: numQuantity,
       customerEmail: buyerEmail,
       totalCents: totalCents,
       status: "pending",
+      expiresAt: expiresAt,
       termsSnapshot,
       legalProfileSnapshot,
       documentVersionsSnapshot,
@@ -123,6 +156,7 @@ export async function POST(req: Request) {
       ],
       mode: "payment",
       customer_email: buyerEmail,
+      expires_at: Math.floor(expiresAt.getTime() / 1000),
       custom_text: {
         submit: {
           message: `Vertragspartner und Verkäufer dieser Tickets ist ${organizerLegalName}. GateMate agiert ausschließlich als technischer Dienstleister.`,

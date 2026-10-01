@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/db";
 import { users, orders, tickets, ticketTiers, events } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { generateSignedTicketJwt } from "@/lib/qr";
 import { sendTicketConfirmationEmail } from "@/lib/email";
 import { formatLegalAddress } from "@/lib/legal";
@@ -162,6 +162,37 @@ export async function POST(req: Request) {
           } catch (mailErr: any) {
             console.error("Failed to trigger Resend confirmation email:", mailErr?.message || mailErr);
           }
+        }
+        break;
+      }
+
+      case "checkout.session.expired": {
+        const session = eventObj.data.object as any;
+        const { orderId } = session.metadata || {};
+
+        if (orderId) {
+          console.log(`[STRIPE WEBHOOK] Checkout session expired for Order ${orderId}. Marking status as failed.`);
+          await db
+            .update(orders)
+            .set({ status: "failed", updatedAt: new Date() })
+            .where(and(eq(orders.id, orderId), eq(orders.status, "pending")));
+        } else if (session.id) {
+          await db
+            .update(orders)
+            .set({ status: "failed", updatedAt: new Date() })
+            .where(and(eq(orders.stripeCheckoutSessionId, session.id), eq(orders.status, "pending")));
+        }
+        break;
+      }
+
+      case "payment_intent.payment_failed": {
+        const paymentIntent = eventObj.data.object as any;
+        console.log(`[STRIPE WEBHOOK] Payment intent failed: ${paymentIntent.id}`);
+        if (paymentIntent.id) {
+          await db
+            .update(orders)
+            .set({ status: "failed", updatedAt: new Date() })
+            .where(and(eq(orders.stripePaymentIntentId, paymentIntent.id), eq(orders.status, "pending")));
         }
         break;
       }
