@@ -1,0 +1,1 @@
+ALTER TYPE "public"."legal_document_type" ADD VALUE 'platform_avv' BEFORE 'organizer_impressum';

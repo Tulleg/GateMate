@@ -6,6 +6,7 @@ export const legalDocumentTypeEnum = pgEnum("legal_document_type", [
   "platform_impressum",
   "platform_privacy",
   "platform_terms",
+  "platform_avv",
   // Organizer Documents (organizer_id IS NOT NULL)
   "organizer_impressum",
   "organizer_privacy",
