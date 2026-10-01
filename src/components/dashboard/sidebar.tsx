@@ -17,11 +17,13 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(pathname.startsWith("/admin"));
 
   useEffect(() => {
     const isSuperAdmin = pathname.startsWith("/admin") || document.cookie.includes("gatemate_role=superadmin");
-    setIsAdmin(isSuperAdmin);
+    if (isSuperAdmin) {
+      setIsAdmin(true);
+    }
 
     fetch("/api/auth/me")
       .then((res) => res.json())
@@ -62,12 +64,12 @@ export function Sidebar() {
     { name: "Plattform-Rechtstexte", href: "/admin/legal", icon: Scale },
   ];
 
-
-  const navItems = isAdmin ? adminNavItems : organizerNavItems;
+  const effectiveIsAdmin = isAdmin || pathname.startsWith("/admin");
+  const navItems = effectiveIsAdmin ? adminNavItems : organizerNavItems;
 
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : isAdmin ? "SA" : "EO";
+    : effectiveIsAdmin ? "SA" : "EO";
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between p-4 shrink-0 min-h-screen">
@@ -79,7 +81,7 @@ export function Sidebar() {
           </div>
           <div>
             <h2 className="font-bold text-white text-lg leading-none">GateMate</h2>
-            <p className="text-xs text-slate-400 mt-1">{isAdmin ? "Admin-Portal" : "Veranstalter-Hub"}</p>
+            <p className="text-xs text-slate-400 mt-1">{effectiveIsAdmin ? "Admin-Portal" : "Veranstalter-Hub"}</p>
           </div>
         </Link>
 
@@ -120,16 +122,16 @@ export function Sidebar() {
         <div className="flex items-center gap-2 min-w-0">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0",
-            isAdmin ? "bg-gradient-to-tr from-red-500 to-rose-600" : "bg-gradient-to-tr from-indigo-500 to-purple-500"
+            effectiveIsAdmin ? "bg-gradient-to-tr from-red-500 to-rose-600" : "bg-gradient-to-tr from-indigo-500 to-purple-500"
           )}>
             {initials}
           </div>
           <div className="truncate">
             <p className="text-xs font-semibold text-white truncate">
-              {user?.name || (isAdmin ? "GateMate Admin" : "Veranstalter")}
+              {user?.name || (effectiveIsAdmin ? "GateMate Admin" : "Veranstalter")}
             </p>
             <p className="text-[10px] text-slate-400 truncate">
-              {user?.email || (isAdmin ? "admin" : "organizer")}
+              {user?.email || (effectiveIsAdmin ? "admin" : "organizer")}
             </p>
           </div>
         </div>
