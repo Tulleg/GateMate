@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#17153a" />
+    </linearGradient>
+    <linearGradient id="ticketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4f46e5" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#bgGrad)" />
+  <rect width="504" height="504" x="4" y="4" rx="112" fill="none" stroke="#312e81" stroke-width="4" stroke-opacity="0.7" />
+
+  <circle cx="256" cy="256" r="160" fill="#6366f1" opacity="0.18" />
+
+  <g filter="url(#dropShadow)">
+    <path d="
+      M 148 100 
+      H 364 
+      A 28 28 0 0 1 392 128 
+      V 224 
+      A 32 32 0 0 0 392 288 
+      V 384 
+      A 28 28 0 0 1 364 412 
+      H 148 
+      A 28 28 0 0 1 120 384 
+      V 288 
+      A 32 32 0 0 0 120 224 
+      V 128 
+      A 28 28 0 0 1 148 100 
+      Z" 
+      fill="url(#ticketGrad)" 
+    />
+    
+    <line x1="152" y1="256" x2="360" y2="256" stroke="#090d16" stroke-width="7" stroke-dasharray="14 10" stroke-linecap="round" opacity="0.85" />
+
+    <g transform="translate(256, 178)" fill="#ffffff">
+      <rect x="-46" y="-46" width="92" height="92" rx="20" fill="none" stroke="#ffffff" stroke-width="10" />
+      <rect x="-24" y="-24" width="20" height="20" rx="4" fill="#ffffff" />
+      <rect x="4" y="-24" width="20" height="20" rx="4" fill="#ffffff" />
+      <rect x="-24" y="4" width="20" height="20" rx="4" fill="#ffffff" />
+      <rect x="4" y="4" width="20" height="20" rx="4" fill="#38bdf8" />
+    </g>
+
+    <g transform="translate(256, 334)">
+      <circle cx="0" cy="0" r="32" fill="#ffffff" />
+      <path d="M -12 2 L -4 10 L 12 -6" fill="none" stroke="#4f46e5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

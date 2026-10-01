@@ -7,6 +7,9 @@ import { eq, desc } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
 import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2, Scale, Mail } from "lucide-react";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
+import { StripeFeeSettingsCard } from "@/components/dashboard/stripe-fee-settings-card";
+
 
 import { CreateOrganizerModal } from "@/components/dashboard/create-organizer-modal";
 import { revalidatePath } from "next/cache";
@@ -26,6 +29,9 @@ export default async function SuperAdminDashboard() {
     revalidatePath("/admin");
   }
 
+  // Fetch current platform Stripe fee percentage from DB
+  const currentFeePercent = await getPlatformFeePercent();
+
   // Fetch all organizers
   const allOrganizers = await db
     .select()
@@ -40,7 +46,7 @@ export default async function SuperAdminDashboard() {
   const allTicketsList = await db.select().from(tickets);
 
   const totalGrossRevenueCents = allOrdersList.reduce((acc, o) => acc + (o.status === "completed" ? o.totalCents : 0), 0);
-  const platformFeeCutCents = Math.round(totalGrossRevenueCents * 0.05); // 5% platform fee
+  const platformFeeCutCents = Math.round(totalGrossRevenueCents * (currentFeePercent / 100));
   const totalTicketsIssued = allTicketsList.length;
 
   return (
@@ -84,6 +90,9 @@ export default async function SuperAdminDashboard() {
           </div>
         </div>
 
+        {/* Dynamic Stripe Fee Configuration Card */}
+        <StripeFeeSettingsCard initialFeePercent={currentFeePercent} />
+
         {/* Global Platform Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -115,7 +124,7 @@ export default async function SuperAdminDashboard() {
 
           <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
             <div className="flex justify-between items-center text-slate-400">
-              <span className="text-xs font-semibold uppercase tracking-wider">Plattform-Einnahmen (5%)</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Plattform-Einnahmen ({currentFeePercent}%)</span>
               <DollarSign className="w-4 h-4 text-emerald-400" />
             </div>
             <p className="text-3xl font-bold text-emerald-400">
@@ -126,6 +135,7 @@ export default async function SuperAdminDashboard() {
             </p>
           </div>
         </div>
+
 
         {/* Section 1: Registered Organizers */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">

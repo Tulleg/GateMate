@@ -6,8 +6,11 @@ import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { orderCreateSchema, OrderCreateInput } from "@/lib/validation";
 import { ActionResult, formatZodErrors } from "@/types";
-import { getOrganizerStripeClient, PLATFORM_FEE_PERCENT } from "@/lib/stripe";
+import { getOrganizerStripeClient } from "@/lib/stripe";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { formatLegalAddress } from "@/lib/legal";
+
+
 
 export async function createCheckoutSessionAction(
   input: unknown
@@ -134,7 +137,8 @@ export async function createCheckoutSessionAction(
     };
 
     if (!isDirectKey && organizer?.stripeConnectedAccountId) {
-      const applicationFeeAmount = Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
+      const platformFeePercent = await getPlatformFeePercent();
+      const applicationFeeAmount = Math.round(totalCents * (platformFeePercent / 100));
       sessionOptions.payment_intent_data = {
         application_fee_amount: applicationFeeAmount,
         transfer_data: {
@@ -142,6 +146,7 @@ export async function createCheckoutSessionAction(
         },
       };
     }
+
 
     const session = await stripeClient.checkout.sessions.create(sessionOptions);
 

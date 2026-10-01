@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { stripe, PLATFORM_FEE_PERCENT, getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
+import { stripe, getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { db } from "@/db";
+
 import { events, ticketTiers, users, orders } from "@/db/schema";
 import { eq, and, gt, sql } from "drizzle-orm";
 import { createOrderLegalSnapshot } from "@/lib/legal-server";
 import { cleanupExpiredOrders } from "@/lib/orders-cleanup";
+
 
 export async function POST(req: Request) {
   try {
@@ -78,7 +81,9 @@ export async function POST(req: Request) {
     }
 
     const totalCents = (tier.priceCents + (tier.feeCents || 0)) * numQuantity;
-    const platformFeeCents = Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
+    const platformFeePercent = await getPlatformFeePercent();
+    const platformFeeCents = Math.round(totalCents * (platformFeePercent / 100));
+
 
     const legalProfileSnapshot = JSON.stringify({
       legalName: organizer?.legalName || organizer?.name || "Veranstalter",
