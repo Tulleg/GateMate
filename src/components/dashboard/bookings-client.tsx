@@ -396,7 +396,92 @@ export function BookingsClient() {
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-slate-800/80 rounded-xl">
+        {/* Mobile View: Vertical Cards (< 768px) */}
+        <div className="block md:hidden space-y-3">
+          {loading ? (
+            <div className="py-12 text-center text-slate-500 text-xs">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-indigo-500 mb-2" />
+              Buchungen werden geladen...
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="py-12 text-center text-slate-500 text-xs">
+              Keine Buchungen entsprechen deinen Filterkriterien.
+            </div>
+          ) : (
+            bookings.map((booking) => {
+              const dateObj = new Date(booking.createdAt);
+              const dateStr = dateObj.toLocaleDateString("de-DE");
+              const timeStr = dateObj.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+              const isExpanded = expandedBookingId === booking.id;
+
+              return (
+                <div key={booking.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{booking.eventTitle}</h4>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{booking.customerEmail}</p>
+                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                        ID: {booking.id} &bull; {dateStr} {timeStr}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border shrink-0 ${
+                        booking.status === "completed"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : booking.status === "refunded"
+                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      }`}
+                    >
+                      {booking.status === "completed" ? "Bezahlt" : booking.status === "refunded" ? "Erstattet" : booking.status}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[11px] text-slate-400">{booking.ticketsCount} Ticket{booking.ticketsCount > 1 ? "s" : ""}</span>
+                      <p className="font-bold text-sm text-white">
+                        <FormatCurrencyClient amountCents={booking.totalCents} />
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => setExpandedBookingId(isExpanded ? null : booking.id)}
+                      className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors min-h-[44px]"
+                    >
+                      Details {isExpanded ? <ChevronUp className="w-4 h-4 text-indigo-400" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Expandable Mobile Ticket Details */}
+                  {isExpanded && (
+                    <div className="pt-3 border-t border-slate-800 space-y-2">
+                      <h5 className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                        Tickets ({booking.tickets.length})
+                      </h5>
+                      <div className="space-y-2">
+                        {booking.tickets.map((t) => (
+                          <div key={t.id} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center text-xs">
+                            <div>
+                              <p className="font-semibold text-white">{t.attendeeName}</p>
+                              <p className="text-[10px] text-slate-400">{t.tierName}</p>
+                            </div>
+                            <span className="font-bold text-indigo-300">
+                              <FormatCurrencyClient amountCents={t.priceCents} />
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Full Table (>= 768px) */}
+        <div className="hidden md:block overflow-x-auto border border-slate-800/80 rounded-xl">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase text-[10px] tracking-wider">

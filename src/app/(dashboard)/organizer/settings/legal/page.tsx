@@ -30,6 +30,7 @@ import {
   LegalDocumentType,
   EventTypeKey,
 } from "@/lib/legal";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 export default function OrganizerLegalSettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "documents" | "modules">("profile");
@@ -268,9 +269,9 @@ export default function OrganizerLegalSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-slate-950 text-slate-50">
+      <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
         <Sidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-w-0">
           <div className="flex items-center gap-3 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
             <span>Lade Rechtliche Einstellungen...</span>
@@ -281,10 +282,10 @@ export default function OrganizerLegalSettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50">
+    <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 space-y-8 overflow-y-auto max-w-5xl">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto max-w-5xl min-w-0">
         {/* Header Bar */}
         <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -971,8 +972,8 @@ export default function OrganizerLegalSettingsPage() {
                         SHA-256 Hash: {h.hash}
                       </p>
                       {h.content && (
-                        <div className="p-3 rounded-xl bg-slate-900/60 text-slate-300 text-[11px] font-mono max-h-32 overflow-y-auto whitespace-pre-wrap">
-                          {h.content}
+                        <div className="p-3 rounded-xl bg-slate-900/60 text-slate-300 text-[11px] max-h-32 overflow-y-auto">
+                          <MarkdownRenderer content={h.content} />
                         </div>
                       )}
                     </div>

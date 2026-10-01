@@ -12,10 +12,10 @@ export default async function CreateEventPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50">
+    <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 space-y-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto min-w-0">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">Neues Event erstellen</h1>
           <p className="text-sm text-slate-400 mt-1">

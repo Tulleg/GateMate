@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, ShieldCheck, Scale, Hash, X, BookOpen, Layers, CheckCircle2 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface OrderLegalSnapshotModalProps {
   orderId: string;
@@ -31,7 +32,7 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-bold flex items-center gap-2 transition-all print:hidden"
+        className="px-4 py-2.5 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-bold flex items-center justify-center gap-2 transition-all print:hidden min-h-[44px]"
       >
         <FileText className="w-4 h-4 text-indigo-400" />
         <span>Geltende Rechtstexte zum Kaufzeitpunkt einsehen</span>
@@ -39,7 +40,7 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full p-6 sm:p-8 space-y-6 shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full p-4 sm:p-8 space-y-6 shadow-2xl max-h-[90dvh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4 shrink-0">
               <div>
@@ -53,7 +54,7 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -133,8 +134,8 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
                         </div>
 
                         {doc.content ? (
-                          <div className="p-3 rounded-xl bg-slate-900 text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                            {doc.content}
+                          <div className="p-3 rounded-xl bg-slate-900 text-xs leading-relaxed max-h-48 overflow-y-auto">
+                            <MarkdownRenderer content={doc.content} />
                           </div>
                         ) : doc.url ? (
                           <a
@@ -165,8 +166,8 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
                           <span className="font-mono text-xs text-indigo-400">Version {doc.version}</span>
                         </div>
                         {doc.content && (
-                          <div className="p-3 rounded-xl bg-slate-900 text-xs text-slate-300 font-mono whitespace-pre-wrap">
-                            {doc.content}
+                          <div className="p-3 rounded-xl bg-slate-900 text-xs leading-relaxed max-h-48 overflow-y-auto">
+                            <MarkdownRenderer content={doc.content} />
                           </div>
                         )}
                       </div>
@@ -191,8 +192,8 @@ export function OrderLegalSnapshotModal({ orderId, rawSnapshot }: OrderLegalSnap
                         </div>
 
                         {doc.content && (
-                          <div className="p-3 rounded-xl bg-slate-900 text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                            {doc.content}
+                          <div className="p-3 rounded-xl bg-slate-900 text-xs leading-relaxed max-h-48 overflow-y-auto">
+                            <MarkdownRenderer content={doc.content} />
                           </div>
                         )}
 

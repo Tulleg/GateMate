@@ -184,9 +184,73 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
         </button>
       </div>
 
-      {/* Users Table */}
+      {/* Users Container: Mobile Card List & Desktop Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Vertical Cards (< 768px) */}
+        <div className="block md:hidden p-4 space-y-3">
+          {filteredUsers.length === 0 ? (
+            <div className="p-6 text-center text-slate-500 text-xs">
+              Keine Benutzer gefunden.
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div key={user.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-slate-800 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-700">
+                      {user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
+                    </div>
+                    <div className="truncate">
+                      <p className="font-semibold text-white text-sm truncate">{user.name || "Kein Name"}</p>
+                      <p className="text-[11px] text-slate-300 font-mono truncate">{user.email}</p>
+                    </div>
+                  </div>
+
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    className={`px-2 py-1 rounded-lg text-xs font-semibold font-mono border focus:outline-none shrink-0 ${
+                      user.role === "superadmin"
+                        ? "bg-red-500/10 text-red-400 border-red-500/30"
+                        : user.role === "organizer"
+                        ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
+                        : "bg-slate-800 text-slate-300 border-slate-700"
+                    }`}
+                  >
+                    <option value="superadmin">superadmin</option>
+                    <option value="organizer">organizer</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-[10px] text-slate-500 font-mono">ID: {user.id.slice(0, 8)}...</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingUserId(user.id);
+                        setEditMessage(null);
+                      }}
+                      className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-all min-h-[44px]"
+                    >
+                      <Key className="w-3.5 h-3.5 text-indigo-400" /> PW-Reset
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteUser(user.id, user.email)}
+                      className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      title="Benutzer löschen"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Full Table (>= 768px) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
               <tr>
@@ -245,7 +309,7 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
                             setEditingUserId(user.id);
                             setEditMessage(null);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition-all"
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition-all min-h-[44px]"
                           title="Passwort zurücksetzen"
                         >
                           <Key className="w-3.5 h-3.5 text-indigo-400" /> PW-Reset
@@ -253,7 +317,7 @@ export function UserManagementTable({ initialUsers }: UserManagementProps) {
 
                         <button
                           onClick={() => handleDeleteUser(user.id, user.email)}
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Benutzer löschen"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

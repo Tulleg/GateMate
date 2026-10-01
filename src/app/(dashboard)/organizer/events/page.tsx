@@ -52,10 +52,10 @@ export default async function OrganizerEventsPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50">
+    <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 space-y-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto min-w-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">Event-Verwaltung</h1>

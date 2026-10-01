@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Ticket, ArrowLeft, Building2, Mail, Phone, Scale, Hash } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
 import { getPublishedDocument } from "@/lib/legal-server";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 export const metadata: Metadata = {
   title: "Impressum | GateMate Event Ticketing Platform",
@@ -53,9 +54,7 @@ export default async function PlatformImpressumPage() {
 
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl">
           {doc?.content ? (
-            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
-              {doc.content}
-            </div>
+            <MarkdownRenderer content={doc.content} />
           ) : (
             <>
               {/* Default Fallback Content */}

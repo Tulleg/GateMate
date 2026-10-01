@@ -4,6 +4,8 @@ import { Ticket, ArrowLeft, ShieldCheck, FileText, Building2, Scale, AlertCircle
 import { PlatformFooter } from "@/components/public/platform-footer";
 import { getPublishedDocument } from "@/lib/legal-server";
 
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
 export const metadata: Metadata = {
   title: "AGB & Nutzungsbedingungen | GateMate Event Ticketing Platform",
   description: "Allgemeine Nutzungsbedingungen für die Software-Plattform GateMate und Rollentrennung zwischen Plattform und Veranstalter.",
@@ -64,9 +66,7 @@ export default async function PlatformAGBPage() {
           </div>
 
           {doc?.content ? (
-            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
-              {doc.content}
-            </div>
+            <MarkdownRenderer content={doc.content} />
           ) : (
             <>
               {/* Fallback Content */}

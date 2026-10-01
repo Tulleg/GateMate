@@ -132,7 +132,7 @@ export default function CheckInScannerPage() {
       <div className="flex border-b border-slate-800 bg-slate-900/50 p-1">
         <button
           onClick={() => setActiveTab("camera")}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all min-h-[44px] ${
             activeTab === "camera"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
               : "text-slate-400 hover:text-white"
@@ -142,7 +142,7 @@ export default function CheckInScannerPage() {
         </button>
         <button
           onClick={() => setActiveTab("manual")}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-3 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all min-h-[44px] ${
             activeTab === "manual"
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
               : "text-slate-400 hover:text-white"
@@ -166,7 +166,7 @@ export default function CheckInScannerPage() {
                 value={searchQuery}
                 onChange={(e) => handleManualSearch(e.target.value)}
                 placeholder="Teilnehmer nach Name oder E-Mail suchen..."
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 

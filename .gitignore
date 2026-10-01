@@ -39,3 +39,6 @@ Thumbs.db
 *.swp
 *.swo
 
+# private / local docs (not committed to git)
+/private_legal/
+

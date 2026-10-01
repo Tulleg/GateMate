@@ -112,9 +112,9 @@ export default function PlatformLegalAdminPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-slate-950 text-slate-50">
+      <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
         <Sidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-w-0">
           <div className="flex items-center gap-3 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
             <span>Lade Plattform-Rechtstexte...</span>
@@ -125,10 +125,10 @@ export default function PlatformLegalAdminPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50">
+    <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 space-y-8 overflow-y-auto max-w-5xl">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto max-w-5xl min-w-0">
         {/* Header */}
         <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

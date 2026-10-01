@@ -165,17 +165,17 @@ export function QrScanner({ onVerifyToken, autoStart = false }: QrScannerProps) 
                   <button
                     onClick={toggleFacingMode}
                     title="Kamera wechseln (Vorne / Hinten)"
-                    className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition-colors backdrop-blur-md"
+                    className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition-colors backdrop-blur-md min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
-                    <SwitchCamera className="w-4 h-4" />
+                    <SwitchCamera className="w-5 h-5" />
                   </button>
                 )}
                 <button
                   onClick={stopScanner}
                   title="Kamera stoppen"
-                  className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-colors backdrop-blur-md"
+                  className="p-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-colors backdrop-blur-md min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
-                  <VideoOff className="w-4 h-4" />
+                  <VideoOff className="w-5 h-5" />
                 </button>
               </div>
             </div>

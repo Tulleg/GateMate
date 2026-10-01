@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText, Building2, Hash } from "lucide-react";
 import { formatLegalAddress } from "@/lib/legal";
 import { getPublishedDocument } from "@/lib/legal-server";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface PageProps {
   params: Promise<{ organizerSlug: string }>;
@@ -96,9 +97,7 @@ Gemäß § 312g Abs. 2 Nr. 9 BGB besteht bei Dienstleistungen im Zusammenhang mi
 
         {/* AGB Document Body */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6 shadow-2xl">
-          <div className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line font-sans">
-            {contentToRender}
-          </div>
+          <MarkdownRenderer content={contentToRender} />
 
           {doc?.hash && (
             <div className="pt-4 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex items-center gap-1.5">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Ticket, ArrowLeft, Lock, ShieldCheck, Database, FileText, CheckCircle2, Hash } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
 import { getPublishedDocument } from "@/lib/legal-server";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GateMate Event Ticketing Platform",
@@ -53,9 +54,7 @@ export default async function PlatformDatenschutzPage() {
 
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl text-slate-300 text-sm leading-relaxed">
           {doc?.content ? (
-            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap font-sans">
-              {doc.content}
-            </div>
+            <MarkdownRenderer content={doc.content} />
           ) : (
             <>
               {/* Fallback Content */}

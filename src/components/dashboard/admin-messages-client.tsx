@@ -183,7 +183,7 @@ export function AdminMessagesClient({ initialMessages }: { initialMessages: Cont
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Suchen nach Name, Mail, Betreff..."
-            className="w-full pl-9 pr-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-base sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>

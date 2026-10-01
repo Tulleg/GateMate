@@ -72,7 +72,7 @@ export default async function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between">
+      <header className="px-4 sm:px-6 py-4 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Ticket className="w-6 h-6 text-indigo-400" />
           <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
@@ -83,12 +83,12 @@ export default async function LandingPage() {
           {isLoggedIn ? (
             <Link
               href="/organizer"
-              className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
+              className="text-xs px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all min-h-[44px] flex items-center justify-center"
             >
               Veranstalter-Hub
             </Link>
           ) : (
-            <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors">
+            <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors py-2 px-3 min-h-[44px] flex items-center">
               Anmelden
             </Link>
           )}
@@ -96,20 +96,20 @@ export default async function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-24 space-y-16">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-24 space-y-12 sm:space-y-16">
         {/* Hero Banner */}
-        <div className="text-center max-w-3xl mx-auto space-y-6">
+        <div className="text-center max-w-3xl mx-auto space-y-4 sm:space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
             <Zap className="w-3.5 h-3.5 text-indigo-400" /> Multi-Tenant Event-Ticketing & QR-Check-In
           </div>
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-            Entdecke Live-Events & <br />
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            Entdecke Live-Events & <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               Mobile QR-Tickets
             </span>
           </h1>
           <p className="text-base text-slate-400 max-w-2xl mx-auto">
-            Buche verifizierte Tickets sofort mit direkter Stripe-Auszahlung. Erhalte kryptographische digitale Passes bereit für den Gate-Check-in.
+            Buche verifizierte Tickets sofort mit direkter Stripe-Auszahlung. Erhalte kryptographische digitale Tickets bereit für den Check-in.
           </p>
         </div>
 

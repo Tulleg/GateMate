@@ -83,26 +83,26 @@ export function EventsList({ events }: { events: EventItem[] }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/organizer/events/${evt.id}/edit`}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center justify-center gap-1.5 transition-colors min-h-[44px]"
                 >
                   <Edit3 className="w-4 h-4 text-amber-400" /> Bearbeiten
                 </Link>
                 <Link
                   href={`/check-in/${evt.id}`}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center justify-center gap-1.5 transition-colors min-h-[44px]"
                 >
                   <QrCode className="w-4 h-4 text-indigo-400" /> Gate Scanner
                 </Link>
                 <button
                   onClick={() => openEmbedModal(evt)}
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-300 border border-indigo-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-300 border border-indigo-500/20 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors min-h-[44px]"
                 >
                   <Code className="w-4 h-4 text-indigo-400" /> Teilen &amp; Einbetten
                 </button>
                 <Link
                   href={`/e/${evt.slug}`}
                   target="_blank"
-                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-colors min-h-[44px]"
                 >
                   Öffentliche Event-Seite <ExternalLink className="w-3.5 h-3.5" />
                 </Link>

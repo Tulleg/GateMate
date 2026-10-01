@@ -136,10 +136,14 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
                     </div>
                   </div>
 
-                  {/* Right QR Code Image */}
-                  <div className="flex flex-col items-center gap-2 bg-white p-4 rounded-2xl border border-slate-700 shrink-0 shadow-lg print:border-black">
-                    <img src={ticket.qrDataUrl} alt="Ticket QR Code" className="w-36 h-36 object-contain" />
-                    <span className="text-[9px] font-mono text-slate-600 truncate max-w-[140px]">
+                  {/* Centered & Responsive High-Contrast QR Code Card */}
+                  <div className="w-full sm:w-auto flex flex-col items-center justify-center bg-white p-5 sm:p-6 rounded-2xl border-2 border-slate-200 shrink-0 shadow-2xl print:border-black mx-auto">
+                    <img
+                      src={ticket.qrDataUrl}
+                      alt="Ticket QR Code"
+                      className="w-full max-w-[280px] sm:max-w-[320px] aspect-square object-contain mx-auto"
+                    />
+                    <span className="text-[10px] font-mono text-slate-800 font-bold truncate max-w-[240px] text-center mt-2 tracking-tight">
                       {ticket.id}
                     </span>
                   </div>

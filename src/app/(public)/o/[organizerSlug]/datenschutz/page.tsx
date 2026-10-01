@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, Building2 } from "lucide-react";
 import { formatLegalAddress } from "@/lib/legal";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface PageProps {
   params: Promise<{ organizerSlug: string }>;
@@ -91,9 +92,7 @@ Die Zahlungsabwicklung erfolgt über den zertifizierten Zahlungsdienstleister St
 
         {/* Datenschutz Document Body */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6 shadow-2xl">
-          <div className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed whitespace-pre-line font-sans">
-            {contentToRender}
-          </div>
+          <MarkdownRenderer content={contentToRender} />
         </div>
       </main>
     </div>
