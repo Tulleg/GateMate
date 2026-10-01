@@ -6,7 +6,7 @@ import { users, events, ticketTiers, orders, tickets } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
-import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2, Scale } from "lucide-react";
+import { Shield, Users, Calendar, Ticket, DollarSign, CheckCircle2, Scale, Mail } from "lucide-react";
 
 import { CreateOrganizerModal } from "@/components/dashboard/create-organizer-modal";
 import { revalidatePath } from "next/cache";
@@ -62,6 +62,12 @@ export default async function SuperAdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/admin/messages"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 border border-indigo-500/30 transition-colors shadow-lg shadow-indigo-600/20"
+            >
+              <Mail className="w-4 h-4" /> Nachrichten &amp; DSA
+            </Link>
             <Link
               href="/admin/users"
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Ticket, ShieldCheck, FileText, Lock, ShieldAlert } from "lucide-react";
+import { Ticket, ShieldCheck, FileText, Lock, ShieldAlert, Mail } from "lucide-react";
 
 export function PlatformFooter() {
   return (
@@ -19,6 +19,9 @@ export function PlatformFooter() {
           </div>
 
           <div className="flex flex-wrap items-center gap-6 text-xs font-medium">
+            <Link href="/kontakt" className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-slate-500" /> Kontakt &amp; Support
+            </Link>
             <Link href="/impressum" className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-500" /> Impressum
             </Link>

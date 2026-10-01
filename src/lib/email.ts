@@ -250,3 +250,151 @@ export async function sendPasswordResetEmail(params: PasswordResetEmailParams) {
     return { success: false, error: err?.message || err };
   }
 }
+
+export interface AdminMessageNotificationEmailParams {
+  id: string;
+  type: "general" | "dsa_notice";
+  name: string;
+  email: string;
+  category: string;
+  subject: string;
+  message: string;
+  targetUrl?: string | null;
+  violationType?: string | null;
+  legalReason?: string | null;
+}
+
+export interface ContactConfirmationEmailParams {
+  name: string;
+  email: string;
+  subject: string;
+  type: "general" | "dsa_notice";
+}
+
+/**
+ * Sends a notification email to the Superadmin when a new contact or DSA message is received.
+ */
+export async function sendAdminNewMessageNotificationEmail(params: AdminMessageNotificationEmailParams) {
+  const { id, type, name, email, category, subject, message, targetUrl, violationType, legalReason } = params;
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@gatemate.io";
+
+  if (!resend) {
+    console.warn(
+      `[RESEND SKIPPED] RESEND_API_KEY is not set. Admin notification for message ${id} (${email}) was not sent.`
+    );
+    return { success: false, error: "RESEND_API_KEY missing" };
+  }
+
+  const isDsa = type === "dsa_notice";
+  const dashboardUrl = `${APP_URL}/admin/messages`;
+  const subjectPrefix = isDsa ? "🚨 [DSA-Meldung Art. 16]" : "📩 [Neue Anfragen]";
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="utf-8">
+      <title>Neue Nachricht auf GateMate</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #020617; color: #f8fafc; padding: 24px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; padding: 32px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 12px; }
+        .badge-dsa { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-general { background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .card { background-color: #1e293b; border-radius: 16px; padding: 20px; margin: 20px 0; border: 1px solid #334155; font-size: 14px; }
+        .btn { display: block; width: 100%; text-align: center; background-color: #4f46e5; color: #ffffff; font-weight: 700; font-size: 15px; padding: 14px 0; border-radius: 14px; text-decoration: none; margin-top: 24px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h2>${isDsa ? "🚨 Neue DSA-Meldung eingegangen" : "📩 Neue Kontaktanfrage eingegangen"}</h2>
+        <p>Eine neue Nachricht wurde über die GateMate Plattform übermittelt:</p>
+
+        <div class="card">
+          <p><strong>Typ:</strong> <span class="badge ${isDsa ? "badge-dsa" : "badge-general"}">${isDsa ? "Art. 16 DSA Meldung" : "Allgemeiner Kontakt"}</span></p>
+          <p><strong>Absender:</strong> ${name} (&lt;${email}&gt;)</p>
+          <p><strong>Kategorie:</strong> ${category}</p>
+          <p><strong>Betreff:</strong> ${subject}</p>
+          ${targetUrl ? `<p><strong>Gemeldete URL:</strong> <a href="${targetUrl}" style="color: #818cf8;">${targetUrl}</a></p>` : ""}
+          ${violationType ? `<p><strong>Verstoßtyp:</strong> ${violationType}</p>` : ""}
+          ${legalReason ? `<p><strong>Begründung der Rechtswidrigkeit:</strong><br>${legalReason}</p>` : ""}
+          <p><strong>Nachrichtentext:</strong></p>
+          <div style="background-color: #0f172a; padding: 12px; border-radius: 8px; font-family: monospace; white-space: pre-wrap;">${message}</div>
+        </div>
+
+        <a href="${dashboardUrl}" class="btn" target="_blank">Im Superadmin Portal Öffnen & Bearbeiten →</a>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [adminEmail],
+      subject: `${subjectPrefix} ${subject} (${name})`,
+      html,
+    });
+    return { success: true, data };
+  } catch (err: any) {
+    console.error(`[RESEND EMAIL ERROR] Failed to send admin message notification:`, err?.message || err);
+    return { success: false, error: err?.message || err };
+  }
+}
+
+/**
+ * Sends a receipt confirmation email to the user who sent a message or DSA report.
+ */
+export async function sendContactConfirmationEmail(params: ContactConfirmationEmailParams) {
+  const { name, email, subject, type } = params;
+
+  if (!resend) {
+    return { success: false, error: "RESEND_API_KEY missing" };
+  }
+
+  const isDsa = type === "dsa_notice";
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="utf-8">
+      <title>Bestätigung deiner Anfrage bei GateMate</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #020617; color: #f8fafc; padding: 24px; }
+        .container { max-width: 550px; margin: 0 auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; padding: 32px; }
+        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h3>Vielen Dank für deine Kontaktaufnahme!</h3>
+        <p>Hallo <strong>${name}</strong>,</p>
+        <p>wir haben deine ${isDsa ? "Meldung gemäß Art. 16 DSA" : "Anfrage"} bezüglich <strong>"${subject}"</strong> erfolgreich erhalten.</p>
+        <p>${
+          isDsa
+            ? "Gemäß Artikel 16 der Verordnung (EU) 2022/2065 (DSA) prüfen wir deine Meldung umgehend und informieren dich über das Ergebnis der Prüfung."
+            : "Unser Support-Team prüft dein Anliegen und wird sich in Kürze bei dir melden."
+        }</p>
+        <div class="footer">
+          GateMate Platform &bull; Automatisierte Empfangsbestätigung
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const data = await resend.emails.send({
+      from: DEFAULT_FROM,
+      to: [email],
+      subject: `Empfangsbestätigung: ${subject} | GateMate`,
+      html,
+    });
+    return { success: true, data };
+  } catch (err: any) {
+    console.error(`[RESEND EMAIL ERROR] Failed to send contact confirmation email to ${email}:`, err?.message || err);
+    return { success: false, error: err?.message || err };
+  }
+}
+

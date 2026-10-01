@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Ticket, ArrowLeft, ShieldAlert, Mail, Send } from "lucide-react";
+import { Ticket, ArrowLeft, ShieldAlert, Mail } from "lucide-react";
 import { PlatformFooter } from "@/components/public/platform-footer";
+import { DsaReportForm } from "@/components/public/dsa-report-form";
 
 export const metadata: Metadata = {
   title: "Meldung rechtswidriger Inhalte (Notice & Action) | GateMate Platform",
@@ -55,94 +56,7 @@ export default function NoticeAndActionPage() {
           </div>
 
           {/* Form */}
-          <form className="space-y-6 text-xs">
-            <div className="space-y-4">
-              <h2 className="text-base font-bold text-white border-b border-slate-800 pb-2">
-                1. Angaben zur meldenden Person / Einrichtung
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">Name / Name der Organisation *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Vor- und Nachname oder Behörde/Firma"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">E-Mail-Adresse für Rückfragen *</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@domain.de"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-base font-bold text-white border-b border-slate-800 pb-2">
-                2. Angaben zum gemeldeten Inhalt
-              </h2>
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">Exakte URL der Eventseite / des Inhalts *</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://gatemate.io/e/event-slug"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">Art des mutmaßlich rechtswidrigen Inhalts *</label>
-                  <select className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option>Gefälschte Veranstaltung / Betrugsverdacht</option>
-                    <option>Urheberrechts- oder Markenrechtsverletzung</option>
-                    <option>Jugendschutzverstoß / Unzulässige Inhalte</option>
-                    <option>Persönlichkeitsrechtsverletzung / Beleidigung</option>
-                    <option>Sonstiger rechtswidriger Inhalt</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">Begründung der Rechtswidrigkeit *</label>
-                  <textarea
-                    rows={5}
-                    required
-                    placeholder="Bitte erläutern Sie genau, aus welchen Gründen Sie den Inhalt für rechtswidrig halten..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-base font-bold text-white border-b border-slate-800 pb-2">
-                3. Erklärungen &amp; Absenden
-              </h2>
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700"
-                  />
-                  <span className="text-slate-300 text-[11px] leading-relaxed">
-                    Ich erkläre in gutem Glauben, dass die in dieser Meldung enthaltenen Informationen und Angaben genau und vollständig sind.
-                  </span>
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all"
-              >
-                <Send className="w-4 h-4" /> Meldung gemäß Art. 16 DSA einreichen
-              </button>
-            </div>
-          </form>
+          <DsaReportForm />
         </div>
       </main>
 
