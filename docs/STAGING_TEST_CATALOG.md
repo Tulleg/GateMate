@@ -7,13 +7,14 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 ## 📋 Übersicht der Testbereiche
 
 1. [Authentifizierung & Benutzerkonten](#1-authentifizierung--benutzerkonten)
-2. [Admin-Dashboard & Systemverwaltung](#2-admin-dashboard--systemverwaltung)
-3. [Veranstalter-Dashboard & Event-Management](#3-veranstalter-dashboard--event-management)
-4. [Ticket-Shop & Checkout (Stripe Staging Integration)](#4-ticket-shop--checkout-stripe-staging-integration)
-5. [Einlass- & Check-in System (QR-Scanner)](#5-einlass--check-in-system-qr-scanner)
-6. [E-Mails & Ticket-Generierung](#6-e-mails--ticket-generierung)
-7. [Embedded Ticket Widget](#7-embedded-ticket-widget)
-8. [Rechtliche Compliance & Layout/Responsive Testing](#8-rechtliche-compliance--layoutresponsive-testing)
+2. [Multi-Step Veranstalter Onboarding](#2-multi-step-veranstalter-onboarding)
+3. [Admin-Dashboard, Legal & Nachrichten Inbox](#3-admin-dashboard-legal--nachrichten-inbox)
+4. [Veranstalter-Dashboard & Buchungsverwaltung](#4-veranstalter-dashboard--buchungsverwaltung)
+5. [Ticket-Shop & Checkout (Stripe Staging Integration)](#5-ticket-shop--checkout-stripe-staging-integration)
+6. [Einlass- & Check-in System (QR-Scanner)](#6-einlass--check-in-system-qr-scanner)
+7. [E-Mails & Ticket-Generierung](#7-e-mails--ticket-generierung)
+8. [Embedded Ticket Widget](#8-embedded-ticket-widget)
+9. [Rechtliche Compliance & Layout/Responsive Testing](#9-rechtliche-compliance--layoutresponsive-testing)
 
 ---
 
@@ -44,62 +45,72 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 
 ---
 
-## 2. Admin-Dashboard & Systemverwaltung
+## 2. Multi-Step Veranstalter Onboarding
+
+| Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
+| :--- | :--- | :--- | :--- | :---: |
+| **ONB-01** | Erzwungener Onboarding-Redirect | 1. Neuer Veranstalter-Account ruft `/organizer` auf | Automatische Umleitung zu `/onboarding` (Wizard) | `[ ] Pass` |
+| **ONB-02** | Schritt 1: Stripe Connect Express | 1. Auf "Stripe verbinden" klicken<br>2. Stripe Express Ablauf durchgehen | Rückkehr zum Onboarding, Schritt 1 als abgeschlossen markiert | `[ ] Pass` |
+| **ONB-03** | Schritt 2: DSA KYTC Stammdaten | 1. Rechtsform, Registergericht, Registriernummer & Telefon eingeben<br>2. Weiter klicken | Validierung erfolgreich, Daten gespeichert, Wechsel zu Schritt 3 | `[ ] Pass` |
+| **ONB-04** | Schritt 3: AGB & AVV Zustimmung | 1. Rechtstexte & AVV prüfen<br>2. Checkboxen aktivieren & Zustimmen klicken | `onboardingCompleted` wird `true`, Weiterleitung zum Hauptdashboard | `[ ] Pass` |
+
+---
+
+## 3. Admin-Dashboard, Legal & Nachrichten Inbox
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **ADM-01** | Admin-Zugriffsbeschränkung | 1. Als normaler Veranstalter angemeldet versuchen `/admin` aufzurufen | Zugriff verweigert / Weiterleitung (403 oder Redirect zu Organizer) | `[ ] Pass` |
 | **ADM-02** | Benutzerübersicht laden | 1. Als Admin einloggen<br>2. `/admin/users` aufrufen | Liste aller registrierten Benutzer wird vollständig & fehlerfrei geladen | `[ ] Pass` |
-| **ADM-03** | Benutzerstatus / Rolle verwalten | 1. Rolle eines Benutzers anpassen oder Passwort zurücksetzen | Änderung wird in der Datenbank übernommen & UI aktualisiert | `[ ] Pass` |
+| **ADM-03** | Rechtstext-Verwaltung (`/admin/legal`) | 1. Zu `/admin/legal` navigieren<br>2. Neue Version der AGB/AVV veröffentlichen | Neue Version gespeichert, öffentlich unter `/agb` bzw. `/avv` sofort aktualisiert | `[ ] Pass` |
+| **ADM-04** | Admin Nachrichten Posteingang (`/admin/messages`) | 1. Formular `/kontakt` oder `/notice-and-action` ausfüllen<br>2. Als Admin `/admin/messages` öffnen | Nachricht wird gelistet, Filter nach Typ/Status funktioniert, Statusänderung möglich | `[ ] Pass` |
 
 ---
 
-## 3. Veranstalter-Dashboard & Event-Management
+## 4. Veranstalter-Dashboard & Buchungsverwaltung
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **ORG-01** | Dashboard Kennzahlen | 1. Als Veranstalter einloggen (`/organizer`) | Verkaufszahlen, Umsatz und Event-Übersicht laden ohne Fehler | `[ ] Pass` |
-| **ORG-02** | Event erstellen | 1. Zu `/organizer/events/new` navigieren<br>2. Titel, Datum, Ort, Beschreibung eingeben<br>3. Ticketkategorien anlegen (z.B. Standard 15€, VIP 30€)<br>4. Speichern | Event wird erfolgreich angelegt & in der Übersicht gelistet | `[ ] Pass` |
+| **ORG-02** | Event erstellen | 1. Zu `/organizer/events/new` navigieren<br>2. Titel, Datum, Ort, Beschreibung eingeben<br>3. Ticketkategorien anlegen<br>4. Speichern | Event wird erfolgreich angelegt & in der Übersicht gelistet | `[ ] Pass` |
 | **ORG-03** | Event bearbeiten & veröffentlichen | 1. Event in Liste auswählen<br>2. Details ändern & Status auf "Veröffentlicht" setzen<br>3. Speichern | Event-Status schaltet auf ÖFFENTLICH, Änderungen gespeichert | `[ ] Pass` |
-| **ORG-04** | Stripe Connect / Integration Prüfen | 1. Zu `/organizer/settings` navigieren<br>2. Stripe Staging Status prüfen | Stripe Account als verknüpft/bereit für Testzahlungen markiert | `[ ] Pass` |
+| **ORG-04** | Buchungsübersicht & Finanzamt-Export | 1. Zu `/organizer/bookings` navigieren<br>2. Datum/Event filtern<br>3. Export-Modal öffnen & CSV/PDF herunterladen | Generierter Bericht enthält korrekte Aufschlüsselung von Umsatz, Gebühren & Netto | `[ ] Pass` |
 
 ---
 
-## 4. Ticket-Shop & Checkout (Stripe Staging Integration)
+## 5. Ticket-Shop & Checkout (Stripe Staging Integration)
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **SHOP-01** | Öffentliche Event-Seite laden | 1. URL `/e/[eventSlug]` im Inkognito-Fenster aufrufen | Event-Details, Datum, Ort, Veranstalter & Ticketkategorien werden angezeigt | `[ ] Pass` |
-| **SHOP-02** | Ticket-Auswahl & Warenkorb | 1. Ticket-Anzahl wählen (z.B. 2x Standard)<br>2. Auf "Tickets kaufen" klicken | Zusammenfassung stimmt überein, Weiterleitung zum Checkout/Formular | `[ ] Pass` |
+| **SHOP-02** | Ticket-Auswahl & Reservierung | 1. Ticket-Anzahl wählen (z.B. 2x Standard)<br>2. Auf "Tickets kaufen" klicken | Zusammenfassung stimmt überein, Ticketkontingent für 15 Minuten reserviert | `[ ] Pass` |
 | **SHOP-03** | Erfolgreiche Test-Zahlung (Stripe) | 1. Käuferdaten ausfüllen (Name, E-Mail)<br>2. Zahlungsart Kreditkarte wählen<br>3. Karte `4242 4242 4242 4242` eingeben<br>4. Bezahlen | Weiterleitung zur Bestätigungsseite (`/tickets/[orderId]`), Bestellung als "Bezahlt" markiert | `[ ] Pass` |
 | **SHOP-04** | Abgebrochene / Fehlgeschlagene Zahlung | 1. Zahlungsablauf starten<br>2. Testkarte für Ablehnung (`4000 0002 0127 3710`) eingeben | Fehlermeldung "Karte abgelehnt", keine Ticket-Erstellung, Rückkehr zum Formular | `[ ] Pass` |
-| **SHOP-05** | Ausverkaufte Tickets / Limits | 1. Event mit Kontingent 1 anlegen<br>2. 1 Ticket kaufen<br>3. Seite erneut laden | Ticketkategorie zeigt "Ausverkauft" / Button deaktiviert | `[ ] Pass` |
+| **SHOP-05** | Order Auto-Cleanup bei Expiration | 1. Checkout starten aber nicht bezahlen<br>2. 15 Minuten warten oder `/api/cron/cleanup-orders` triggern | Kontingent wird freigegeben, Order auf `cancelled` gesetzt | `[ ] Pass` |
 
 ---
 
-## 5. Einlass- & Check-in System (QR-Scanner)
+## 6. Einlass- & Check-in System (QR-Scanner)
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **CHK-01** | Check-in Maske aufrufen | 1. Als Veranstalter zu `/check-in/[eventId]` navigieren | Check-in UI lädt, Kamera-Freigabe wird ggf. angefordert | `[ ] Pass` |
-| **CHK-02** | Gültiges Ticket scannen / entwerten | 1. QR-Code eines bezahlten Tickets in Kamera halten (oder Ticket-ID manuell eingeben) | Meldung: "Gültig - Einlass gewährt", Ticket-Status wechselt auf `checked_in` | `[ ] Pass` |
+| **CHK-01** | Check-in Maske aufrufen | 1. Als Veranstalter zu `/check-in/[eventId]` navigieren | Check-in UI lädt, Kamera-Freigabe wird direkt via Html5Qrcode angefordert | `[ ] Pass` |
+| **CHK-02** | Gültiges Ticket scannen / entwerten | 1. QR-Code eines bezahlten Tickets in Kamera halten | Meldung: "Gültig - Einlass gewährt", Ticket-Status wechselt auf `checked_in` | `[ ] Pass` |
 | **CHK-03** | Bereits entwertetes Ticket erneut scannen | 1. Dasselbe Ticket nochmals scannen | Warnmeldung: "Bereits entwertet am [Zeitpunkt]", Einlass verweigert | `[ ] Pass` |
 | **CHK-04** | Ungültigen QR-Code scannen | 1. Beliebigen ungültigen QR-Code scannen | Fehlermeldung: "Ungültiges Ticket", Einlass verweigert | `[ ] Pass` |
-| **CHK-05** | Manuelle Suche nach Namen | 1. Nach Käufernamen im Suchfeld suchen<br>2. Auf "Manuell einchecken" klicken | Ticket wird in der Liste gefunden und erfolgreich entwertet | `[ ] Pass` |
 
 ---
 
-## 6. E-Mails & Ticket-Generierung (Resend Integration)
+## 7. E-Mails & Ticket-Generierung (Resend Integration)
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **MAIL-01** | Resend Ticketbestätigungs-Mail | 1. Erfolgreichen Testkauf im Shop durchführen<br>2. Posteingang der angegebenen Käufer-E-Mail prüfen | HTML-E-Mail von Resend mit Event-Titel, Datum, Ort & Direktlink zu `/tickets/[orderId]` trifft ein (Server-Log zeigt `[RESEND EMAIL SUCCESS]`) | `[ ] Pass` |
+| **MAIL-01** | Resend Ticketbestätigungs-Mail | 1. Erfolgreichen Testkauf im Shop durchführen<br>2. Posteingang der angegebenen Käufer-E-Mail prüfen | HTML-E-Mail von Resend mit Event-Titel, Datum, Ort, Impressum des Veranstalters & Direktlink zu `/tickets/[orderId]` trifft ein | `[ ] Pass` |
 | **MAIL-02** | Resend Passwort-Reset Mail | 1. Zu `/reset-password` navigieren<br>2. E-Mail eingeben & anfordern | Resend stellt E-Mail mit Reset-Link zu | `[ ] Pass` |
-| **MAIL-03** | PDF-Ticket Download | 1. Auf `/tickets/[orderId]` oder in der E-Mail auf "PDF herunterladen" klicken | PDF wird heruntergeladen, QR-Code & Event-Daten sind gut lesbar | `[ ] Pass` |
 
 ---
 
-## 7. Embedded Ticket Widget
+## 8. Embedded Ticket Widget
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
@@ -108,12 +119,12 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 
 ---
 
-## 8. Rechtliche Compliance & Layout/Responsive Testing
+## 9. Rechtliche Compliance & Layout/Responsive Testing
 
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **LEG-01** | Impressum & Datenschutz Links | 1. Footer aller public & dashboard Seiten prüfen | Impressum & Datenschutz sind von jeder Seite aus erreichbar & aktuell | `[ ] Pass` |
-| **LEG-02** | Mobile Viewport (Responsive) | 1. Entwicklertools auf Mobile (z.B. iPhone 14 / Pixel) stellen<br>2. Shop & Check-in testen | Keine horizontalen Scrollbalken, Buttons gut tippbar, Scanner nutzbar | `[ ] Pass` |
+| **LEG-01** | Impressum, Datenschutz & AVV Links | 1. Footer aller Seiten prüfen | Impressum, Datenschutz, AGB & AVV sind voll erreichbar & aktuell | `[ ] Pass` |
+| **LEG-02** | Mobile Viewport (Responsive) | 1. Entwicklertools auf Mobile (z.B. iPhone 14 / 360px-430px) stellen<br>2. Shop & Check-in testen | Keine horizontalen Scrollbalken, Buttons gut tippbar, Scanner nutzbar | `[ ] Pass` |
 | **LEG-03** | Konsolenfehler / Network Errors | 1. Entwicklerkonsole öffnen und Hauptpfade durchklicken | Keine unerwarteten `Uncaught SyntaxError` oder `500 Internal Server Errors` | `[ ] Pass` |
 
 ---
@@ -124,11 +135,12 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 **Getestet am:** `DD.MM.YYYY`  
 **Tester:** `____________________`  
 
-- [ ] Alle AUTH-Tests bestanden
-- [ ] Alle ORG- & ADM-Tests bestanden
+- [ ] Alle AUTH- & ONB-Tests bestanden
+- [ ] Alle ADM-, LEG- & MSG-Tests bestanden
+- [ ] Alle ORG- & BOOKINGS-Tests bestanden
 - [ ] Alle SHOP- & Stripe-Tests bestanden
 - [ ] Alle CHK-Check-in-Tests bestanden
-- [ ] Alle MAIL- & LEG-Tests bestanden
+- [ ] Alle MAIL- & EMB-Tests bestanden
 
 **Gefundene Bugs / Anmerkungen:**
 > *Hier gefundene Abweichungen oder Fehler eintragen...*
