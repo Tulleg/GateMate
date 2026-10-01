@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Anbieterkennzeichnung und rechtliche Informationen gemäß § 5 DDG (Telemediengesetz) der Plattform GateMate.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PlatformImpressumPage() {
   const doc = await getPublishedDocument({ documentType: "platform_impressum" });
 

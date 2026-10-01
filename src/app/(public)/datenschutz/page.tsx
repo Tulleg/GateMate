@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Informationen zur Verarbeitung personenbezogener Daten gemäß Art. 13 DSGVO auf der Plattform GateMate.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PlatformDatenschutzPage() {
   const doc = await getPublishedDocument({ documentType: "platform_privacy" });
 

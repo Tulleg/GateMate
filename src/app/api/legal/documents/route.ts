@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { legalDocuments, users } from "@/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
@@ -92,9 +93,16 @@ export async function POST(request: Request) {
       status: status || "published",
     });
 
+    revalidatePath("/impressum");
+    revalidatePath("/datenschutz");
+    revalidatePath("/agb");
+    revalidatePath("/avv");
+    revalidatePath("/admin/legal");
+
     return NextResponse.json({ success: true, document: result });
   } catch (error: any) {
     console.error("POST /api/legal/documents error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }
+

@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Vertrag zur Auftragsverarbeitung (AVV) gemäß Art. 28 DSGVO zwischen der Plattform GateMate und den Veranstaltern.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PlatformAVVPage() {
   const doc = await getPublishedDocument({ documentType: "platform_avv" });
 

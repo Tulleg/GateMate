@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Allgemeine Nutzungsbedingungen für die Software-Plattform GateMate und Rollentrennung zwischen Plattform und Veranstalter.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PlatformAGBPage() {
   const doc = await getPublishedDocument({ documentType: "platform_terms" });
 
