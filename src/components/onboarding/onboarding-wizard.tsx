@@ -16,9 +16,10 @@ import {
   EyeOff,
   AlertCircle,
   Loader2,
-  Sparkles,
   LogOut,
+  Sparkles,
 } from "lucide-react";
+import { saveStep1StripeAction, saveStep2LegalAction, saveStep3TermsAction } from "@/app/actions/onboarding-actions";
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -133,49 +134,29 @@ export function OnboardingWizard() {
     setErrorMessage(null);
     setFieldErrors({});
 
-    if (stripeAccountType === "custom_keys") {
-      const errors: Record<string, string> = {};
-      if (!stripePublishableKey.trim()) errors.stripePublishableKey = "Bitte gib deinen Publishable Key ein.";
-      else if (!stripePublishableKey.trim().startsWith("pk_")) errors.stripePublishableKey = "Publishable Key muss mit 'pk_' beginnen.";
-
-      if (!hasSecretKey && !stripeSecretKey.trim()) errors.stripeSecretKey = "Bitte gib deinen Secret Key ein.";
-      else if (stripeSecretKey.trim() && !stripeSecretKey.trim().startsWith("sk_") && !stripeSecretKey.trim().startsWith("rk_")) {
-        errors.stripeSecretKey = "Secret Key muss mit 'sk_' oder 'rk_' beginnen.";
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
-        return;
-      }
-    }
-
     try {
       setSubmitting(true);
-      const res = await fetch("/api/onboarding/step-1-stripe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stripeAccountType,
-          stripePublishableKey,
-          stripeSecretKey,
-        }),
+      const res = await saveStep1StripeAction({
+        stripeAccountType,
+        stripePublishableKey,
+        stripeSecretKey,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error || "Fehler beim Verbinden mit Stripe.");
-        return;
-      }
-
-      if (stripeAccountType === "express" && data.url) {
-        // Redirect user to Stripe Express hosted onboarding
-        window.location.href = data.url;
+      if (!res.success) {
+        setErrorMessage(res.error || "Fehler beim Verbinden mit Stripe.");
+        if (res.fieldErrors) {
+          const errors: Record<string, string> = {};
+          for (const [k, v] of Object.entries(res.fieldErrors)) {
+            errors[k] = v[0];
+          }
+          setFieldErrors(errors);
+        }
         return;
       }
 
       setSuccessToast("Schritt 1 (Zahlungsanbindung) erfolgreich gespeichert!");
       setCurrentStep(2);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMessage("Serverfehler bei der Validierung des Stripe-Kontos.");
     } finally {
       setSubmitting(false);
@@ -188,43 +169,32 @@ export function OnboardingWizard() {
     setErrorMessage(null);
     setFieldErrors({});
 
-    const errors: Record<string, string> = {};
-    if (!legalCompanyName.trim()) errors.legalCompanyName = "Firmenname / Rechnungsname ist erforderlich.";
-    if (!legalVatId.trim()) errors.legalVatId = "Steuernummer / USt-IdNr. ist erforderlich.";
-    if (!street.trim()) errors.street = "Straße und Hausnummer sind erforderlich.";
-    if (!zip.trim()) errors.zip = "Postleitzahl ist erforderlich.";
-    if (!city.trim()) errors.city = "Ort / Stadt ist erforderlich.";
-    if (!country.trim()) errors.country = "Land ist erforderlich.";
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
     try {
       setSubmitting(true);
-      const res = await fetch("/api/onboarding/step-2-legal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          legalCompanyName,
-          legalVatId,
-          street,
-          zip,
-          city,
-          country,
-        }),
+      const res = await saveStep2LegalAction({
+        legalCompanyName,
+        legalVatId,
+        street,
+        zip,
+        city,
+        country,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error || "Fehler beim Speichern der Stammdaten.");
+      if (!res.success) {
+        setErrorMessage(res.error || "Fehler beim Speichern der Stammdaten.");
+        if (res.fieldErrors) {
+          const errors: Record<string, string> = {};
+          for (const [k, v] of Object.entries(res.fieldErrors)) {
+            errors[k] = v[0];
+          }
+          setFieldErrors(errors);
+        }
         return;
       }
 
       setSuccessToast("Stammdaten & Rechtliches erfolgreich gespeichert!");
       setCurrentStep(3);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMessage("Serverfehler beim Speichern der Stammdaten.");
     } finally {
       setSubmitting(false);
@@ -237,45 +207,38 @@ export function OnboardingWizard() {
     setErrorMessage(null);
     setFieldErrors({});
 
-    const errors: Record<string, string> = {};
-    if (!termsAccepted) errors.termsAccepted = "Du musst den AGB zustimmen.";
-    if (!privacyAccepted) errors.privacyAccepted = "Du musst der Datenschutzerklärung zustimmen.";
-    if (!avvAccepted) errors.avvAccepted = "Du musst dem Auftragsverarbeitungsvertrag (AVV) zustimmen.";
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
     try {
       setSubmitting(true);
-      const res = await fetch("/api/onboarding/step-3-terms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          termsAccepted,
-          privacyAccepted,
-          avvAccepted,
-        }),
+      const res = await saveStep3TermsAction({
+        termsAccepted,
+        privacyAccepted,
+        avvAccepted,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error || "Fehler beim Abschließen des Onboardings.");
+      if (!res.success) {
+        setErrorMessage(res.error || "Fehler beim Abschließen des Onboardings.");
+        if (res.fieldErrors) {
+          const errors: Record<string, string> = {};
+          for (const [k, v] of Object.entries(res.fieldErrors)) {
+            errors[k] = v[0];
+          }
+          setFieldErrors(errors);
+        }
         return;
       }
 
       setSuccessToast("Onboarding erfolgreich abgeschlossen!");
       setCurrentStep(4);
       setTimeout(() => {
-        router.push(data.redirectUrl || "/organizer");
-      }, 1500);
-    } catch (err: any) {
+        router.push("/organizer");
+      }, 1200);
+    } catch (err: unknown) {
       setErrorMessage("Serverfehler beim Absenden der Zustimmungen.");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, pgEnum, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { events, ticketTiers } from "./events";
 
@@ -24,7 +24,13 @@ export const orders = pgTable("orders", {
   acceptedAt: timestamp("accepted_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("orders_event_id_idx").on(table.eventId),
+  index("orders_customer_email_idx").on(table.customerEmail),
+  index("orders_stripe_pi_idx").on(table.stripePaymentIntentId),
+  index("orders_stripe_cs_idx").on(table.stripeCheckoutSessionId),
+  index("orders_status_idx").on(table.status),
+]);
 
 export const tickets = pgTable("tickets", {
   id: text("id").primaryKey(),
@@ -35,7 +41,12 @@ export const tickets = pgTable("tickets", {
   status: ticketStatusEnum("status").default("valid").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("tickets_qr_hash_token_idx").on(table.qrHashToken),
+  index("tickets_order_id_idx").on(table.orderId),
+  index("tickets_tier_id_idx").on(table.ticketTierId),
+  index("tickets_status_idx").on(table.status),
+]);
 
 export const checkInLogs = pgTable("check_in_logs", {
   id: text("id").primaryKey(),
@@ -43,8 +54,8 @@ export const checkInLogs = pgTable("check_in_logs", {
   scannedByUserId: text("scanned_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   scannedAt: timestamp("scanned_at").defaultNow().notNull(),
   deviceInfo: text("device_info"),
-}, (table) => {
-  return [
-    uniqueIndex("unique_ticket_checkin_idx").on(table.ticketId),
-  ];
-});
+}, (table) => [
+  uniqueIndex("unique_ticket_checkin_idx").on(table.ticketId),
+  index("check_in_logs_scanned_by_idx").on(table.scannedByUserId),
+]);
+

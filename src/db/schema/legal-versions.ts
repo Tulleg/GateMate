@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { events } from "./events";
 
@@ -12,4 +12,9 @@ export const legalDocumentVersions = pgTable("legal_document_versions", {
   url: text("url"),
   hash: text("hash").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("legal_versions_org_id_idx").on(table.organizerId),
+  index("legal_versions_event_id_idx").on(table.eventId),
+  index("legal_versions_type_idx").on(table.documentType),
+]);
+

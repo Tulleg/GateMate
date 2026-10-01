@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { eq } from "drizzle-orm";
 
 export const auth = betterAuth({
@@ -25,12 +25,40 @@ export const auth = betterAuth({
         defaultValue: "organizer",
         required: true,
       },
+      onboardingCompleted: {
+        type: "boolean",
+        defaultValue: false,
+        required: false,
+      },
+      onboardingStep: {
+        type: "string",
+        defaultValue: "stripe_connect",
+        required: false,
+      },
     },
   },
 });
 
+export async function getCurrentSession() {
+  try {
+    const reqHeaders = await headers();
+    const session = await auth.api.getSession({
+      headers: reqHeaders,
+    });
+    if (session) return session;
+  } catch (e) {
+    // Fall back to cookie / header checking
+  }
+  return null;
+}
+
 export async function getCurrentUser() {
   try {
+    const session = await getCurrentSession();
+    if (session?.user) {
+      return session.user;
+    }
+
     const cookieStore = await cookies();
     const userId = cookieStore.get("gatemate_user_id")?.value;
     if (!userId) return null;
@@ -41,4 +69,5 @@ export async function getCurrentUser() {
     return null;
   }
 }
+
 

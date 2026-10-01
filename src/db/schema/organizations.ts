@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const orgRoleEnum = pgEnum("org_role", ["owner", "admin", "scanner"]);
@@ -14,7 +14,9 @@ export const organizations = pgTable("organizations", {
   stripePayoutsEnabled: boolean("stripe_payouts_enabled").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("organizations_slug_idx").on(table.slug),
+]);
 
 export const organizationMembers = pgTable("organization_members", {
   id: text("id").primaryKey(),
@@ -23,4 +25,9 @@ export const organizationMembers = pgTable("organization_members", {
   role: orgRoleEnum("role").default("admin").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("org_members_user_id_idx").on(table.userId),
+  index("org_members_org_id_idx").on(table.organizationId),
+  uniqueIndex("org_members_user_org_unique").on(table.userId, table.organizationId),
+]);
+

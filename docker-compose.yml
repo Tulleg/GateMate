@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
@@ -27,7 +27,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: gatemate
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gatemate_secret}

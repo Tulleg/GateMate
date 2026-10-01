@@ -5,7 +5,7 @@ const stripeSecretKey =
   process.env.STRIPE_SECRET_KEY || "sk_test_dummy_build_key_placeholder";
 
 export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2024-12-18.acacia" as any,
+  apiVersion: "2025-02-24.acacia",
   typescript: true,
 });
 
@@ -27,12 +27,14 @@ export function getOrganizerStripeClient(organizer?: { stripeSecretKey?: string 
   if (decryptedKey && decryptedKey.trim().length > 0) {
     return {
       client: new Stripe(decryptedKey.trim(), {
-        apiVersion: "2024-12-18.acacia" as any,
+        apiVersion: "2025-02-24.acacia",
         typescript: true,
       }),
       isDirectKey: true,
     };
   }
+
+
 
   return {
     client: stripe,

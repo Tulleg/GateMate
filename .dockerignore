@@ -1,0 +1,29 @@
+# Node & Build artifacts
+node_modules
+.next
+out
+build
+dist
+.env
+.env*.local
+.env.production
+.env.staging
+
+# Git & IDE
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+
+# Antigravity & Brain logs
+.gemini
+.agent
+*.log
+
+# Docker & OS
+Dockerfile
+docker-compose*.yml
+.DS_Store
+Thumbs.db

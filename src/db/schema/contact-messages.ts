@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, index } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const messageTypeEnum = pgEnum("message_type", [
@@ -41,4 +41,9 @@ export const contactMessages = pgTable("contact_messages", {
   userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("contact_messages_status_idx").on(table.status),
+  index("contact_messages_category_idx").on(table.category),
+  index("contact_messages_user_id_idx").on(table.userId),
+]);
+

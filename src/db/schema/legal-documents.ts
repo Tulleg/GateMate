@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, pgEnum, index } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const legalDocumentTypeEnum = pgEnum("legal_document_type", [
@@ -49,4 +49,9 @@ export const legalDocuments = pgTable("legal_documents", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   validFrom: timestamp("valid_from"),
   validUntil: timestamp("valid_until"),
-});
+}, (table) => [
+  index("legal_docs_organizer_id_idx").on(table.organizerId),
+  index("legal_docs_type_idx").on(table.documentType),
+  index("legal_docs_status_idx").on(table.status),
+]);
+

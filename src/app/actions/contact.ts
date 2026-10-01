@@ -5,35 +5,31 @@ import { contactMessages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendAdminNewMessageNotificationEmail, sendContactConfirmationEmail } from "@/lib/email";
+import { contactMessageSchema } from "@/lib/validation";
+import { ActionResult, formatZodErrors } from "@/types";
+import { getCurrentUser } from "@/lib/auth";
 
-export type ActionResponse = {
-  success: boolean;
-  message?: string;
-  error?: string;
-};
-
-export async function submitContactForm(formData: FormData): Promise<ActionResponse> {
+export async function submitContactForm(formData: FormData): Promise<ActionResult<{ messageId: string }>> {
   try {
-    const name = formData.get("name")?.toString().trim();
-    const email = formData.get("email")?.toString().trim();
-    const category = (formData.get("category")?.toString().trim() || "general") as
-      | "general"
-      | "organizer_support"
-      | "buyer_support"
-      | "billing"
-      | "legal_dsa"
-      | "other";
-    const subject = formData.get("subject")?.toString().trim();
-    const message = formData.get("message")?.toString().trim();
+    const rawData = {
+      name: formData.get("name")?.toString().trim() || "",
+      email: formData.get("email")?.toString().trim() || "",
+      category: formData.get("category")?.toString().trim() || "general",
+      subject: formData.get("subject")?.toString().trim() || "",
+      message: formData.get("message")?.toString().trim() || "",
+      type: "general" as const,
+    };
 
-    if (!name || !email || !subject || !message) {
-      return { success: false, error: "Bitte fülle alle Pflichtfelder aus." };
+    const validated = contactMessageSchema.safeParse(rawData);
+    if (!validated.success) {
+      return {
+        success: false,
+        error: "Ungültige Eingabedaten. Bitte überprüfe deine Angaben.",
+        fieldErrors: formatZodErrors(validated.error),
+      };
     }
 
-    if (!email.includes("@") || !email.includes(".")) {
-      return { success: false, error: "Bitte gib eine gültige E-Mail-Adresse ein." };
-    }
-
+    const { name, email, category, subject, message } = validated.data;
     const id = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     await db.insert(contactMessages).values({
@@ -48,7 +44,7 @@ export async function submitContactForm(formData: FormData): Promise<ActionRespo
     });
 
     // Send emails asynchronously
-    await sendAdminNewMessageNotificationEmail({
+    sendAdminNewMessageNotificationEmail({
       id,
       type: "general",
       name,
@@ -58,7 +54,7 @@ export async function submitContactForm(formData: FormData): Promise<ActionRespo
       message,
     }).catch(console.error);
 
-    await sendContactConfirmationEmail({
+    sendContactConfirmationEmail({
       name,
       email,
       subject,
@@ -67,37 +63,54 @@ export async function submitContactForm(formData: FormData): Promise<ActionRespo
 
     return {
       success: true,
+      data: { messageId: id },
       message: "Vielen Dank! Deine Nachricht wurde erfolgreich übermittelt. Wir melden uns in Kürze.",
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Fehler beim Senden der Nachricht.";
     console.error("[SUBMIT CONTACT FORM ERROR]", err);
     return {
       success: false,
-      error: "Fehler beim Senden der Nachricht. Bitte versuche es später erneut.",
+      error: errorMsg,
     };
   }
 }
 
-export async function submitDsaReportForm(formData: FormData): Promise<ActionResponse> {
+export async function submitDsaReportForm(formData: FormData): Promise<ActionResult<{ messageId: string }>> {
   try {
-    const name = formData.get("name")?.toString().trim();
-    const email = formData.get("email")?.toString().trim();
-    const targetUrl = formData.get("targetUrl")?.toString().trim();
-    const violationType = formData.get("violationType")?.toString().trim() || "Sonstiger rechtswidriger Inhalt";
-    const legalReason = formData.get("legalReason")?.toString().trim();
-    const dsaDeclaration = formData.get("dsaDeclaration") === "on" || formData.get("dsaDeclaration") === "true";
+    const rawData = {
+      name: formData.get("name")?.toString().trim() || "",
+      email: formData.get("email")?.toString().trim() || "",
+      category: "legal_dsa",
+      subject: `DSA-Meldung: ${formData.get("violationType")?.toString().trim() || "Sonstiger Verstoß"}`,
+      message: `Gemeldete URL: ${formData.get("targetUrl")?.toString().trim() || ""}\nVerstoßtyp: ${
+        formData.get("violationType")?.toString().trim() || ""
+      }\nBegründung: ${formData.get("legalReason")?.toString().trim() || ""}`,
+      type: "dsa_notice" as const,
+      targetUrl: formData.get("targetUrl")?.toString().trim() || "",
+      violationType: formData.get("violationType")?.toString().trim() || "Sonstiger rechtswidriger Inhalt",
+      legalReason: formData.get("legalReason")?.toString().trim() || "",
+      dsaDeclaration: formData.get("dsaDeclaration") === "on" || formData.get("dsaDeclaration") === "true",
+    };
 
-    if (!name || !email || !targetUrl || !legalReason) {
-      return { success: false, error: "Bitte fülle alle erforderlichen Pflichtfelder aus." };
+    const validated = contactMessageSchema.safeParse(rawData);
+    if (!validated.success) {
+      return {
+        success: false,
+        error: "Ungültige Angaben bei der DSA-Meldung.",
+        fieldErrors: formatZodErrors(validated.error),
+      };
     }
 
-    if (!dsaDeclaration) {
-      return { success: false, error: "Bitte bestätige die Erklärung in gutem Glauben gemäß Art. 16 DSA." };
+    if (!validated.data.dsaDeclaration) {
+      return {
+        success: false,
+        error: "Bitte bestätige die Erklärung in gutem Glauben gemäß Art. 16 DSA.",
+      };
     }
 
+    const { name, email, subject, message, targetUrl, violationType, legalReason } = validated.data;
     const id = `dsa_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const subject = `DSA-Meldung: ${violationType} (${targetUrl})`;
-    const message = `Gemeldete URL: ${targetUrl}\nVerstoßtyp: ${violationType}\nBegründung: ${legalReason}`;
 
     await db.insert(contactMessages).values({
       id,
@@ -107,15 +120,15 @@ export async function submitDsaReportForm(formData: FormData): Promise<ActionRes
       category: "legal_dsa",
       subject,
       message,
-      targetUrl,
-      violationType,
-      legalReason,
+      targetUrl: targetUrl || null,
+      violationType: violationType || null,
+      legalReason: legalReason || null,
       dsaDeclaration: true,
       status: "new",
     });
 
     // Send emails asynchronously
-    await sendAdminNewMessageNotificationEmail({
+    sendAdminNewMessageNotificationEmail({
       id,
       type: "dsa_notice",
       name,
@@ -128,7 +141,7 @@ export async function submitDsaReportForm(formData: FormData): Promise<ActionRes
       legalReason,
     }).catch(console.error);
 
-    await sendContactConfirmationEmail({
+    sendContactConfirmationEmail({
       name,
       email,
       subject,
@@ -137,13 +150,15 @@ export async function submitDsaReportForm(formData: FormData): Promise<ActionRes
 
     return {
       success: true,
+      data: { messageId: id },
       message: "Vielen Dank. Ihre Meldung gemäß Art. 16 DSA wurde erfolgreich eingereicht und wird umgehend geprüft.",
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Fehler beim Einreichen der DSA-Meldung.";
     console.error("[SUBMIT DSA REPORT ERROR]", err);
     return {
       success: false,
-      error: "Fehler beim Einreichen der DSA-Meldung. Bitte versuchen Sie es erneut.",
+      error: errorMsg,
     };
   }
 }
@@ -152,8 +167,16 @@ export async function updateMessageStatus(
   id: string,
   status: "new" | "in_progress" | "replied" | "archived",
   adminNotes?: string
-): Promise<ActionResponse> {
+): Promise<ActionResult> {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== "superadmin") {
+      return {
+        success: false,
+        error: "Keine Berechtigung. Nur Superadmins können den Nachrichtenstatus ändern.",
+      };
+    }
+
     await db
       .update(contactMessages)
       .set({
@@ -166,9 +189,16 @@ export async function updateMessageStatus(
     revalidatePath("/admin/messages");
     revalidatePath("/admin");
 
-    return { success: true, message: "Nachrichtenstatus erfolgreich aktualisiert." };
-  } catch (err: any) {
+    return {
+      success: true,
+      message: "Nachrichtenstatus erfolgreich aktualisiert.",
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Fehler beim Aktualisieren des Status.";
     console.error("[UPDATE MESSAGE STATUS ERROR]", err);
-    return { success: false, error: "Fehler beim Aktualisieren des Status." };
+    return {
+      success: false,
+      error: errorMsg,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, index } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { eventTypeEnum } from "./legal-documents";
 
@@ -38,7 +38,12 @@ export const events = pgTable("events", {
   cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("events_organizer_id_idx").on(table.organizerId),
+  index("events_slug_idx").on(table.slug),
+  index("events_start_date_idx").on(table.startDate),
+  index("events_is_published_idx").on(table.isPublished),
+]);
 
 export const ticketTiers = pgTable("ticket_tiers", {
   id: text("id").primaryKey(),
@@ -52,4 +57,7 @@ export const ticketTiers = pgTable("ticket_tiers", {
   quantitySold: integer("quantity_sold").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("ticket_tiers_event_id_idx").on(table.eventId),
+]);
+

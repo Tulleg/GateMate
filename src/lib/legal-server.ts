@@ -22,7 +22,7 @@ export async function getPublishedDocument(params: {
 
     // Build query condition
     const conditions = [
-      eq(legalDocuments.documentType, documentType as any),
+      eq(legalDocuments.documentType, documentType),
       eq(legalDocuments.status, "published"),
     ];
 
@@ -45,8 +45,9 @@ export async function getPublishedDocument(params: {
     }
 
     return docs[0] || null;
-  } catch (err: any) {
-    console.warn(`[getPublishedDocument Note] Could not fetch document ${params.documentType} from DB:`, err?.message || err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.warn(`[getPublishedDocument Note] Could not fetch document ${params.documentType} from DB:`, errorMsg);
     return null;
   }
 }
@@ -70,7 +71,7 @@ export async function publishLegalDocument(params: {
   const hash = generateHash(rawString);
 
   // Fetch latest version for this doc type & organizer
-  const conditions = [eq(legalDocuments.documentType, documentType as any)];
+  const conditions = [eq(legalDocuments.documentType, documentType)];
   if (organizerId) {
     conditions.push(eq(legalDocuments.organizerId, organizerId));
   } else {
@@ -89,23 +90,28 @@ export async function publishLegalDocument(params: {
 
   const modulesJson = applicableModules && applicableModules.length > 0 ? JSON.stringify(applicableModules) : null;
 
+  const validEventType = (eventType && ["concert", "sports", "club_association", "workshop", "festival", "other"].includes(eventType))
+    ? (eventType as "concert" | "sports" | "club_association" | "workshop" | "festival" | "other")
+    : null;
+
   await db.insert(legalDocuments).values({
     id: newId,
     organizerId: organizerId || null,
-    documentType: documentType as any,
+    documentType,
     title,
     content: content || null,
     url: url || null,
-    eventType: (eventType as any) || null,
+    eventType: validEventType,
     applicableModules: modulesJson,
     version: nextVersion,
-    status: status as any,
+    status,
     hash,
     createdAt: new Date(),
     publishedAt: status === "published" ? new Date() : null,
     updatedAt: new Date(),
     validFrom: new Date(),
   });
+
 
   // Also record in legacy legalDocumentVersions table for backwards compatibility
   if (organizerId) {

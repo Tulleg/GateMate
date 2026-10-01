@@ -571,7 +571,7 @@ export function validateEventForPublication(
 }
 
 // ==========================================
-// ONBOARDING ZOD SCHEMAS
+// ONBOARDING ZOD SCHEMAS & TYPES
 // ==========================================
 import { z } from "zod";
 
@@ -642,4 +642,135 @@ export const onboardingStep3Schema = z.object({
 });
 
 export type OnboardingStep3Input = z.infer<typeof onboardingStep3Schema>;
+
+// ==========================================
+// TICKET & ORDER VALIDATION SCHEMAS
+// ==========================================
+
+export const orderCreateSchema = z.object({
+  eventId: z.string().min(1, "Event ID ist erforderlich."),
+  ticketTierId: z.string().min(1, "Ticketkategorie ist erforderlich."),
+  quantity: z.number().int().min(1, "Mindestens 1 Ticket.").max(50, "Maximal 50 Tickets pro Bestellung."),
+  customerEmail: z.string().trim().email("Ungültige E-Mail-Adresse."),
+  customerName: z.string().trim().min(2, "Vollständiger Name ist erforderlich."),
+  termsAccepted: z.boolean().refine((val) => val === true, "AGB-Zustimmung erforderlich."),
+  privacyAccepted: z.boolean().refine((val) => val === true, "Datenschutz-Zustimmung erforderlich."),
+});
+
+export type OrderCreateInput = z.infer<typeof orderCreateSchema>;
+
+export const ticketCheckInSchema = z.object({
+  qrToken: z.string().min(1, "QR Token / Hash ist erforderlich."),
+  scannedByUserId: z.string().optional(),
+  deviceInfo: z.string().optional(),
+  allowDuplicateCheckIn: z.boolean().default(false),
+});
+
+export type TicketCheckInInput = z.infer<typeof ticketCheckInSchema>;
+
+export const ticketStatusUpdateSchema = z.object({
+  status: z.enum(["valid", "used", "cancelled"]),
+  reason: z.string().optional(),
+});
+
+export type TicketStatusUpdateInput = z.infer<typeof ticketStatusUpdateSchema>;
+
+// ==========================================
+// EVENT & TICKET TIER SCHEMAS
+// ==========================================
+
+export const ticketTierSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().trim().min(1, "Name der Ticketkategorie ist erforderlich."),
+  priceCents: z.number().int().min(0, "Preis darf nicht negativ sein."),
+  feeCents: z.number().int().min(0).default(0),
+  quantityAvailable: z.number().int().min(1, "Kontingent muss mindestens 1 betragen."),
+  includedServices: z.string().nullable().optional(),
+  ticketTerms: z.string().nullable().optional(),
+});
+
+export type TicketTierInput = z.infer<typeof ticketTierSchema>;
+
+export const eventCreateSchema = z.object({
+  title: z.string().trim().min(3, "Titel muss mindestens 3 Zeichen lang sein."),
+  slug: z.string().trim().min(3).regex(/^[a-z0-9-]+$/, "Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."),
+  description: z.string().trim().nullable().optional(),
+  eventType: z.enum(["concert", "sports", "club_association", "workshop", "festival", "other"]).default("other"),
+  bannerUrl: z.string().url("Ungültige Bild-URL").nullable().optional().or(z.literal("")),
+  venue: z.string().trim().min(2, "Veranstaltungsort (Location) ist erforderlich."),
+  venueStreet: z.string().trim().min(2, "Straße ist erforderlich."),
+  venueZip: z.string().trim().min(2, "Postleitzahl ist erforderlich."),
+  venueCity: z.string().trim().min(2, "Stadt ist erforderlich."),
+  venueCountry: z.string().trim().default("Deutschland"),
+  startDate: z.coerce.date({ invalid_type_error: "Gültiges Startdatum erforderlich." }),
+  endDate: z.coerce.date({ invalid_type_error: "Gültiges Enddatum erforderlich." }),
+  hasEndTime: z.boolean().default(true),
+  isFixedDateEvent: z.boolean().default(true),
+  doorsOpenAt: z.coerce.date().nullable().optional(),
+  ageRestriction: z.string().trim().min(1, "Altersbeschränkung ist erforderlich."),
+  accessibilityInfo: z.string().nullable().optional(),
+  houseRules: z.string().nullable().optional(),
+  specialAdmissionConditions: z.string().nullable().optional(),
+  eventTerms: z.string().nullable().optional(),
+  cancellationPolicy: z.string().nullable().optional(),
+  salesStartDate: z.coerce.date().nullable().optional(),
+  salesEndDate: z.coerce.date().nullable().optional(),
+  isPublished: z.boolean().default(false),
+  isListedInDirectory: z.boolean().default(true),
+  tiers: z.array(ticketTierSchema).min(1, "Mindestens 1 Ticketkategorie erforderlich."),
+});
+
+export type EventCreateInput = z.infer<typeof eventCreateSchema>;
+
+export const eventUpdateSchema = eventCreateSchema.partial().extend({
+  id: z.string().min(1),
+});
+
+export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
+
+// ==========================================
+// SCANNER & CHECK-IN SCHEMAS
+// ==========================================
+
+export const scanRequestSchema = z.object({
+  qrToken: z.string().min(1, "QR-Code Token erforderlich."),
+  eventId: z.string().optional(),
+  deviceInfo: z.string().optional(),
+});
+
+export type ScanRequestInput = z.infer<typeof scanRequestSchema>;
+
+// ==========================================
+// STRIPE WEBHOOK EVENT SCHEMA
+// ==========================================
+
+export const stripeWebhookEventSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  data: z.object({
+    object: z.record(z.any()),
+  }),
+});
+
+export type StripeWebhookPayload = z.infer<typeof stripeWebhookEventSchema>;
+
+// ==========================================
+// CONTACT & DSA NOTICE SCHEMAS
+// ==========================================
+
+export const contactMessageSchema = z.object({
+  name: z.string().trim().min(2, "Name muss mindestens 2 Zeichen lang sein."),
+  email: z.string().trim().email("Gültige E-Mail-Adresse erforderlich."),
+  category: z.enum(["general", "organizer_support", "buyer_support", "billing", "legal_dsa", "other"]).default("general"),
+  subject: z.string().trim().min(3, "Betreff muss mindestens 3 Zeichen lang sein."),
+  message: z.string().trim().min(10, "Nachricht muss mindestens 10 Zeichen lang sein."),
+  type: z.enum(["general", "dsa_notice"]).default("general"),
+  targetUrl: z.string().url("Ungültige URL.").optional().or(z.literal("")),
+  violationType: z.string().optional(),
+  legalReason: z.string().optional(),
+  dsaDeclaration: z.boolean().optional(),
+});
+
+export type ContactMessageInput = z.infer<typeof contactMessageSchema>;
+
 

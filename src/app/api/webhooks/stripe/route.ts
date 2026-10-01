@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/db";
-import { users, orders, tickets, ticketTiers, events } from "@/db/schema";
+import { users, orders, tickets, ticketTiers } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { generateSignedTicketJwt } from "@/lib/qr";
-import { sendTicketConfirmationEmail } from "@/lib/email";
-import { formatLegalAddress } from "@/lib/legal";
+import { sendTicketConfirmationEmailAsync } from "@/lib/email-service";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
@@ -17,9 +17,9 @@ export async function POST(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  let organizerId = searchParams.get("organizerId");
+  const organizerId = searchParams.get("organizerId");
 
-  let secretsToTry: string[] = [];
+  const secretsToTry: string[] = [];
 
   if (process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOK_SECRET.trim().length > 0) {
     secretsToTry.push(process.env.STRIPE_WEBHOOK_SECRET.trim());
@@ -41,15 +41,15 @@ export async function POST(req: Request) {
     );
   }
 
-  let eventObj: any = null;
-  let lastError: any = null;
+  let eventObj: Stripe.Event | null = null;
+  let lastError: Error | null = null;
 
   for (const sec of secretsToTry) {
     try {
       eventObj = stripe.webhooks.constructEvent(body, signature, sec);
       if (eventObj) break;
-    } catch (err: any) {
-      lastError = err;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err : new Error(String(err));
     }
   }
 
@@ -61,117 +61,113 @@ export async function POST(req: Request) {
   try {
     switch (eventObj.type) {
       case "checkout.session.completed": {
-        const session = eventObj.data.object as any;
-        const { orderId, eventId, tierId, quantity, buyerEmail, buyerName } = session.metadata || {};
+        const session = eventObj.data.object as Stripe.Checkout.Session;
+        const metadata = session.metadata || {};
+        const { orderId, eventId, tierId, quantity, buyerEmail, buyerName } = metadata;
 
         if (!orderId || !eventId || !tierId) {
-          console.log("Missing session metadata in webhook fulfillment.");
+          console.log("[STRIPE WEBHOOK] Missing session metadata in webhook fulfillment.");
           break;
         }
 
-        // 1. Fetch Order Record
-        const orderRecords = await db.select().from(orders).where(eq(orders.id, orderId));
-        const orderRecord = orderRecords[0];
-
-        // Idempotency check: if already completed, ignore
-        if (orderRecord && orderRecord.status === "completed") {
-          console.log(`Order ${orderId} is already marked completed. Skipping.`);
-          break;
-        }
-
-        // 2. Mark Order as Completed
-        await db
-          .update(orders)
-          .set({
-            status: "completed",
-            stripePaymentIntentId: session.payment_intent as string,
-          })
-          .where(eq(orders.id, orderId));
-
-        // 3. Increment Quantity Sold on Ticket Tier
         const numQty = parseInt(quantity || "1", 10);
-        await db
-          .update(ticketTiers)
-          .set({
-            quantitySold: sql`${ticketTiers.quantitySold} + ${numQty}`,
-          })
-          .where(eq(ticketTiers.id, tierId));
+        let shouldDispatchEmail = false;
 
-        // 4. Generate Cryptographic QR Ticket Tokens & Insert Tickets
-        const ticketInserts = [];
-        for (let i = 1; i <= numQty; i++) {
-          const ticketId = `tkt_${orderId}_${i}`;
-          const nonce = crypto.randomBytes(16).toString("hex");
+        // Atomic & Idempotent Database Transaction
+        await db.transaction(async (tx) => {
+          // 1. Fetch Order Record with status check inside transaction
+          const orderRecords = await tx.select().from(orders).where(eq(orders.id, orderId));
+          const orderRecord = orderRecords[0];
 
-          const signedJwt = await generateSignedTicketJwt({
-            ticketId,
-            orderId,
-            eventId,
-            tierId,
-            organizationId: "default_org",
-            issuedAt: Date.now(),
-            nonce,
-          });
+          // Idempotency check: if already completed, do not re-process
+          if (orderRecord && orderRecord.status === "completed") {
+            console.log(`[STRIPE WEBHOOK] Order ${orderId} is already completed. Idempotent skip.`);
+            return;
+          }
 
-          ticketInserts.push({
-            id: ticketId,
-            orderId,
-            ticketTierId: tierId,
-            attendeeName: buyerName || "Attendee",
-            qrHashToken: signedJwt,
-            status: "valid" as const,
-          });
-        }
+          // 2. Mark Order as Completed
+          const paymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id || null;
 
-        if (ticketInserts.length > 0) {
-          await db.insert(tickets).values(ticketInserts);
-        }
+          await tx
+            .update(orders)
+            .set({
+              status: "completed",
+              stripePaymentIntentId: paymentIntentId,
+              updatedAt: new Date(),
+            })
+            .where(eq(orders.id, orderId));
 
-        console.log(`[TICKET FULFILLMENT SUCCESS] Issued ${numQty} tickets for Order ${orderId}`);
+          // 3. Increment Quantity Sold on Ticket Tier
+          await tx
+            .update(ticketTiers)
+            .set({
+              quantitySold: sql`${ticketTiers.quantitySold} + ${numQty}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(ticketTiers.id, tierId));
 
-        // 5. Trigger Resend Ticket Confirmation Email
-        const targetEmail = buyerEmail || session.customer_details?.email;
-        if (targetEmail) {
-          try {
-            const eventRecords = await db.select().from(events).where(eq(events.id, eventId));
-            const tierRecords = await db.select().from(ticketTiers).where(eq(ticketTiers.id, tierId));
+          // 4. Generate Cryptographic QR Tickets & Insert
+          const ticketInserts = [];
+          for (let i = 1; i <= numQty; i++) {
+            const ticketId = `tkt_${orderId}_${i}`;
+            const nonce = crypto.randomBytes(16).toString("hex");
 
-            const currentEvent = eventRecords[0];
-            const currentTier = tierRecords[0];
-
-            const organizerRecords = currentEvent?.organizerId
-              ? await db.select().from(users).where(eq(users.id, currentEvent.organizerId))
-              : [];
-            const organizer = organizerRecords[0];
-
-            await sendTicketConfirmationEmail({
-              buyerEmail: targetEmail,
-              buyerName: buyerName || session.customer_details?.name || "Kunde",
+            const signedJwt = await generateSignedTicketJwt({
+              ticketId,
               orderId,
-              eventTitle: currentEvent?.title || "GateMate Event",
-              eventDate: currentEvent?.startDate,
-              venue: currentEvent?.venue,
-              ticketCount: numQty,
-              tierName: currentTier?.name || "Standard Ticket",
-              totalCents: orderRecord?.totalCents || session.amount_total || 0,
-              organizerLegalName: organizer?.legalName || organizer?.name || "Veranstalter",
-              organizerAddress: formatLegalAddress(organizer),
-              organizerVatId: organizer?.vatId,
-              isSmallBusiness: organizer?.isSmallBusiness,
+              eventId,
+              tierId,
+              organizationId: "default_org",
+              issuedAt: Date.now(),
+              nonce,
             });
-          } catch (mailErr: any) {
-            console.error("Failed to trigger Resend confirmation email:", mailErr?.message || mailErr);
+
+            ticketInserts.push({
+              id: ticketId,
+              orderId,
+              ticketTierId: tierId,
+              attendeeName: buyerName || "Attendee",
+              qrHashToken: signedJwt,
+              status: "valid" as const,
+            });
+          }
+
+          if (ticketInserts.length > 0) {
+            await tx.insert(tickets).values(ticketInserts);
+          }
+
+          shouldDispatchEmail = true;
+          console.log(`[TICKET FULFILLMENT SUCCESS] Issued ${numQty} tickets for Order ${orderId}`);
+        });
+
+        // 5. Decoupled Asynchronous Email Dispatch (Outside Transaction)
+        if (shouldDispatchEmail) {
+          const targetEmail = buyerEmail || session.customer_details?.email;
+          if (targetEmail) {
+            sendTicketConfirmationEmailAsync({
+              orderId,
+              eventId,
+              tierId,
+              targetEmail,
+              buyerName: buyerName || session.customer_details?.name || "Kunde",
+              ticketCount: numQty,
+              amountTotal: session.amount_total || 0,
+            }).catch((emailErr) => {
+              console.error("[DECOUPLED EMAIL DISPATCH ERROR]", emailErr);
+            });
           }
         }
         break;
       }
 
       case "checkout.session.expired": {
-        const session = eventObj.data.object as any;
-        const { orderId } = session.metadata || {};
+        const session = eventObj.data.object as Stripe.Checkout.Session;
+        const orderId = session.metadata?.orderId;
 
         if (orderId) {
-          console.log(`[STRIPE WEBHOOK] Checkout session expired for Order ${orderId}. Marking status as failed.`);
+          console.log(`[STRIPE WEBHOOK] Checkout session expired for Order ${orderId}.`);
           await db
             .update(orders)
             .set({ status: "failed", updatedAt: new Date() })
@@ -186,7 +182,7 @@ export async function POST(req: Request) {
       }
 
       case "payment_intent.payment_failed": {
-        const paymentIntent = eventObj.data.object as any;
+        const paymentIntent = eventObj.data.object as Stripe.PaymentIntent;
         console.log(`[STRIPE WEBHOOK] Payment intent failed: ${paymentIntent.id}`);
         if (paymentIntent.id) {
           await db
@@ -198,12 +194,12 @@ export async function POST(req: Request) {
       }
 
       case "account.updated": {
-        const account = eventObj.data.object as any;
+        const account = eventObj.data.object as Stripe.Account;
         console.log(`Stripe Account Updated: ${account.id}`);
         if (account.id) {
           await db
             .update(users)
-            .set({ stripeConnectedAccountId: account.id })
+            .set({ stripeConnectedAccountId: account.id, updatedAt: new Date() })
             .where(eq(users.stripeConnectedAccountId, account.id));
         }
         break;
@@ -214,8 +210,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error("Stripe webhook processing error:", err.message);
-    return NextResponse.json({ error: `Webhook Processing Error: ${err.message}` }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Unbekannter Verarbeitungsfehler";
+    console.error("Stripe webhook processing error:", errorMsg);
+    return NextResponse.json({ error: `Webhook Processing Error: ${errorMsg}` }, { status: 500 });
   }
 }

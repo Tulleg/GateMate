@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, pgEnum, json } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, json, index } from "drizzle-orm/pg-core";
 
 export const systemRoleEnum = pgEnum("system_role", ["superadmin", "organizer"]);
 
@@ -55,7 +55,10 @@ export const users = pgTable("users", {
   kytcVerifiedAt: timestamp("kytc_verified_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("users_role_idx").on(table.role),
+  index("users_organizer_slug_idx").on(table.organizerSlug),
+]);
 
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
@@ -66,7 +69,10 @@ export const sessions = pgTable("sessions", {
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("sessions_user_id_idx").on(table.userId),
+  index("sessions_token_idx").on(table.token),
+]);
 
 export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
@@ -83,7 +89,9 @@ export const accounts = pgTable("accounts", {
   scope: text("scope"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("accounts_user_id_idx").on(table.userId),
+]);
 
 export const verification = pgTable("verification", {
   id: text("id").primaryKey(),
@@ -92,4 +100,7 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("verification_identifier_idx").on(table.identifier),
+]);
+
