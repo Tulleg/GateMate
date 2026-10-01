@@ -71,6 +71,13 @@
       "when": 1790767153067,
       "tag": "0009_stiff_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790828417322,
+      "tag": "0010_new_songbird",
+      "breakpoints": true
     }
   ]
 }
