@@ -217,7 +217,7 @@ export function Sidebar() {
       )}
 
       {/* Desktop Fixed Sidebar (Visible on >= 768px) */}
-      <aside className="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between p-4 shrink-0 min-h-screen">
+      <aside className="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between p-4 shrink-0 sticky top-0 h-dvh overflow-y-auto z-30">
         <div className="space-y-6">
           {/* Brand Header */}
           <Link href="/" className="flex items-center gap-3 px-2 py-2 hover:opacity-80 transition-opacity">
