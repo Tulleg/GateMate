@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/db";
-import { users, orders, tickets, ticketTiers } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
-import { generateSignedTicketJwt } from "@/lib/qr";
-import { sendTicketConfirmationEmailAsync } from "@/lib/email-service";
-import crypto from "crypto";
+import { users, orders } from "@/db/schema";
+import { eq, and, isNotNull } from "drizzle-orm";
+import { decryptText } from "@/lib/encryption";
+import { fulfillOrder } from "@/lib/order-fulfillment";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -17,7 +16,15 @@ export async function POST(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const organizerId = searchParams.get("organizerId");
+  let organizerId = searchParams.get("organizerId");
+
+  // Attempt to parse unverified payload for auto-detecting organizer / order details
+  let unverifiedPayload: any = null;
+  try {
+    unverifiedPayload = JSON.parse(body);
+  } catch {
+    // Ignore JSON parse errors for invalid payloads
+  }
 
   const secretsToTry: string[] = [];
 
@@ -25,11 +32,53 @@ export async function POST(req: Request) {
     secretsToTry.push(process.env.STRIPE_WEBHOOK_SECRET.trim());
   }
 
+  // 1. Try resolving organizerId from payload metadata or Connect account ID if not in searchParams
+  if (!organizerId && unverifiedPayload) {
+    const metadata = unverifiedPayload.data?.object?.metadata;
+    if (metadata?.organizerId) {
+      organizerId = metadata.organizerId;
+    } else if (metadata?.orderId) {
+      const orderRecords = await db.select().from(orders).where(eq(orders.id, metadata.orderId));
+      if (orderRecords[0]?.eventId) {
+        const eventRecords = await db.select().from(orders).where(eq(orders.id, metadata.orderId));
+        // We can get organizerId from user query via connected account if available
+      }
+    }
+  }
+
+  // 2. Fetch specific organizer secret if organizerId is known
   if (organizerId) {
     const orgRecords = await db.select().from(users).where(eq(users.id, organizerId));
     const org = orgRecords[0];
-    if (org?.stripeWebhookSecret && org.stripeWebhookSecret.trim().length > 0) {
-      secretsToTry.push(org.stripeWebhookSecret.trim());
+    const decryptedSecret = decryptText(org?.stripeWebhookSecret);
+    if (decryptedSecret && decryptedSecret.trim().length > 0) {
+      secretsToTry.push(decryptedSecret.trim());
+    }
+  }
+
+  // 3. Fallback: If payload came from a Connect account, check connected account user
+  if (unverifiedPayload?.account) {
+    const connectOrgRecords = await db
+      .select()
+      .from(users)
+      .where(eq(users.stripeConnectedAccountId, unverifiedPayload.account));
+    const connectOrg = connectOrgRecords[0];
+    const decryptedSecret = decryptText(connectOrg?.stripeWebhookSecret);
+    if (decryptedSecret && decryptedSecret.trim().length > 0 && !secretsToTry.includes(decryptedSecret.trim())) {
+      secretsToTry.push(decryptedSecret.trim());
+    }
+  }
+
+  // 4. Ultimate Fallback: Add all non-null organizer webhook secrets from DB
+  const allOrgsWithWebhooks = await db
+    .select({ stripeWebhookSecret: users.stripeWebhookSecret })
+    .from(users)
+    .where(isNotNull(users.stripeWebhookSecret));
+
+  for (const org of allOrgsWithWebhooks) {
+    const decrypted = decryptText(org.stripeWebhookSecret);
+    if (decrypted && decrypted.trim().length > 0 && !secretsToTry.includes(decrypted.trim())) {
+      secretsToTry.push(decrypted.trim());
     }
   }
 
@@ -60,103 +109,42 @@ export async function POST(req: Request) {
 
   try {
     switch (eventObj.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = eventObj.data.object as Stripe.Checkout.Session;
-        const metadata = session.metadata || {};
-        const { orderId, eventId, tierId, quantity, buyerEmail, buyerName } = metadata;
+        const orderId = session.metadata?.orderId;
 
-        if (!orderId || !eventId || !tierId) {
-          console.log("[STRIPE WEBHOOK] Missing session metadata in webhook fulfillment.");
+        if (!orderId) {
+          // If orderId is missing in metadata, attempt lookup by checkout session id
+          if (session.id) {
+            const orderRecords = await db.select().from(orders).where(eq(orders.stripeCheckoutSessionId, session.id));
+            if (orderRecords[0]) {
+              const paymentIntentId = typeof session.payment_intent === "string"
+                ? session.payment_intent
+                : session.payment_intent?.id || null;
+              await fulfillOrder(orderRecords[0].id, paymentIntentId);
+            }
+          }
           break;
         }
 
-        const numQty = parseInt(quantity || "1", 10);
-        let shouldDispatchEmail = false;
+        const paymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id || null;
 
-        // Atomic & Idempotent Database Transaction
-        await db.transaction(async (tx) => {
-          // 1. Fetch Order Record with status check inside transaction
-          const orderRecords = await tx.select().from(orders).where(eq(orders.id, orderId));
-          const orderRecord = orderRecords[0];
+        await fulfillOrder(orderId, paymentIntentId);
+        break;
+      }
 
-          // Idempotency check: if already completed, do not re-process
-          if (orderRecord && orderRecord.status === "completed") {
-            console.log(`[STRIPE WEBHOOK] Order ${orderId} is already completed. Idempotent skip.`);
-            return;
-          }
-
-          // 2. Mark Order as Completed
-          const paymentIntentId = typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : session.payment_intent?.id || null;
-
-          await tx
-            .update(orders)
-            .set({
-              status: "completed",
-              stripePaymentIntentId: paymentIntentId,
-              updatedAt: new Date(),
-            })
-            .where(eq(orders.id, orderId));
-
-          // 3. Increment Quantity Sold on Ticket Tier
-          await tx
-            .update(ticketTiers)
-            .set({
-              quantitySold: sql`${ticketTiers.quantitySold} + ${numQty}`,
-              updatedAt: new Date(),
-            })
-            .where(eq(ticketTiers.id, tierId));
-
-          // 4. Generate Cryptographic QR Tickets & Insert
-          const ticketInserts = [];
-          for (let i = 1; i <= numQty; i++) {
-            const ticketId = `tkt_${orderId}_${i}`;
-            const nonce = crypto.randomBytes(16).toString("hex");
-
-            const signedJwt = await generateSignedTicketJwt({
-              ticketId,
-              orderId,
-              eventId,
-              tierId,
-              organizationId: "default_org",
-              issuedAt: Date.now(),
-              nonce,
-            });
-
-            ticketInserts.push({
-              id: ticketId,
-              orderId,
-              ticketTierId: tierId,
-              attendeeName: buyerName || "Attendee",
-              qrHashToken: signedJwt,
-              status: "valid" as const,
-            });
-          }
-
-          if (ticketInserts.length > 0) {
-            await tx.insert(tickets).values(ticketInserts);
-          }
-
-          shouldDispatchEmail = true;
-          console.log(`[TICKET FULFILLMENT SUCCESS] Issued ${numQty} tickets for Order ${orderId}`);
-        });
-
-        // 5. Decoupled Asynchronous Email Dispatch (Outside Transaction)
-        if (shouldDispatchEmail) {
-          const targetEmail = buyerEmail || session.customer_details?.email;
-          if (targetEmail) {
-            sendTicketConfirmationEmailAsync({
-              orderId,
-              eventId,
-              tierId,
-              targetEmail,
-              buyerName: buyerName || session.customer_details?.name || "Kunde",
-              ticketCount: numQty,
-              amountTotal: session.amount_total || 0,
-            }).catch((emailErr) => {
-              console.error("[DECOUPLED EMAIL DISPATCH ERROR]", emailErr);
-            });
+      case "payment_intent.succeeded": {
+        const paymentIntent = eventObj.data.object as Stripe.PaymentIntent;
+        const orderId = paymentIntent.metadata?.orderId;
+        if (orderId) {
+          await fulfillOrder(orderId, paymentIntent.id);
+        } else if (paymentIntent.id) {
+          const orderRecords = await db.select().from(orders).where(eq(orders.stripePaymentIntentId, paymentIntent.id));
+          if (orderRecords[0]) {
+            await fulfillOrder(orderRecords[0].id, paymentIntent.id);
           }
         }
         break;
@@ -216,3 +204,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Webhook Processing Error: ${errorMsg}` }, { status: 500 });
   }
 }
+

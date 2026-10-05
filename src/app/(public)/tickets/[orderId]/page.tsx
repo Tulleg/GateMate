@@ -3,7 +3,9 @@ import { orders, events, tickets, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateQrCodeDataUrl } from "@/lib/qr";
 import { formatLegalAddress, GATEMATE_PLATFORM_DISCLAIMER } from "@/lib/legal";
-import { CheckCircle2, Calendar, MapPin, Ticket as TicketIcon, Printer, ArrowLeft, Building2, ShieldCheck } from "lucide-react";
+import { getOrganizerStripeClient } from "@/lib/stripe";
+import { fulfillOrder } from "@/lib/order-fulfillment";
+import { CheckCircle2, Clock, AlertCircle, Calendar, MapPin, Ticket as TicketIcon, ArrowLeft, Building2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "./print-button";
@@ -18,7 +20,7 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
 
   // 1. Fetch Order
   const orderRecords = await db.select().from(orders).where(eq(orders.id, orderId));
-  const order = orderRecords[0];
+  let order = orderRecords[0];
 
   if (!order) {
     notFound();
@@ -31,6 +33,30 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
   // 3. Fetch Organizer
   const organizerRecords = event ? await db.select().from(users).where(eq(users.id, event.organizerId)) : [];
   const organizer = organizerRecords[0];
+
+  // Fallback verification: If order is still pending, check payment status directly via Stripe SDK
+  if (order.status === "pending" && order.stripeCheckoutSessionId) {
+    try {
+      const { client: stripeClient } = getOrganizerStripeClient(organizer);
+      const session = await stripeClient.checkout.sessions.retrieve(order.stripeCheckoutSessionId);
+
+      if (session.payment_status === "paid" || session.status === "complete") {
+        const paymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id || null;
+
+        await fulfillOrder(order.id, paymentIntentId);
+
+        // Refresh order record
+        const refreshedOrderRecords = await db.select().from(orders).where(eq(orders.id, orderId));
+        if (refreshedOrderRecords[0]) {
+          order = refreshedOrderRecords[0];
+        }
+      }
+    } catch (err) {
+      console.error("[TICKETS PAGE FALLBACK STRIPE ERROR]", err);
+    }
+  }
 
   const legalSellerName = organizer?.legalName || organizer?.name || "Demo Events GmbH";
   const legalAddressText = formatLegalAddress(organizer);
@@ -53,6 +79,9 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
     })
   );
 
+  const isCompleted = order.status === "completed";
+  const isPending = order.status === "pending";
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-indigo-500 selection:text-white pb-20 print:bg-white print:text-black">
       {/* Header (Hidden when printing) */}
@@ -67,20 +96,42 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 space-y-8">
-        {/* Order Confirmation Banner (Hidden when printing) */}
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-800/40 text-center space-y-3 print:hidden">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <CheckCircle2 className="w-6 h-6" />
+        {/* Order Status Banner */}
+        {isCompleted ? (
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-800/40 text-center space-y-3 print:hidden">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white">Zahlung Bestätigt &amp; Tickets Ausgestellt!</h1>
+            <p className="text-xs text-slate-300 max-w-md mx-auto">
+              Bestellung <span className="font-mono text-emerald-400">{order.id}</span> abgeschlossen. Vertragspartner &amp; Verkäufer ist <strong className="text-white">{legalSellerName}</strong>. Zeigen Sie Ihren QR-Code am Einlass vor.
+            </p>
+            <div className="pt-2 flex justify-center flex-wrap gap-3">
+              <PrintButton />
+              <OrderLegalSnapshotModal orderId={order.id} rawSnapshot={order.documentVersionsSnapshot} />
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Zahlung Bestätigt &amp; Tickets Ausgestellt!</h1>
-          <p className="text-xs text-slate-300 max-w-md mx-auto">
-            Bestellung <span className="font-mono text-emerald-400">{order.id}</span> abgeschlossen. Vertragspartner &amp; Verkäufer ist <strong className="text-white">{legalSellerName}</strong>. Zeigen Sie Ihren QR-Code am Einlass vor.
-          </p>
-          <div className="pt-2 flex justify-center flex-wrap gap-3">
-            <PrintButton />
-            <OrderLegalSnapshotModal orderId={order.id} rawSnapshot={order.documentVersionsSnapshot} />
+        ) : isPending ? (
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-900 border border-amber-800/40 text-center space-y-3 print:hidden">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <Clock className="w-6 h-6 animate-pulse" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white">Zahlungsbestätigung Ausstehend</h1>
+            <p className="text-xs text-slate-300 max-w-md mx-auto">
+              Die Zahlung für Bestellung <span className="font-mono text-amber-400">{order.id}</span> wird derzeit von Stripe verarbeitet. Sobald die Bestätigung eintrifft, werden Ihre Tickets automatisch freigeschaltet.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 border border-red-800/40 text-center space-y-3 print:hidden">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white">Bestellung nicht abgeschlossen</h1>
+            <p className="text-xs text-slate-300 max-w-md mx-auto">
+              Die Bezahlung für Bestellung <span className="font-mono text-red-400">{order.id}</span> wurde nicht bestätigt oder wurde abgebrochen.
+            </p>
+          </div>
+        )}
 
         {/* Printable Ticket Passes List */}
         <div className="space-y-6">
@@ -90,7 +141,9 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
 
           {processedTickets.length === 0 ? (
             <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center text-slate-400 text-sm">
-              Ihre Tickets werden derzeit generiert. Bitte laden Sie die Seite in wenigen Sekunden neu.
+              {isPending
+                ? "Ihre Tickets werden freigeschaltet, sobald die Zahlungsbestätigung eingetroffen ist."
+                : "Keine Tickets für diese Bestellung vorhanden."}
             </div>
           ) : (
             processedTickets.map((ticket, idx) => (
@@ -176,3 +229,4 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
     </div>
   );
 }
+
