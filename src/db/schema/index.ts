@@ -7,6 +7,7 @@ export * from "./legal-documents";
 export * from "./contact-messages";
 export * from "./relations";
 export * from "./platform-settings";
+export * from "./system-logs";
 
 
 

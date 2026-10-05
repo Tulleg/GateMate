@@ -655,6 +655,7 @@ export const orderCreateSchema = z.object({
   customerName: z.string().trim().min(2, "Vollständiger Name ist erforderlich."),
   termsAccepted: z.boolean().refine((val) => val === true, "AGB-Zustimmung erforderlich."),
   privacyAccepted: z.boolean().refine((val) => val === true, "Datenschutz-Zustimmung erforderlich."),
+  revocationExemptionAccepted: z.boolean().optional().default(true),
 });
 
 export type OrderCreateInput = z.infer<typeof orderCreateSchema>;

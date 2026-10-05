@@ -15,6 +15,7 @@ import {
   Users,
   Receipt,
   Mail,
+  Activity,
   Menu,
   X,
 } from "lucide-react";
@@ -80,6 +81,7 @@ export function Sidebar() {
 
   const adminNavItems = [
     { name: "Superadmin Portal", href: "/admin", icon: Shield },
+    { name: "System-Logs & Health", href: "/admin/logs", icon: Activity },
     { name: "Nachrichten & DSA", href: "/admin/messages", icon: Mail },
     { name: "User- & Rollenverwaltung", href: "/admin/users", icon: Users },
     { name: "Plattform-Rechtstexte", href: "/admin/legal", icon: Scale },

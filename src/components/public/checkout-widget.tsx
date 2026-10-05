@@ -42,6 +42,8 @@ export function CheckoutWidget({
   const [quantity, setQuantity] = useState<number>(1);
   const [buyerName, setBuyerName] = useState<string>("");
   const [buyerEmail, setBuyerEmail] = useState<string>("");
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [revocationAccepted, setRevocationAccepted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -69,6 +71,15 @@ export function CheckoutWidget({
       return;
     }
 
+    if (!termsAccepted) {
+      setErrorMessage("Bitte bestätigen Sie die AGB und Datenschutzerklärung, um fortzufahren.");
+      return;
+    }
+    if (!revocationAccepted) {
+      setErrorMessage("Bitte bestätigen Sie die Kenntnisnahme zum Widerrufsausschluss, um fortzufahren.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -78,8 +89,9 @@ export function CheckoutWidget({
         quantity,
         customerName: buyerName,
         customerEmail: buyerEmail,
-        termsAccepted: true,
-        privacyAccepted: true,
+        termsAccepted: termsAccepted,
+        privacyAccepted: termsAccepted,
+        revocationExemptionAccepted: revocationAccepted,
       });
 
       if (!res.success) {
@@ -342,33 +354,61 @@ export function CheckoutWidget({
             </div>
           </div>
 
-          {/* Terms Acceptance & Privacy Notice (§ 305 Abs. 2 BGB) */}
-          <div className="text-[11px] text-slate-400 text-center leading-relaxed px-1">
-            Mit Klick auf &quot;Zahlungspflichtig bestellen&quot; akzeptieren Sie die{" "}
-            <Link
-              href={`/o/${organizerSlug}/agb`}
-              target="_blank"
-              className="text-indigo-400 hover:underline font-semibold"
-            >
-              AGB von {legalName}
-            </Link>{" "}
-            und nehmen die{" "}
-            <Link
-              href={`/o/${organizerSlug}/datenschutz`}
-              target="_blank"
-              className="text-indigo-400 hover:underline font-semibold"
-            >
-              Datenschutzerklärung des Veranstalters
-            </Link>{" "}
-            sowie die{" "}
-            <Link
-              href="/agb"
-              target="_blank"
-              className="text-indigo-400 hover:underline font-semibold"
-            >
-              GateMate Nutzungsbedingungen
-            </Link>{" "}
-            zur Kenntnis.
+          {/* Separate Legal Checkboxes (AGB & Separater Widerrufsausschluss) */}
+          <div className="space-y-3 pt-3 text-xs border-t border-slate-800">
+            {/* Checkbox 1: AGB & Datenschutz */}
+            <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white transition-colors group p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500 shrink-0 cursor-pointer"
+              />
+              <span className="leading-relaxed text-[11px]">
+                Ich akzeptiere die{" "}
+                <Link
+                  href={`/o/${organizerSlug}/agb`}
+                  target="_blank"
+                  className="text-indigo-400 hover:underline font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  AGB von {legalName}
+                </Link>{" "}
+                sowie die{" "}
+                <Link
+                  href="/agb"
+                  target="_blank"
+                  className="text-indigo-400 hover:underline font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  GateMate Nutzungsbedingungen
+                </Link>{" "}
+                und nehme die{" "}
+                <Link
+                  href={`/o/${organizerSlug}/datenschutz`}
+                  target="_blank"
+                  className="text-indigo-400 hover:underline font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Datenschutzerklärung
+                </Link>{" "}
+                zur Kenntnis. <span className="text-red-400">*</span>
+              </span>
+            </label>
+
+            {/* Checkbox 2: Separater Widerrufsausschluss (§ 312g Abs. 2 Nr. 9 BGB) */}
+            <label className="flex items-start gap-2.5 cursor-pointer text-slate-300 hover:text-white transition-colors group p-3 rounded-xl bg-amber-950/20 border border-amber-800/40 hover:border-amber-700/60">
+              <input
+                type="checkbox"
+                checked={revocationAccepted}
+                onChange={(e) => setRevocationAccepted(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-amber-700/60 bg-slate-950 text-amber-500 focus:ring-amber-500 shrink-0 cursor-pointer"
+              />
+              <span className="leading-relaxed text-[11px] text-amber-200/90">
+                <strong className="text-amber-100 block font-semibold mb-0.5">Widerrufsausschluss (§ 312g Abs. 2 Nr. 9 BGB):</strong>
+                Ich stimme ausdrücklich zu und nehme zur Kenntnis, dass bei Verträgen zur Erbringung von Dienstleistungen im Zusammenhang mit Freizeitbetätigungen zu einem spezifischen Termin <strong className="text-white">kein Widerrufsrecht</strong> besteht. <span className="text-red-400">*</span>
+              </span>
+            </label>
           </div>
 
           <Button

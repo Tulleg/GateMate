@@ -3,6 +3,7 @@ import { events, ticketTiers, users, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendTicketConfirmationEmail } from "@/lib/email";
 import { formatLegalAddress } from "@/lib/legal";
+import { logSystemEvent } from "@/lib/system-logger";
 
 export interface TicketEmailDispatchParams {
   orderId: string;
@@ -53,9 +54,30 @@ export async function sendTicketConfirmationEmailAsync(params: TicketEmailDispat
 
     if (!result.success) {
       console.warn(`[DECOUPLED EMAIL SERVICE] Ticket confirmation email delivery warning for order ${orderId}:`, result.error);
+      await logSystemEvent({
+        severity: "warning",
+        category: "email",
+        message: `E-Mail-Bestätigung für Bestellung ${orderId} fehlgeschlagen`,
+        details: String(result.error),
+        relatedEntityId: orderId,
+      });
+    } else {
+      await logSystemEvent({
+        severity: "info",
+        category: "email",
+        message: `Ticket-Bestätigung erfolgreich per E-Mail an ${targetEmail} gesendet`,
+        relatedEntityId: orderId,
+      });
     }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error(`[DECOUPLED EMAIL SERVICE ERROR] Failed to dispatch ticket confirmation email for order ${orderId}:`, errorMsg);
+    await logSystemEvent({
+      severity: "critical",
+      category: "email",
+      message: `Kritischer Fehler beim E-Mail-Versand für Bestellung ${orderId}`,
+      details: errorMsg,
+      relatedEntityId: orderId,
+    });
   }
 }

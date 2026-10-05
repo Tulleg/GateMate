@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { orders, events, tickets, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateQrCodeDataUrl } from "@/lib/qr";
-import { formatLegalAddress, GATEMATE_PLATFORM_DISCLAIMER } from "@/lib/legal";
+import { formatLegalAddress, formatTaxDisclosure, GATEMATE_PLATFORM_DISCLAIMER, STATUTORY_WITHDRAWAL_NOTICE } from "@/lib/legal";
 import { getOrganizerStripeClient } from "@/lib/stripe";
 import { fulfillOrder } from "@/lib/order-fulfillment";
 import { CheckCircle2, Clock, AlertCircle, Calendar, MapPin, Ticket as TicketIcon, ArrowLeft, Building2, ShieldCheck } from "lucide-react";
@@ -204,20 +204,32 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
 
                 {/* Issuer / Legal Seller Section & Platform Disclaimer */}
                 <div className="pt-4 border-t border-slate-800/80 print:border-gray-300 space-y-2 text-[11px]">
-                  <div className="flex items-start gap-2 text-slate-300 print:text-black">
-                    <Building2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 print:hidden" />
-                    <div>
-                      <span className="font-bold block">Veranstalter &amp; Aussteller (Vertragspartner):</span>
-                      <p className="font-semibold text-white print:text-black">{legalSellerName}</p>
-                      <p className="text-slate-400 print:text-gray-700 text-[10px]">
-                        {legalAddressText}
-                        {organizer?.vatId && ` • USt-ID: ${organizer.vatId}`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-2 text-slate-300 print:text-black">
+                      <Building2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5 print:hidden" />
+                      <div>
+                        <span className="font-bold block">Veranstalter &amp; Aussteller (Vertragspartner):</span>
+                        <p className="font-semibold text-white print:text-black">{legalSellerName}</p>
+                        <p className="text-slate-400 print:text-gray-700 text-[10px]">
+                          {legalAddressText}
+                          {organizer?.vatId && ` • USt-ID: ${organizer.vatId}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-left sm:text-right space-y-0.5 text-xs text-slate-300 print:text-black">
+                      <p className="text-[10px] text-slate-500 uppercase font-semibold print:text-gray-600">Gesamtbetrag der Bestellung</p>
+                      <p className="font-extrabold text-indigo-400 text-sm print:text-black">
+                        {(order.totalCents / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                      </p>
+                      <p className="text-[10px] text-slate-400 print:text-gray-600">
+                        {formatTaxDisclosure(organizer?.isSmallBusiness)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-1 text-[10px] text-slate-500 print:text-gray-600 flex items-center gap-1.5 border-t border-slate-800/40 print:border-gray-200">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 print:hidden" />
+                  <div className="pt-2 text-[10px] text-slate-500 print:text-gray-600 flex items-center gap-1.5 border-t border-slate-800/40 print:border-gray-200">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 print:hidden shrink-0" />
                     <span>{GATEMATE_PLATFORM_DISCLAIMER}</span>
                   </div>
                 </div>
@@ -225,6 +237,26 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
             ))
           )}
         </div>
+
+        {/* Legal Disclaimer Box & Statutory Withdrawal Notice */}
+        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-2 print:border-gray-300 print:bg-white print:text-black">
+          <p className="font-semibold text-slate-300 print:text-black text-[11px] uppercase tracking-wider">Verbraucherinformation &amp; Widerrufsrecht</p>
+          <p className="text-[11px] leading-relaxed">
+            {STATUTORY_WITHDRAWAL_NOTICE}
+          </p>
+        </div>
+
+        {/* Footer Legal Links */}
+        <footer className="pt-8 border-t border-slate-800/60 text-center text-xs text-slate-500 print:hidden space-y-2">
+          <p>GateMate Digital Ticketing Platform &bull; Bestell-ID: <span className="font-mono text-slate-400">{order.id}</span></p>
+          <div className="flex justify-center gap-4 text-indigo-400 text-[11px]">
+            <Link href="/impressum" className="hover:underline">Plattform-Impressum</Link>
+            <span>&bull;</span>
+            <Link href="/datenschutz" className="hover:underline">Datenschutzerklärung</Link>
+            <span>&bull;</span>
+            <Link href="/agb" className="hover:underline">Nutzungsbedingungen (AGB)</Link>
+          </div>
+        </footer>
       </main>
     </div>
   );
