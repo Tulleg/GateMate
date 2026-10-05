@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { formatTaxDisclosure, formatLegalAddress, OrganizerLegalProfile } from "@/lib/legal";
+import { formatTaxDisclosure, formatLegalAddress, OrganizerLegalProfile, STATUTORY_WITHDRAWAL_NOTICE } from "@/lib/legal";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -104,6 +104,7 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
         .detail-value { font-weight: 600; color: #f8fafc; text-align: right; }
         .btn { display: block; width: 100%; text-align: center; background-color: #4f46e5; color: #ffffff; font-weight: 700; font-size: 16px; padding: 14px 0; border-radius: 14px; text-decoration: none; margin-top: 24px; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); }
         .footer { text-align: center; margin-top: 32px; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 16px; }
+        .legal-notice { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px 16px; margin-top: 24px; font-size: 12px; color: #94a3b8; line-height: 1.5; text-align: left; }
       </style>
     </head>
     <body>
@@ -169,9 +170,24 @@ export async function sendTicketConfirmationEmail(params: TicketConfirmationEmai
 
         <a href="${ticketPageUrl}" class="btn" target="_blank">Jetzt Digitales Ticket & QR-Code Öffnen →</a>
 
+        <div class="legal-notice">
+          <strong style="color: #cbd5e1;">Verbraucherinformation zum Widerrufsrecht:</strong><br>
+          ${STATUTORY_WITHDRAWAL_NOTICE}
+        </div>
+
         <div class="footer">
-          GateMate agiert ausschließlich als technischer Dienstleister und Vermittler im Auftrag von ${displayLegalName}.<br>
-          Bestell-ID: ${orderId} &bull; ${buyerEmail}
+          <p style="margin: 0 0 6px 0;">
+            GateMate agiert ausschließlich als technischer Dienstleister und Vermittler im Auftrag von <strong>${displayLegalName}</strong>.
+          </p>
+          <p style="margin: 0 0 8px 0; font-size: 11px; color: #475569;">
+            Bestell-ID: ${orderId} &bull; Empfänger: ${buyerEmail}
+          </p>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b;">
+            GateMate Ticketing Platform &bull; 
+            <a href="${APP_URL}/impressum" style="color: #818cf8; text-decoration: underline;">Impressum</a> &bull; 
+            <a href="${APP_URL}/datenschutz" style="color: #818cf8; text-decoration: underline;">Datenschutzerklärung</a> &bull; 
+            <a href="${APP_URL}/agb" style="color: #818cf8; text-decoration: underline;">AGB</a>
+          </p>
         </div>
       </div>
     </body>
@@ -230,6 +246,11 @@ export async function sendPasswordResetEmail(params: PasswordResetEmailParams) {
         <p>Du hast das Zurücksetzen deines Passworts für deinen GateMate-Account angefordert. Klicke auf den Button unten, um ein neues Passwort festzulegen:</p>
         <a href="${resetUrl}" class="btn" target="_blank">Neues Passwort festlegen →</a>
         <p style="margin-top: 24px; font-size: 12px; color: #64748b;">Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail einfach ignorieren.</p>
+        <div style="text-align: center; margin-top: 24px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 16px;">
+          GateMate Platform &bull; 
+          <a href="${APP_URL}/impressum" style="color: #818cf8; text-decoration: underline;">Impressum</a> &bull; 
+          <a href="${APP_URL}/datenschutz" style="color: #818cf8; text-decoration: underline;">Datenschutzerklärung</a>
+        </div>
       </div>
     </body>
     </html>
@@ -377,7 +398,12 @@ export async function sendContactConfirmationEmail(params: ContactConfirmationEm
             : "Unser Support-Team prüft dein Anliegen und wird sich in Kürze bei dir melden."
         }</p>
         <div class="footer">
-          GateMate Platform &bull; Automatisierte Empfangsbestätigung
+          <p style="margin: 0 0 6px 0;">GateMate Platform &bull; Automatisierte Empfangsbestätigung</p>
+          <p style="margin: 0; font-size: 11px; color: #64748b;">
+            <a href="${APP_URL}/impressum" style="color: #818cf8; text-decoration: underline;">Impressum</a> &bull; 
+            <a href="${APP_URL}/datenschutz" style="color: #818cf8; text-decoration: underline;">Datenschutzerklärung</a> &bull; 
+            <a href="${APP_URL}/kontakt" style="color: #818cf8; text-decoration: underline;">Kontakt</a>
+          </p>
         </div>
       </div>
     </body>
