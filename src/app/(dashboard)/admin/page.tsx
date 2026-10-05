@@ -67,28 +67,28 @@ export default async function SuperAdminDashboard() {
               Globale Plattformübersicht, Verzeichnis registrierter Veranstalter, aktive Events und Gebühreneinnahmen.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/admin/logs"
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+              className="h-10 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs inline-flex items-center justify-center gap-2 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
             >
               <Activity className="w-4 h-4 text-indigo-400" /> System-Logs &amp; Health
             </Link>
             <Link
               href="/admin/messages"
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 border border-indigo-500/30 transition-colors shadow-lg shadow-indigo-600/20"
+              className="h-10 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs inline-flex items-center justify-center gap-2 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
             >
-              <Mail className="w-4 h-4" /> Nachrichten &amp; DSA
+              <Mail className="w-4 h-4 text-indigo-400" /> Nachrichten &amp; DSA
             </Link>
             <Link
               href="/admin/users"
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+              className="h-10 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs inline-flex items-center justify-center gap-2 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
             >
               <Users className="w-4 h-4 text-indigo-400" /> Userverwaltung
             </Link>
             <Link
               href="/admin/legal"
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-2 border border-slate-700 transition-colors"
+              className="h-10 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs inline-flex items-center justify-center gap-2 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
             >
               <Scale className="w-4 h-4 text-emerald-400" /> Plattform-Rechtstexte
             </Link>
