@@ -210,7 +210,7 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
                   </span>
                 ) : connectedAccountId && detailsSubmitted ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono border border-emerald-500/30">
-                    Connect Express Aktiv
+                    Connect Standard Aktiv
                   </span>
                 ) : connectedAccountId && !detailsSubmitted ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono border border-amber-500/30">
@@ -226,10 +226,10 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
                 {hasSecretKey
                   ? "Ihre manuellen Stripe API-Schlüssel sind aktiv. Auszahlungen fließen direkt in Ihr eigenes Stripe-Konto."
                   : connectedAccountId && detailsSubmitted
-                  ? `Verknüpft mit Stripe Express Konto ${connectedAccountId}. Ticket-Einnahmen werden direkt ausgezahlt.`
+                  ? `Verknüpft mit Stripe Standard Konto ${connectedAccountId}. Ticket-Einnahmen werden direkt ausgezahlt.`
                   : connectedAccountId && !detailsSubmitted
-                  ? `Stripe Express Konto ${connectedAccountId} wurde erstellt, aber die Registrierung bei Stripe wurde nicht abgeschlossen.`
-                  : "Verknüpfen Sie Ihr Bankkonto per 1-Klick über Stripe Express, um Ticketverkäufe zu empfangen."}
+                  ? `Stripe Standard Konto ${connectedAccountId} wurde erstellt, aber die Registrierung bei Stripe wurde noch nicht abgeschlossen.`
+                  : "Verknüpfen Sie Ihr Bankkonto per 1-Klick über Stripe Standard, um Ticketverkäufe zu empfangen."}
               </p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function StripeSettingsCard({ userId }: StripeSettingsCardProps) {
                   ? "Stripe Dashboard verwalten"
                   : connectedAccountId && !detailsSubmitted
                   ? "Onboarding fortsetzen"
-                  : "Stripe Express verbinden"}{" "}
+                  : "Stripe Standard verbinden"}{" "}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

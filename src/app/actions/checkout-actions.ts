@@ -141,6 +141,8 @@ export async function createCheckoutSessionAction(
       const applicationFeeAmount = Math.round(totalCents * (platformFeePercent / 100));
       sessionOptions.payment_intent_data = {
         application_fee_amount: applicationFeeAmount,
+        on_behalf_of: organizer.stripeConnectedAccountId,
+        description: `Ticketkauf bei ${organizer?.legalName || organizer?.name || "Veranstalter"} für ${eventRecord.title}`,
         transfer_data: {
           destination: organizer.stripeConnectedAccountId,
         },

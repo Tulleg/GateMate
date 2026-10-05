@@ -10,7 +10,7 @@ export const users = pgTable("users", {
   // Onboarding Workflow State Management
   onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
   onboardingStep: text("onboarding_step").default("stripe_connect").notNull(), // 'stripe_connect' | 'legal_info' | 'agb_terms' | 'completed'
-  stripeAccountType: text("stripe_account_type").default("express"), // 'express' | 'custom_keys'
+  stripeAccountType: text("stripe_account_type").default("standard"), // 'standard' | 'express' | 'custom_keys'
   stripeAccountId: text("stripe_account_id"),
   stripeConnectedAccountId: text("stripe_connected_account_id"),
   stripePublishableKey: text("stripe_publishable_key"),

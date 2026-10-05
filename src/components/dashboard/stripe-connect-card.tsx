@@ -47,7 +47,7 @@ export function StripeConnectCard({ userId, isConnected, accountId }: StripeConn
             <h3 className="text-base font-semibold text-white flex items-center gap-2">
               Stripe Connect Bereit
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
-                Express Payouts Aktiv
+                Standard Konto Aktiv
               </span>
             </h3>
             <p className="text-xs text-slate-400 mt-1">
@@ -76,7 +76,7 @@ export function StripeConnectCard({ userId, isConnected, accountId }: StripeConn
           <div>
             <h3 className="text-base font-semibold text-white">Direkte Auszahlungen mit Stripe Connect</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Verknüpfen Sie Ihr Bankkonto via Stripe Express für direkte Ticket-Auszahlungen.
+              Verknüpfen Sie Ihr Stripe Standard-Konto für direkte Ticket-Auszahlungen.
             </p>
           </div>
         </div>
@@ -91,7 +91,7 @@ export function StripeConnectCard({ userId, isConnected, accountId }: StripeConn
             </>
           ) : (
             <>
-              Stripe Express verbinden <ArrowRight className="w-4 h-4" />
+              Stripe Standard verbinden <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>

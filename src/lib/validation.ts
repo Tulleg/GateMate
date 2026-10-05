@@ -577,6 +577,9 @@ import { z } from "zod";
 
 export const onboardingStep1Schema = z.discriminatedUnion("stripeAccountType", [
   z.object({
+    stripeAccountType: z.literal("standard"),
+  }),
+  z.object({
     stripeAccountType: z.literal("express"),
   }),
   z.object({

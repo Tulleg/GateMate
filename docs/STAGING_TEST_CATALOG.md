@@ -50,7 +50,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 | Test-ID | Testfall | Schritte | Erwartetes Ergebnis | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **ONB-01** | Erzwungener Onboarding-Redirect | 1. Neuer Veranstalter-Account ruft `/organizer` auf | Automatische Umleitung zu `/onboarding` (Wizard) | `[ ] Pass` |
-| **ONB-02** | Schritt 1: Stripe Connect Express | 1. Auf "Stripe verbinden" klicken<br>2. Stripe Express Ablauf durchgehen | Rückkehr zum Onboarding, Schritt 1 als abgeschlossen markiert | `[ ] Pass` |
+| **ONB-02** | Schritt 1: Stripe Connect Standard | 1. Auf "Stripe verbinden" klicken<br>2. Stripe Standard Ablauf durchgehen | Rückkehr zum Onboarding, Schritt 1 als abgeschlossen markiert | `[ ] Pass` |
 | **ONB-03** | Schritt 2: DSA KYTC Stammdaten | 1. Rechtsform, Registergericht, Registriernummer & Telefon eingeben<br>2. Weiter klicken | Validierung erfolgreich, Daten gespeichert, Wechsel zu Schritt 3 | `[ ] Pass` |
 | **ONB-04** | Schritt 3: AGB & AVV Zustimmung | 1. Rechtstexte & AVV prüfen<br>2. Checkboxen aktivieren & Zustimmen klicken | `onboardingCompleted` wird `true`, Weiterleitung zum Hauptdashboard | `[ ] Pass` |
 

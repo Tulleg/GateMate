@@ -82,7 +82,7 @@ export async function POST(req: Request) {
         message: "Eigene Stripe API-Keys wurden erfolgreich validiert und gespeichert.",
       });
     } else {
-      // Option a: Stripe Connect Express Flow
+      // Option a: Stripe Connect Standard Flow
       if (!hasPlatformStripeKey()) {
         return NextResponse.json(
           {
@@ -94,15 +94,12 @@ export async function POST(req: Request) {
       }
 
       let stripeAccountId = user.stripeAccountId || user.stripeConnectedAccountId;
+      const targetAccountType = data.stripeAccountType === "express" ? "express" : "standard";
 
       if (!stripeAccountId) {
         const account = await stripe.accounts.create({
-          type: "express",
+          type: targetAccountType,
           email: user.email,
-          capabilities: {
-            card_payments: { requested: true },
-            transfers: { requested: true },
-          },
           business_profile: {
             name: user.legalCompanyName || user.name || "GateMate Organizer",
           },
@@ -114,7 +111,7 @@ export async function POST(req: Request) {
           .set({
             stripeAccountId: stripeAccountId,
             stripeConnectedAccountId: stripeAccountId,
-            stripeAccountType: "express",
+            stripeAccountType: targetAccountType,
             stripeMode: "connect",
             updatedAt: new Date(),
           })
@@ -123,7 +120,7 @@ export async function POST(req: Request) {
         await db
           .update(users)
           .set({
-            stripeAccountType: "express",
+            stripeAccountType: targetAccountType,
             stripeMode: "connect",
             updatedAt: new Date(),
           })

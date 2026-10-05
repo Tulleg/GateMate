@@ -37,11 +37,11 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
 
     const data: OnboardingStep1Input = validated.data;
 
-    if (data.stripeAccountType === "express") {
+    if (data.stripeAccountType === "standard" || data.stripeAccountType === "express") {
       await db
         .update(users)
         .set({
-          stripeAccountType: "express",
+          stripeAccountType: data.stripeAccountType,
           stripeMode: "connect",
           onboardingStep: "legal_info",
           updatedAt: new Date(),

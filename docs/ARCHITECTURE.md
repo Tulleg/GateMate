@@ -2,7 +2,7 @@
 
 ## 1. Übersicht & Systemarchitektur
 
-**GateMate** ist eine Fullstack-Ticketing-Plattform für Veranstalter und Event-Teilnehmer. Die Anwendung kombiniert ein modernes Next.js 15 App-Router-Frontend mit einer typsicheren PostgreSQL-Datenbank (via Drizzle ORM), Stripe Connect Express für Zahlungsabwicklung, Better-Auth für Authentifizierung & Session-Management, Resend für E-Mail-Kommunikation sowie ein Browser-basiertes Check-in-System mit QR-Code-Scanning.
+**GateMate** ist eine Fullstack-Ticketing-Plattform für Veranstalter und Event-Teilnehmer. Die Anwendung kombiniert ein modernes Next.js 15 App-Router-Frontend mit einer typsicheren PostgreSQL-Datenbank (via Drizzle ORM), Stripe Connect Standard für Zahlungsabwicklung, Better-Auth für Authentifizierung & Session-Management, Resend für E-Mail-Kommunikation sowie ein Browser-basiertes Check-in-System mit QR-Code-Scanning.
 
 ```mermaid
 graph TD
@@ -11,7 +11,7 @@ graph TD
     Middleware --> ServerActions["Server Actions & API Routes"]
     ServerActions --> DrizzleORM["Drizzle ORM"]
     DrizzleORM --> PostgresDB[("PostgreSQL Database")]
-    ServerActions --> StripeAPI["Stripe API (Connect Express)"]
+    ServerActions --> StripeAPI["Stripe API (Connect Standard)"]
     ServerActions --> ResendAPI["Resend Email API"]
     ServerActions --> QRSigning["HMAC-SHA256 Ticket Signing"]
     Client --> Scanner["HTML5-QRCode Camera Scanner"]
@@ -28,7 +28,7 @@ graph TD
 | **Styling** | Tailwind CSS v3 & Radix UI | Komponentenbibliothek mit responsivem Design |
 | **Datenbank** | PostgreSQL & Drizzle ORM (v0.38) | Typsichere Schema-Definitionen & SQL-Migrationen |
 | **Authentifizierung** | Better-Auth (v1.1) | Session-basierte Authentifizierung mit Rollenverwaltung (`superadmin`, `organizer`, `user`) |
-| **Zahlungen** | Stripe Connect Express | Direct Seller Payment Architecture mit automatischen Split-Gebühren |
+| **Zahlungen** | Stripe Connect Standard | Direct Seller Payment Architecture mit automatischen Split-Gebühren |
 | **E-Mails** | Resend SDK (v6.30) | Transaktionale Ticketbestätigungen & Passwort-Resets |
 | **Scanner & QR** | HTML5-QRCode & ZXing Library | Browserbasierter QR-Scanner mit Kamera-Freigabe |
 | **Typisierung** | TypeScript (v5.7) & Zod (v3.24) | End-to-End Typsicherheit & Laufzeit-Validierung |

@@ -98,7 +98,7 @@ export default async function PlatformDatenschutzPage() {
                   Im Rahmen des Ticketkaufs verarbeiten wir personenbezogene Daten (Name, E-Mail-Adresse, Bestelldaten), um die Erstellung und Zustellung der digitalen QR-Tickets durchzuführen (Art. 6 Abs. 1 lit. b DSGVO).
                 </p>
                 <p>
-                  Zahlungsdaten werden direkt über den Zahlungsdienstleister <strong>Stripe Payments Europe, Ltd.</strong> abgewickelt. GateMate speichert selbst keine vollständigen Kreditkartendaten. Soweit bei Stripe Connect Destination Charges genutzt werden, erfolgt die Abwicklung im Namen des jeweiligen Veranstalters.
+                  Zahlungsdaten werden direkt über den Zahlungsdienstleister <strong>Stripe Payments Europe, Ltd.</strong> abgewickelt. GateMate speichert selbst keine vollständigen Kreditkartendaten. Soweit bei Stripe Connect Standard Destination Charges genutzt werden, erfolgt die Zahlungsabwicklung im Namen und auf Rechnung des jeweiligen Veranstalters als vertraglichem Zahlungsempfänger.
                 </p>
               </section>
 

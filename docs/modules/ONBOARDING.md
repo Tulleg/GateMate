@@ -9,7 +9,7 @@ sequenceDiagram
     autonumber
     actor Organizer as Veranstalter
     participant App as Next.js Middleware & /onboarding
-    participant Stripe as Stripe Connect Express
+    participant Stripe as Stripe Connect Standard
     participant DB as PostgreSQL (Drizzle)
 
     Organizer->>App: Zugriff auf Dashboard /organizer
@@ -17,7 +17,7 @@ sequenceDiagram
     DB-->>App: onboardingCompleted = false
     App-->>Organizer: Redirect /onboarding (Wizard Step 1)
     
-    Organizer->>Stripe: Step 1: Stripe Express Onboarding durchführen
+    Organizer->>Stripe: Step 1: Stripe Standard Onboarding durchführen
     Stripe-->>App: Return URL Callback & Check Verification Status
     App->>DB: Update stripeAccountId & stripeOnboardingStatus
     
@@ -33,10 +33,10 @@ sequenceDiagram
 
 ## 2. Die 3 Onboarding-Schritte
 
-### Schritt 1: Stripe Connect Express Verknüpfung
-- **Zweck:** Einrichtung des Zahlungskontos für direkte Auszahlungen (Direct Charges).
+### Schritt 1: Stripe Connect Standard Verknüpfung
+- **Zweck:** Einrichtung des Zahlungskontos für direkte Auszahlungen (Destination Charges auf Standard-Konto).
 - **API Endpoint:** [`/api/onboarding/step-1-stripe`](file:///home/Tulle/antigravity/delightful-newton/src/app/api/onboarding/step-1-stripe/route.ts)
-- **Ablauf:** Generierung eines Stripe Connect Express Account Links. Nach Rückkehr wird der Status auf `active` / `completed` abgefragt.
+- **Ablauf:** Generierung eines Stripe Connect Standard Account Links. Nach Rückkehr wird der Status auf `active` / `completed` abgefragt.
 
 ### Schritt 2: Rechtliche Stammdaten (DSA KYTC - Know Your Business Customer)
 - **Zweck:** Erfüllung der Transparenzpflichten nach Art. 30/31 Digital Services Act (DSA).

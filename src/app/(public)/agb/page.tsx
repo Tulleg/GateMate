@@ -99,10 +99,13 @@ export default async function PlatformAGBPage() {
                   <FileText className="w-5 h-5 text-indigo-400" /> § 3 Zahlungsabwicklung &amp; Gebühren
                 </h2>
                 <p>
-                  (1) Die Zahlungsabwicklung für Ticketverkäufe erfolgt direkt über das Stripe-Konto (Stripe Connect oder Direct Key Integration) des jeweiligen Veranstalters.
+                  (1) Die Zahlungsabwicklung für Ticketverkäufe erfolgt direkt über das Stripe-Konto (Stripe Connect Standard oder direkte API-Schlüssel) des jeweiligen Veranstalters. Der Vertragspartner und vertragliche Zahlungsempfänger für den Ticketkauf ist ausschließlich der jeweilige Veranstalter (Merchant of Record).
                 </p>
                 <p>
-                  (2) Etwaige Plattform- und Vermittlungsgebühren werden im Zahlungsfluss transparent ausgewiesen und gemäß Vereinbarung mit dem Veranstalter abgerechnet.
+                  (2) Etwaige Plattform- und Vermittlungsgebühren werden im Zahlungsfluss transparent ausgewiesen und automatisch gemäß Vereinbarung mit dem Veranstalter einbehalten.
+                </p>
+                <p>
+                  (3) Der Veranstalter trägt die alleinige finanzielle und rechtliche Verantwortung für etwaige Rückbuchungen (Chargebacks), Zahlungsausfälle, Kundenreklamationen und Stornierungen im Zusammenhang mit seinen Veranstaltungen.
                 </p>
               </section>
 
@@ -114,7 +117,7 @@ export default async function PlatformAGBPage() {
                   (1) Veranstalter verpflichten sich, auf ihren Event-Seiten ein eigenes, vollständiges Impressum sowie alle gesetzlich erforderlichen Pflichtangaben (insbesondere Verbraucherinformationen und Widerrufsbelehrungen nach § 312g BGB) bereitzustellen.
                 </p>
                 <p>
-                  (2) Veranstalter sind verpflichtet, vor der Veröffentlichung von Events ein eigenes Stripe-Zahlungskonto anzubinden.
+                  (2) Veranstalter sind verpflichtet, vor der Veröffentlichung von Events ein eigenes Stripe-Zahlungskonto (Stripe Connect Standard) anzubinden.
                 </p>
               </section>
             </>

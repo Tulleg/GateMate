@@ -34,7 +34,7 @@ export function OnboardingWizard() {
   const [currentStep, setCurrentStep] = useState<number>(1); // 1, 2, 3, 4 (completed)
 
   // Step 1 State: Stripe
-  const [stripeAccountType, setStripeAccountType] = useState<"express" | "custom_keys">("express");
+  const [stripeAccountType, setStripeAccountType] = useState<"standard" | "express" | "custom_keys">("standard");
   const [stripePublishableKey, setStripePublishableKey] = useState("");
   const [stripeSecretKey, setStripeSecretKey] = useState("");
   const [showSecretKey, setShowSecretKey] = useState(false);
@@ -412,11 +412,11 @@ export function OnboardingWizard() {
 
               {/* Selection Options Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Option A: Stripe Express */}
+                {/* Option A: Stripe Standard */}
                 <div
-                  onClick={() => setStripeAccountType("express")}
+                  onClick={() => setStripeAccountType("standard")}
                   className={`p-5 rounded-2xl border-2 cursor-pointer transition-all space-y-3 relative ${
-                    stripeAccountType === "express"
+                    stripeAccountType === "standard" || stripeAccountType === "express"
                       ? "bg-indigo-600/10 border-indigo-500 shadow-md shadow-indigo-600/10"
                       : "bg-slate-950/40 border-slate-800 hover:border-slate-700"
                   }`}
@@ -426,15 +426,15 @@ export function OnboardingWizard() {
                     <input
                       type="radio"
                       name="stripe_option"
-                      checked={stripeAccountType === "express"}
-                      onChange={() => setStripeAccountType("express")}
+                      checked={stripeAccountType === "standard" || stripeAccountType === "express"}
+                      onChange={() => setStripeAccountType("standard")}
                       className="w-4 h-4 text-indigo-600 accent-indigo-500"
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base">Mit Stripe Express verbinden</h3>
+                    <h3 className="font-bold text-white text-base">Mit Stripe Standard verbinden</h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      Schnelles Onboarding über Stripe Connect. Inklusive automatischer Steueraufschlüsselung &amp; Auszahlungen.
+                      Verknüpfen Sie Ihr eigenes Konto über Stripe Connect. Inklusive automatischer Gebührenabrechnung &amp; Auszahlungen.
                     </p>
                   </div>
                   {stripeAccountId && (
@@ -538,7 +538,7 @@ export function OnboardingWizard() {
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" /> Verarbeite...
                     </>
-                  ) : stripeAccountType === "express" ? (
+                  ) : stripeAccountType === "standard" || stripeAccountType === "express" ? (
                     <>
                       Mit Stripe verbinden <ExternalLink className="w-4 h-4" />
                     </>
