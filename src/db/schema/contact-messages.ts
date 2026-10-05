@@ -47,3 +47,14 @@ export const contactMessages = pgTable("contact_messages", {
   index("contact_messages_user_id_idx").on(table.userId),
 ]);
 
+export const contactMessageReplies = pgTable("contact_message_replies", {
+  id: text("id").primaryKey(), // rpl_...
+  messageId: text("message_id").notNull().references(() => contactMessages.id, { onDelete: "cascade" }),
+  senderName: text("sender_name").notNull(),
+  senderEmail: text("sender_email").notNull(),
+  replyText: text("reply_text").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("contact_message_replies_message_id_idx").on(table.messageId),
+]);
+

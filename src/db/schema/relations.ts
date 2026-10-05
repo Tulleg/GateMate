@@ -5,7 +5,22 @@ import { events, ticketTiers } from "./events";
 import { orders, tickets, checkInLogs } from "./tickets";
 import { legalDocuments } from "./legal-documents";
 import { legalDocumentVersions } from "./legal-versions";
-import { contactMessages } from "./contact-messages";
+import { contactMessages, contactMessageReplies } from "./contact-messages";
+
+export const contactMessagesRelations = relations(contactMessages, ({ one, many }) => ({
+  user: one(users, {
+    fields: [contactMessages.userId],
+    references: [users.id],
+  }),
+  replies: many(contactMessageReplies),
+}));
+
+export const contactMessageRepliesRelations = relations(contactMessageReplies, ({ one }) => ({
+  message: one(contactMessages, {
+    fields: [contactMessageReplies.messageId],
+    references: [contactMessages.id],
+  }),
+}));
 
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
@@ -116,12 +131,5 @@ export const legalDocumentVersionsRelations = relations(legalDocumentVersions, (
   event: one(events, {
     fields: [legalDocumentVersions.eventId],
     references: [events.id],
-  }),
-}));
-
-export const contactMessagesRelations = relations(contactMessages, ({ one }) => ({
-  user: one(users, {
-    fields: [contactMessages.userId],
-    references: [users.id],
   }),
 }));

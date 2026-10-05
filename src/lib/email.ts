@@ -424,3 +424,87 @@ export async function sendContactConfirmationEmail(params: ContactConfirmationEm
   }
 }
 
+export interface AdminSupportReplyEmailParams {
+  recipientEmail: string;
+  recipientName: string;
+  originalSubject: string;
+  originalMessage: string;
+  replyText: string;
+  adminName?: string;
+}
+
+/**
+ * Sends a support reply email to a customer from the Superadmin dashboard via Resend.
+ */
+export async function sendAdminSupportReplyEmail(params: AdminSupportReplyEmailParams) {
+  const { recipientEmail, recipientName, originalSubject, originalMessage, replyText, adminName } = params;
+
+  if (!resend) {
+    console.warn(`[RESEND SKIPPED] RESEND_API_KEY is missing. Support reply email for ${recipientEmail} was not sent.`);
+    return { success: false, error: "RESEND_API_KEY missing" };
+  }
+
+  const senderLabel = adminName ? `GateMate Support (${adminName})` : "GateMate Support";
+  const rawFromEmail = DEFAULT_FROM.includes("<") ? DEFAULT_FROM.split("<")[1].replace(">", "").trim() : DEFAULT_FROM.trim();
+  const dynamicFrom = `${senderLabel} <${rawFromEmail}>`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+      <meta charset="utf-8">
+      <title>Antwort auf Ihre Anfrage | GateMate</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #020617; color: #f8fafc; padding: 24px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 24px; border: 1px solid #1e293b; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+        .header { border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 20px; }
+        .logo { font-size: 20px; font-weight: 800; color: #818cf8; text-decoration: none; }
+        .reply-box { background-color: #1e293b; border-radius: 16px; padding: 20px; border-left: 4px solid #6366f1; margin: 20px 0; font-size: 15px; line-height: 1.6; white-space: pre-wrap; color: #f8fafc; }
+        .original-box { background-color: #090d16; border-radius: 12px; padding: 16px; border: 1px solid #1e293b; font-size: 13px; color: #94a3b8; margin-top: 24px; }
+        .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">🎟️ GateMate Support-Team</div>
+        </div>
+
+        <p>Hallo <strong>${recipientName}</strong>,</p>
+        <p>vielen Dank für deine Geduld. Hier ist unsere Antwort auf deine Anfrage:</p>
+
+        <div class="reply-box">${replyText}</div>
+
+        <div class="original-box">
+          <strong style="color: #cbd5e1;">Deine ursprüngliche Anfrage:</strong><br>
+          <span style="color: #64748b; font-size: 12px;">Betreff: ${originalSubject}</span>
+          <p style="margin: 8px 0 0 0; white-space: pre-wrap;">${originalMessage}</p>
+        </div>
+
+        <div class="footer">
+          GateMate Ticketing Platform &bull; 
+          <a href="${APP_URL}/impressum" style="color: #818cf8; text-decoration: underline;">Impressum</a> &bull; 
+          <a href="${APP_URL}/datenschutz" style="color: #818cf8; text-decoration: underline;">Datenschutzerklärung</a> &bull; 
+          <a href="${APP_URL}/kontakt" style="color: #818cf8; text-decoration: underline;">Kontakt</a>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const data = await resend.emails.send({
+      from: dynamicFrom,
+      to: [recipientEmail],
+      subject: `Re: ${originalSubject} | GateMate Support`,
+      html,
+    });
+
+    console.log(`[RESEND EMAIL SUCCESS] Support reply sent to ${recipientEmail}:`, data);
+    return { success: true, data };
+  } catch (err: any) {
+    console.error(`[RESEND EMAIL ERROR] Failed to send support reply to ${recipientEmail}:`, err?.message || err);
+    return { success: false, error: err?.message || err };
+  }
+}
+

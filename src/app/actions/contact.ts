@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { contactMessages } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { contactMessages, contactMessageReplies } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendAdminNewMessageNotificationEmail, sendContactConfirmationEmail } from "@/lib/email";
+import { sendAdminNewMessageNotificationEmail, sendContactConfirmationEmail, sendAdminSupportReplyEmail } from "@/lib/email";
 import { contactMessageSchema } from "@/lib/validation";
 import { ActionResult, formatZodErrors } from "@/types";
 import { getCurrentUser } from "@/lib/auth";
@@ -200,5 +200,124 @@ export async function updateMessageStatus(
       success: false,
       error: errorMsg,
     };
+  }
+}
+
+export interface ContactReplyItem {
+  id: string;
+  messageId: string;
+  senderName: string;
+  senderEmail: string;
+  replyText: string;
+  createdAt: Date;
+}
+
+export async function replyToContactMessage(
+  messageId: string,
+  replyText: string
+): Promise<ActionResult<{ reply: ContactReplyItem }>> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== "superadmin") {
+      return {
+        success: false,
+        error: "Keine Berechtigung. Nur Superadmins können auf Supportanfragen antworten.",
+      };
+    }
+
+    const trimmedText = replyText.trim();
+    if (!trimmedText) {
+      return {
+        success: false,
+        error: "Bitte gib eine Antwortnachricht ein.",
+      };
+    }
+
+    const [msg] = await db.select().from(contactMessages).where(eq(contactMessages.id, messageId));
+    if (!msg) {
+      return {
+        success: false,
+        error: "Nachricht nicht gefunden.",
+      };
+    }
+
+    const replyId = `rpl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const adminName = currentUser.name || "GateMate Support";
+    const adminEmail = currentUser.email || "support@gatemate.io";
+
+    // Insert reply into history table
+    await db.insert(contactMessageReplies).values({
+      id: replyId,
+      messageId,
+      senderName: adminName,
+      senderEmail: adminEmail,
+      replyText: trimmedText,
+    });
+
+    // Update message status to "replied"
+    await db
+      .update(contactMessages)
+      .set({
+        status: "replied",
+        updatedAt: new Date(),
+      })
+      .where(eq(contactMessages.id, messageId));
+
+    // Send email to the requester via Resend
+    await sendAdminSupportReplyEmail({
+      recipientEmail: msg.email,
+      recipientName: msg.name,
+      originalSubject: msg.subject,
+      originalMessage: msg.message,
+      replyText: trimmedText,
+      adminName,
+    });
+
+    revalidatePath("/admin/messages");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: "Antwort wurde erfolgreich per E-Mail gesendet und in der Historie gespeichert.",
+      data: {
+        reply: {
+          id: replyId,
+          messageId,
+          senderName: adminName,
+          senderEmail: adminEmail,
+          replyText: trimmedText,
+          createdAt: new Date(),
+        },
+      },
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Fehler beim Senden der Antwort.";
+    console.error("[REPLY TO CONTACT MESSAGE ERROR]", err);
+    return {
+      success: false,
+      error: errorMsg,
+    };
+  }
+}
+
+export async function getContactMessageReplies(messageId: string): Promise<ContactReplyItem[]> {
+  try {
+    const rawReplies = await db
+      .select()
+      .from(contactMessageReplies)
+      .where(eq(contactMessageReplies.messageId, messageId))
+      .orderBy(asc(contactMessageReplies.createdAt));
+
+    return rawReplies.map((r) => ({
+      id: r.id,
+      messageId: r.messageId,
+      senderName: r.senderName,
+      senderEmail: r.senderEmail,
+      replyText: r.replyText,
+      createdAt: r.createdAt,
+    }));
+  } catch (err) {
+    console.error("[GET CONTACT MESSAGE REPLIES ERROR]", err);
+    return [];
   }
 }

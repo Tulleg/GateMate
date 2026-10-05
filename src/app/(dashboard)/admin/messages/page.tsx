@@ -1,10 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { contactMessages } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { contactMessages, contactMessageReplies } from "@/db/schema";
+import { desc, asc } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { AdminMessagesClient, ContactMessageItem } from "@/components/dashboard/admin-messages-client";
+import { ContactReplyItem } from "@/app/actions/contact";
 import { MessageSquare, ShieldAlert, Mail, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,27 @@ export default async function AdminMessagesPage() {
     .select()
     .from(contactMessages)
     .orderBy(desc(contactMessages.createdAt));
+
+  const rawReplies = await db
+    .select()
+    .from(contactMessageReplies)
+    .orderBy(asc(contactMessageReplies.createdAt))
+    .catch(() => []);
+
+  const repliesByMessageId: Record<string, ContactReplyItem[]> = {};
+  for (const r of rawReplies) {
+    if (!repliesByMessageId[r.messageId]) {
+      repliesByMessageId[r.messageId] = [];
+    }
+    repliesByMessageId[r.messageId].push({
+      id: r.id,
+      messageId: r.messageId,
+      senderName: r.senderName,
+      senderEmail: r.senderEmail,
+      replyText: r.replyText,
+      createdAt: r.createdAt,
+    });
+  }
 
   const messages: ContactMessageItem[] = rawMessages.map((m) => ({
     id: m.id,
@@ -107,7 +129,7 @@ export default async function AdminMessagesPage() {
         </div>
 
         {/* Client Interactive Inbox */}
-        <AdminMessagesClient initialMessages={messages} />
+        <AdminMessagesClient initialMessages={messages} initialReplies={repliesByMessageId} />
       </main>
     </div>
   );
