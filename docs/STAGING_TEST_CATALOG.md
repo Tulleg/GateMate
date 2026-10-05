@@ -64,6 +64,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 | **ADM-02** | Benutzerübersicht laden | 1. Als Admin einloggen<br>2. `/admin/users` aufrufen | Liste aller registrierten Benutzer wird vollständig & fehlerfrei geladen | `[ ] Pass` |
 | **ADM-03** | Rechtstext-Verwaltung (`/admin/legal`) | 1. Zu `/admin/legal` navigieren<br>2. Neue Version der AGB/AVV veröffentlichen | Neue Version gespeichert, öffentlich unter `/agb` bzw. `/avv` sofort aktualisiert | `[ ] Pass` |
 | **ADM-04** | Admin Nachrichten Posteingang (`/admin/messages`) | 1. Formular `/kontakt` oder `/notice-and-action` ausfüllen<br>2. Als Admin `/admin/messages` öffnen | Nachricht wird gelistet, Filter nach Typ/Status funktioniert, Statusänderung möglich | `[ ] Pass` |
+| **ADM-05** | Dynamische Stripe-Plattformgebühr (`/admin`) | 1. Als Superadmin `/admin` aufrufen<br>2. In der Kachel "Plattform-Gebühr" auf "Bearbeiten" klicken<br>3. Neuen Prozentsatz eingeben (z. B. `6.5`%) & Speichern<br>4. Seite neu laden | Neuer Gebührensatz wird persistiert; Kachel "Plattform-Einnahmen" berechnet Betrag sofort mit dem neuen Satz | `[ ] Pass` |
 
 ---
 
@@ -87,6 +88,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 | **SHOP-03** | Erfolgreiche Test-Zahlung (Stripe) | 1. Käuferdaten ausfüllen (Name, E-Mail)<br>2. Zahlungsart Kreditkarte wählen<br>3. Karte `4242 4242 4242 4242` eingeben<br>4. Bezahlen | Weiterleitung zur Bestätigungsseite (`/tickets/[orderId]`), Bestellung als "Bezahlt" markiert | `[ ] Pass` |
 | **SHOP-04** | Abgebrochene / Fehlgeschlagene Zahlung | 1. Zahlungsablauf starten<br>2. Testkarte für Ablehnung (`4000 0002 0127 3710`) eingeben | Fehlermeldung "Karte abgelehnt", keine Ticket-Erstellung, Rückkehr zum Formular | `[ ] Pass` |
 | **SHOP-05** | Order Auto-Cleanup bei Expiration | 1. Checkout starten aber nicht bezahlen<br>2. 15 Minuten warten oder `/api/cron/cleanup-orders` triggern | Kontingent wird freigegeben, Order auf `cancelled` gesetzt | `[ ] Pass` |
+| **SHOP-06** | Dynamische Plattformgebühr bei Stripe Checkout | 1. Im Admin Gebühr auf 10.0% konfigurieren<br>2. Ticket für 50,00 € kaufen<br>3. Stripe Payment Intent prüfen | `application_fee_amount` beträgt exakt 5,00 € (10%), Restbetrag fließt an Veranstalter-Connect-Konto | `[ ] Pass` |
 
 ---
 
@@ -107,6 +109,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 | :--- | :--- | :--- | :--- | :---: |
 | **MAIL-01** | Resend Ticketbestätigungs-Mail | 1. Erfolgreichen Testkauf im Shop durchführen<br>2. Posteingang der angegebenen Käufer-E-Mail prüfen | HTML-E-Mail von Resend mit Event-Titel, Datum, Ort, Impressum des Veranstalters & Direktlink zu `/tickets/[orderId]` trifft ein | `[ ] Pass` |
 | **MAIL-02** | Resend Passwort-Reset Mail | 1. Zu `/reset-password` navigieren<br>2. E-Mail eingeben & anfordern | Resend stellt E-Mail mit Reset-Link zu | `[ ] Pass` |
+| **MAIL-03** | Widerrufsausschluss-Belehrung & Pflicht-Footer | 1. Ticketbestätigungs-Mail und Passwort-Reset-Mail öffnen | Ticket-Mail enthält Hinweis zu § 312g Abs. 2 Nr. 9 BGB; alle Mails enthalten Footer-Links zu Impressum, Datenschutz & AGB | `[ ] Pass` |
 
 ---
 
@@ -126,6 +129,7 @@ Dieses Dokument dient als systematischer Testkatalog für Usertests und Regressi
 | **LEG-01** | Impressum, Datenschutz & AVV Links | 1. Footer aller Seiten prüfen | Impressum, Datenschutz, AGB & AVV sind voll erreichbar & aktuell | `[ ] Pass` |
 | **LEG-02** | Mobile Viewport (Responsive) | 1. Entwicklertools auf Mobile (z.B. iPhone 14 / 360px-430px) stellen<br>2. Shop & Check-in testen | Keine horizontalen Scrollbalken, Buttons gut tippbar, Scanner nutzbar | `[ ] Pass` |
 | **LEG-03** | Konsolenfehler / Network Errors | 1. Entwicklerkonsole öffnen und Hauptpfade durchklicken | Keine unerwarteten `Uncaught SyntaxError` oder `500 Internal Server Errors` | `[ ] Pass` |
+| **LEG-04** | PWA Manifest & Favicons | 1. `/site.webmanifest` und `/favicon.ico` im Browser anfragen | Manifest liefert gültiges JSON mit App-Namen; Icons und Favicon werden korrekt ausgeliefert | `[ ] Pass` |
 
 ---
 

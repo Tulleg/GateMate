@@ -24,7 +24,7 @@ Das Dashboard ermöglicht Veranstaltern die Sicht auf alle bezahlten und stornie
 ### Bestandteile des Finanzamt-Reports:
 1. **Zusammenfassung der Einnahmen:**
    - Gesammelte Bruttoeinnahmen (Gesamtumsatz)
-   - Abgezogene Plattformgebühren (STRIPE_PLATFORM_FEE_PERCENT)
+   - Abgezogene Plattformgebühren (dynamisch über `platform_settings` bzw. `getPlatformFeePercent()`, mit Fallback auf `STRIPE_PLATFORM_FEE_PERCENT`)
    - Ausgezahlter Nettoerlös an den Veranstalter
 2. **Aufschlüsselung nach Event & Ticketkategorien:**
    - Anzahl verkaufter Tickets pro Kategorie

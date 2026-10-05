@@ -117,6 +117,12 @@ erDiagram
         text message
         string status "new | in_progress | resolved"
     }
+
+    platform_settings {
+        string key PK
+        string value
+        timestamp updatedAt
+    }
 ```
 
 ---
@@ -133,6 +139,8 @@ Die Middleware in [`src/middleware.ts`](file:///home/Tulle/antigravity/delightfu
    - Veranstalter, die `onboardingCompleted: false` aufweisen, werden automatisch zu `/onboarding` umgeleitet, sobald sie versuchen, Dashboard-Funktionen zu nutzen.
 3. **Öffentliche Routen (Public Unprotected):**
    - Startseite (`/`), Event-Seiten (`/e/[eventSlug]`), Rechtstexte (`/impressum`, `/datenschutz`, `/agb`, `/avv`), Kontakt (`/kontakt`), DSA (`/notice-and-action`), Ticket-Widget (`/embed/[eventId]`) und Auth-Seiten (`/login`, `/register`).
+4. **Statische Assets & PWA-Manifest:**
+   - Der Middleware-Matcher schließt Web-Manifeste (`site.webmanifest`), Favicons und statische Bildformate (`.svg`, `.png`, `.jpg`, `.ico`, `.webp`) gezielt von der Ausführung aus, um Overhead zu vermeiden.
 
 ---
 
@@ -156,6 +164,7 @@ Die wesentlichen Konfigurationsvariablen in [`.env.example`](file:///home/Tulle/
 - `DATABASE_URL`: PostgreSQL-Verbindungs-URL.
 - `BETTER_AUTH_SECRET` & `BETTER_AUTH_URL`: Authentifizierungsschlüssel und Base-URL.
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe API Schlüssel.
+- `STRIPE_PLATFORM_FEE_PERCENT`: Standard- / Fallback-Gebührensatz (Standard: `5.0`), falls noch kein Wert in `platform_settings` konfiguriert wurde. Die aktive Steuerung erfolgt live über das Superadmin-Dashboard (`/admin`).
 - `QR_SIGNING_SECRET`: Kryptografischer Schlüssel (HMAC-SHA256) für fälschungssichere QR-Code Ticket-Tokens.
 - `RESEND_API_KEY` & `EMAIL_FROM`: Resend E-Mail Integration.
 - `ADMIN_EMAIL` & `ADMIN_PASSWORD`: Automatisches Bootstrapping des ersten Superadmin-Accounts beim Serverstart.

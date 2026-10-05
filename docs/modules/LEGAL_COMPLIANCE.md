@@ -40,7 +40,28 @@ Da der Veranstalter der Vertragspartner des Ticketkäufers ist (Direktverkauf), 
 
 ---
 
-## 4. Digital Services Act (DSA) Compliance
+## 4. Rechtssichere E-Mail-Kommunikation (§ 312g Abs. 2 Nr. 9 BGB & Plattform-Pflichtangaben)
+
+Um Streitigkeiten und Abmahnrisiken vorzubeugen, stellt GateMate in allen transaktionalen E-Mail-Vorlagen ([`src/lib/email.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/email.ts)) sicher:
+
+1. **Gesetzlicher Hinweis zum Ausschluss des Widerrufsrechts:**
+   - Gemäß **§ 312g Abs. 2 Nr. 9 BGB** besteht bei Verträgen zur Erbringung von Dienstleistungen im Zusammenhang mit Freizeitbetätigungen, für die ein spezifischer Termin oder Zeitraum vorgesehen ist (wie Konzert-, Festival- oder Event-Tickets), **kein gesetzliches Widerrufsrecht** für Verbraucher.
+   - Dieser Hinweis (`STATUTORY_WITHDRAWAL_NOTICE`) wird in der Ticket-Bestätigungs-E-Mail gut sichtbar in einem separaten Hinweisfeld (`.legal-notice`) direkt unter dem Ticket-Button platziert.
+
+2. **Pflicht-Footer in Transaktionsmails (§ 5 DDG & Art. 13 DSGVO):**
+   - Jede vom System versendete E-Mail (Ticket-Bestätigung, Passwort-Reset, Kontakt-Bestätigung) enthält im Footer verbindliche Links zu den rechtlichen Pflichtseiten:
+     - **Impressum** (`/impressum`)
+     - **Datenschutzerklärung** (`/datenschutz`)
+     - **Plattform-AGB** (`/agb`) bzw. **Kontakt** (`/kontakt`)
+
+3. **Klarstellung der Plattformrolle:**
+   - In Ticket-Bestätigungsmails wird transparent deklariert:  
+     *„GateMate agiert ausschließlich als technischer Dienstleister und Vermittler im Auftrag von [Veranstalter-Name].“*  
+     Ergänzt wird dies durch die eindeutige Nennung von Bestell-ID und Käufer-E-Mail.
+
+---
+
+## 5. Digital Services Act (DSA) Compliance
 
 GateMate setzt die Vorgaben des europäischen Digital Services Act (DSA) um:
 
@@ -52,10 +73,11 @@ GateMate setzt die Vorgaben des europäischen Digital Services Act (DSA) um:
 
 ---
 
-## 5. Relevante Dateien
+## 6. Relevante Dateien
 
+- **E-Mail-Vorlagen & rechtliche Footers:** [`src/lib/email.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/email.ts)
+- **Rechtstext Server Library & Konstanten:** [`src/lib/legal-server.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/legal-server.ts) & [`src/lib/legal.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/legal.ts)
 - **Admin Rechtstext-Verwaltung:** [`src/app/(dashboard)/admin/legal/page.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/app/(dashboard)/admin/legal/page.tsx)
-- **Rechtstext Server Library:** [`src/lib/legal-server.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/legal-server.ts) & [`src/lib/legal.ts`](file:///home/Tulle/antigravity/delightful-newton/src/lib/legal.ts)
 - **Öffentliche Rechtstext-Routen:** [`src/app/(public)/agb/page.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/app/(public)/agb/page.tsx), [`avv/page.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/app/(public)/avv/page.tsx), [`datenschutz/page.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/app/(public)/datenschutz/page.tsx), [`impressum/page.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/app/(public)/impressum/page.tsx)
 - **DSA Notice & Action Formular:** [`src/components/public/dsa-report-form.tsx`](file:///home/Tulle/antigravity/delightful-newton/src/components/public/dsa-report-form.tsx)
 - **Datenbankschema:** [`src/db/schema/legal-documents.ts`](file:///home/Tulle/antigravity/delightful-newton/src/db/schema/legal-documents.ts)
