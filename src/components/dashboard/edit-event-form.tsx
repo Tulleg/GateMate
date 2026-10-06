@@ -39,9 +39,11 @@ interface TierInput {
 
 interface EditEventFormProps {
   eventId: string;
+  platformFeePercent?: number;
 }
 
-export function EditEventForm({ eventId }: EditEventFormProps) {
+export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProps) {
+  const activeFeePercent = typeof platformFeePercent === "number" && !isNaN(platformFeePercent) ? platformFeePercent : 10;
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -218,7 +220,7 @@ export function EditEventForm({ eventId }: EditEventFormProps) {
     if (field === "price") {
       const parsedPrice = parseFloat(value || "0");
       if (!isNaN(parsedPrice) && parsedPrice >= 0) {
-        updated[index].fee = (parsedPrice * 0.10).toFixed(2);
+        updated[index].fee = (parsedPrice * (activeFeePercent / 100)).toFixed(2);
       }
     }
     setTiers(updated);
@@ -706,7 +708,7 @@ export function EditEventForm({ eventId }: EditEventFormProps) {
                       </div>
 
                       <div>
-                        <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr (EUR €)</label>
+                        <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr ({activeFeePercent}% - EUR €)</label>
                         <input
                           type="number"
                           step="0.01"

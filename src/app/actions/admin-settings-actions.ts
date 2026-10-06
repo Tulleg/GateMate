@@ -45,7 +45,10 @@ export async function updatePlatformFeeAction(
         },
       });
 
+    revalidatePath("/", "layout");
     revalidatePath("/admin");
+    revalidatePath("/e/[eventSlug]", "page");
+    revalidatePath("/o/[organizerSlug]", "page");
 
     return {
       success: true,

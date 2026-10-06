@@ -81,9 +81,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const totalCents = (tier.priceCents + (tier.feeCents || 0)) * numQuantity;
     const platformFeePercent = await getPlatformFeePercent();
-    const platformFeeCents = Math.round(totalCents * (platformFeePercent / 100));
+    const unitFeeCents = Math.round(tier.priceCents * (platformFeePercent / 100));
+    const unitPriceCents = tier.priceCents + unitFeeCents;
+    const totalCents = unitPriceCents * numQuantity;
+    const platformFeeCents = Math.round((tier.priceCents * numQuantity) * (platformFeePercent / 100));
 
 
     const legalProfileSnapshot = JSON.stringify({
@@ -155,7 +157,7 @@ export async function POST(req: Request) {
               description: `Eintrittskarte für ${event.title}. Vertragspartner & Verkäufer: ${organizerLegalName}`,
               images: event.bannerUrl ? [event.bannerUrl] : [],
             },
-            unit_amount: tier.priceCents + (tier.feeCents || 0),
+            unit_amount: unitPriceCents,
           },
           quantity: numQuantity,
         },

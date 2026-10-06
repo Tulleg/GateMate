@@ -5,8 +5,11 @@ import { eq } from "drizzle-orm";
 import { CheckoutWidget } from "@/components/public/checkout-widget";
 import { Calendar, MapPin, Ticket, ShieldCheck, ArrowLeft, User, AlertOctagon, Ban, Clock, ShieldAlert, Building2, FileText, Info } from "lucide-react";
 import { formatLegalAddress, getOrganizerSellerLabel, GATEMATE_PLATFORM_DISCLAIMER_EXTENDED } from "@/lib/legal";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ eventSlug: string }>;
@@ -73,8 +76,9 @@ export default async function PublicEventPage({ params, searchParams }: PageProp
     notFound();
   }
 
-  // 2. Fetch Ticket Tiers
+  // 2. Fetch Ticket Tiers & Global Platform Fee Percentage
   const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
+  const platformFeePercent = await getPlatformFeePercent();
 
   // 3. Fetch Organizer info
   const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
@@ -284,6 +288,7 @@ export default async function PublicEventPage({ params, searchParams }: PageProp
                 isCancelled={Boolean(event.isCancelled)}
                 cancelReason={event.cancelReason}
                 isPublished={Boolean(event.isPublished)}
+                platformFeePercent={platformFeePercent}
               />
             </div>
           </div>

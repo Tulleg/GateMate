@@ -5,7 +5,10 @@ import { eq, and, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Calendar, MapPin, Ticket, ShieldCheck, User, ArrowLeft, ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ organizerSlug: string }>;
@@ -57,6 +60,8 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
     notFound();
   }
 
+  const platformFeePercent = await getPlatformFeePercent();
+
   // 2. Fetch Organizer's Published Events
   const organizerEvents = await db
     .select()
@@ -67,7 +72,9 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
   const eventsWithPrices = await Promise.all(
     organizerEvents.map(async (event) => {
       const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
-      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents)) : 0;
+      const lowestPriceCents = tiers.length > 0
+        ? Math.min(...tiers.map((t) => t.priceCents + Math.round(t.priceCents * (platformFeePercent / 100))))
+        : 0;
 
       return {
         ...event,

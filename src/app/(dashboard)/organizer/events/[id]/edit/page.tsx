@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { EditEventForm } from "@/components/dashboard/edit-event-form";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -7,6 +8,7 @@ interface PageProps {
 
 export default async function EditEventPage({ params }: PageProps) {
   const { id } = await params;
+  const platformFeePercent = await getPlatformFeePercent();
 
   return (
     <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
@@ -20,7 +22,7 @@ export default async function EditEventPage({ params }: PageProps) {
           </p>
         </div>
 
-        <EditEventForm eventId={id} />
+        <EditEventForm eventId={id} platformFeePercent={platformFeePercent} />
       </main>
     </div>
   );

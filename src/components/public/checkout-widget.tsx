@@ -27,6 +27,7 @@ interface CheckoutWidgetProps {
   isCancelled?: boolean;
   cancelReason?: string | null;
   isPublished?: boolean;
+  platformFeePercent?: number;
 }
 
 export function CheckoutWidget({
@@ -37,6 +38,7 @@ export function CheckoutWidget({
   isCancelled,
   cancelReason,
   isPublished = true,
+  platformFeePercent,
 }: CheckoutWidgetProps) {
   const [selectedTierId, setSelectedTierId] = useState<string>(tiers[0]?.id || "");
   const [quantity, setQuantity] = useState<number>(1);
@@ -48,10 +50,18 @@ export function CheckoutWidget({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) || tiers[0];
+  const activeFeePercent = typeof platformFeePercent === "number" && !isNaN(platformFeePercent) ? platformFeePercent : null;
   const tierBasePrice = selectedTier ? selectedTier.priceCents : 0;
-  const tierFeePrice = selectedTier ? (selectedTier.feeCents || 0) : 0;
+  const tierFeePrice = selectedTier
+    ? (activeFeePercent !== null
+        ? Math.round(selectedTier.priceCents * (activeFeePercent / 100))
+        : (selectedTier.feeCents || 0))
+    : 0;
+
   const unitPrice = tierBasePrice + tierFeePrice;
   const totalPriceCents = unitPrice * quantity;
+  const totalBasePriceCents = tierBasePrice * quantity;
+  const totalFeePriceCents = tierFeePrice * quantity;
 
   const organizerSlug = organizer?.organizerSlug || "demo-organizer";
   const legalName = organizer?.legalName || organizer?.name || "Demo Events GmbH";
@@ -175,9 +185,6 @@ export function CheckoutWidget({
     );
   }
 
-  const totalBasePriceCents = tierBasePrice * quantity;
-  const totalFeePriceCents = tierFeePrice * quantity;
-
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
       {/* Header */}
@@ -251,7 +258,7 @@ export function CheckoutWidget({
                   </div>
                   <div className="text-right">
                     <span className="text-base font-extrabold text-indigo-400 block">
-                      {formatCurrency(t.priceCents + (t.feeCents || 0))}
+                      {formatCurrency(t.priceCents + (activeFeePercent !== null ? Math.round(t.priceCents * (activeFeePercent / 100)) : (t.feeCents || 0)))}
                     </span>
                     <span className="text-[10px] text-slate-400 font-normal">{taxNotice}</span>
                   </div>
@@ -346,7 +353,7 @@ export function CheckoutWidget({
                 <span>{formatCurrency(totalBasePriceCents)}</span>
               </div>
               <div className="flex justify-between text-slate-400 text-[11px]">
-                <span>Vorverkaufs- / Systemgebühr ({quantity > 1 ? `${quantity}x ${formatCurrency(tierFeePrice)}` : "1x"}):</span>
+                <span>Vorverkaufs- / Systemgebühr ({activeFeePercent !== null ? `${activeFeePercent}%` : "VVK"}{quantity > 1 ? `, ${quantity}x` : ""}):</span>
                 <span>{totalFeePriceCents > 0 ? formatCurrency(totalFeePriceCents) : `${formatCurrency(0)} (Inkludiert)`}</span>
               </div>
               <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800 font-bold">

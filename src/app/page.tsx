@@ -6,6 +6,7 @@ import { events, ticketTiers, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { EventSearch } from "@/components/public/event-search";
 import { PlatformFooter } from "@/components/public/platform-footer";
+import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { Ticket, ShieldCheck, Zap, QrCode, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,8 @@ export default async function LandingPage() {
   const userId = cookieStore.get("gatemate_user_id")?.value;
   const isLoggedIn = Boolean(userId);
 
+  const platformFeePercent = await getPlatformFeePercent();
+
   // Query all published & listed events
   const publicEvents = await db
     .select()
@@ -50,7 +53,9 @@ export default async function LandingPage() {
   const eventsWithData = await Promise.all(
     publicEvents.map(async (event) => {
       const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
-      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents)) : 0;
+      const lowestPriceCents = tiers.length > 0
+        ? Math.min(...tiers.map((t) => t.priceCents + Math.round(t.priceCents * (platformFeePercent / 100))))
+        : 0;
 
       const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
       const organizer = organizerRecords[0];

@@ -69,7 +69,9 @@ export async function createCheckoutSessionAction(
 
     const { client: stripeClient, isDirectKey } = getOrganizerStripeClient(organizer);
 
-    const unitPriceCents = tierRecord.priceCents + (tierRecord.feeCents || 0);
+    const platformFeePercent = await getPlatformFeePercent();
+    const unitFeeCents = Math.round(tierRecord.priceCents * (platformFeePercent / 100));
+    const unitPriceCents = tierRecord.priceCents + unitFeeCents;
     const totalCents = unitPriceCents * data.quantity;
 
     const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -147,8 +149,7 @@ export async function createCheckoutSessionAction(
     let stripeRequestOptions: Stripe.RequestOptions | undefined = undefined;
 
     if (!isDirectKey && connectedAccountId) {
-      const platformFeePercent = await getPlatformFeePercent();
-      const applicationFeeAmount = Math.round(totalCents * (platformFeePercent / 100));
+      const applicationFeeAmount = Math.round((tierRecord.priceCents * data.quantity) * (platformFeePercent / 100));
       sessionOptions.payment_intent_data = {
         ...(applicationFeeAmount > 0 ? { application_fee_amount: applicationFeeAmount } : {}),
         description: `Ticketkauf bei ${organizer?.legalName || organizer?.name || "Veranstalter"} für ${eventRecord.title}`,

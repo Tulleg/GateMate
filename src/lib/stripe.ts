@@ -15,6 +15,7 @@ export function getPlatformFeePercent(): number {
   return PLATFORM_FEE_PERCENT;
 }
 
+
 export function hasPlatformStripeKey(): boolean {
   return (
     Boolean(process.env.STRIPE_SECRET_KEY) &&

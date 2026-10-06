@@ -33,7 +33,12 @@ interface TicketTierInput {
   ticketTerms: string;
 }
 
-export function EventForm() {
+interface EventFormProps {
+  platformFeePercent?: number;
+}
+
+export function EventForm({ platformFeePercent }: EventFormProps) {
+  const activeFeePercent = typeof platformFeePercent === "number" && !isNaN(platformFeePercent) ? platformFeePercent : 10;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -133,7 +138,7 @@ export function EventForm() {
     if (field === "price") {
       const parsedPrice = parseFloat(value || "0");
       if (!isNaN(parsedPrice) && parsedPrice >= 0) {
-        updated[index].fee = (parsedPrice * 0.10).toFixed(2);
+        updated[index].fee = (parsedPrice * (activeFeePercent / 100)).toFixed(2);
       }
     }
     setTiers(updated);
@@ -540,7 +545,7 @@ export function EventForm() {
                     </div>
 
                     <div>
-                      <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr (EUR €)</label>
+                      <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr ({activeFeePercent}% - EUR €)</label>
                       <input
                         type="number"
                         step="0.01"

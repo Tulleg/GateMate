@@ -8,7 +8,10 @@ import { EventForm } from "@/components/dashboard/event-form";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 
+import { getPlatformFeePercent } from "@/lib/platform-settings";
+
 export default async function CreateEventPage() {
+  const platformFeePercent = await getPlatformFeePercent();
   const cookieStore = await cookies();
   const role = cookieStore.get("gatemate_role")?.value;
 
@@ -91,7 +94,7 @@ export default async function CreateEventPage() {
           </div>
         )}
 
-        <EventForm />
+        <EventForm platformFeePercent={platformFeePercent} />
       </main>
     </div>
   );
