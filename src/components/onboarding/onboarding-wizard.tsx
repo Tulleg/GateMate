@@ -113,8 +113,8 @@ export function OnboardingWizard() {
 
       // Handle Stripe OAuth Return query params
       if (searchParams.get("stripe_success") === "true") {
-        if (Boolean(data.stripeExpressDetailsSubmitted) || Boolean(data.hasSecretKey)) {
-          setSuccessToast("Stripe Standard Onboarding erfolgreich abgeschlossen!");
+        if (Boolean(data.stripeAccountId) || Boolean(data.stripeExpressDetailsSubmitted) || Boolean(data.hasSecretKey)) {
+          setSuccessToast("Stripe Standard-Konto erfolgreich verknüpft!");
           setCurrentStep(2);
         } else {
           setErrorMessage("Das Stripe-Onboarding wurde nicht abgeschlossen. Bitte schließe die Registrierung bei Stripe ab.");

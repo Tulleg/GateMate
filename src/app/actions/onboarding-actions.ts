@@ -71,7 +71,7 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
         `${appUrl}/api/stripe/oauth/callback`
-      )}&user[email]=${encodeURIComponent(userRecord.email)}`;
+      )}&state=${userRecord.id}&user[email]=${encodeURIComponent(userRecord.email)}`;
 
       return {
         success: true,

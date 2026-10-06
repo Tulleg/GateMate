@@ -30,16 +30,23 @@ export async function GET() {
       return NextResponse.json({ error: "Benutzer nicht gefunden" }, { status: 404 });
     }
 
-    // Check Stripe Express connection status if express mode is selected
+    // Check Stripe Express / Standard connection status
     let stripeExpressDetailsSubmitted = false;
     let stripeAccountId = user.stripeAccountId || user.stripeConnectedAccountId || null;
 
-    if (stripeAccountId && hasPlatformStripeKey()) {
-      try {
-        const acc = await stripe.accounts.retrieve(stripeAccountId);
-        stripeExpressDetailsSubmitted = Boolean(acc.details_submitted);
-      } catch (err) {
-        console.error("Error retrieving Stripe connected account:", err);
+    if (stripeAccountId) {
+      // Standard accounts connected via OAuth or Connect accounts with stripeAccountId are connected
+      stripeExpressDetailsSubmitted = true;
+
+      if (hasPlatformStripeKey()) {
+        try {
+          const acc = await stripe.accounts.retrieve(stripeAccountId);
+          if (acc.details_submitted || acc.charges_enabled) {
+            stripeExpressDetailsSubmitted = true;
+          }
+        } catch (err) {
+          console.error("Error retrieving Stripe connected account:", err);
+        }
       }
     }
 

@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
+    const state = searchParams.get("state");
     const error = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
 
@@ -25,8 +26,17 @@ export async function GET(req: Request) {
       return NextResponse.redirect(`${appUrl}/onboarding?stripe_refresh=true&error=Missing_code`);
     }
 
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
+    let currentUser = await getCurrentUser();
+    let userId = currentUser?.id;
+
+    if (!userId && state) {
+      const stateUsers = await db.select().from(users).where(eq(users.id, state));
+      if (stateUsers[0]) {
+        userId = stateUsers[0].id;
+      }
+    }
+
+    if (!userId) {
       return NextResponse.redirect(`${appUrl}/login`);
     }
 
@@ -52,9 +62,19 @@ export async function GET(req: Request) {
         onboardingStep: "legal_info",
         updatedAt: new Date(),
       })
-      .where(eq(users.id, currentUser.id));
+      .where(eq(users.id, userId));
 
-    return NextResponse.redirect(`${appUrl}/onboarding?stripe_success=true`);
+    const response = NextResponse.redirect(`${appUrl}/onboarding?stripe_success=true`);
+    const isProd = process.env.NODE_ENV === "production";
+    response.cookies.set("gatemate_user_id", userId, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+    });
+
+    return response;
   } catch (err: any) {
     console.error("Stripe OAuth Callback error:", err);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
