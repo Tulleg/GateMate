@@ -532,7 +532,7 @@ export function EventForm({ platformFeePercent }: EventFormProps) {
                     </div>
 
                     <div>
-                      <label className="font-medium text-slate-400 block mb-1">Ticket Grundpreis (EUR €) *</label>
+                      <label className="font-medium text-slate-400 block mb-1">Ticket Grundpreis (Brutto in €) *</label>
                       <input
                         type="number"
                         step="0.01"
