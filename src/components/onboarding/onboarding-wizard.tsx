@@ -452,9 +452,15 @@ export function OnboardingWizard() {
                   </div>
                   {stripeAccountId && (
                     <div className="pt-2">
-                      <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Stripe-Konto ({stripeAccountId}) erstellt
-                      </span>
+                      {stripeExpressDetailsSubmitted ? (
+                        <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Stripe-Konto ({stripeAccountId}) erfolgreich verbunden
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-amber-400" /> Registrierung bei Stripe noch unvollständig ({stripeAccountId})
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
