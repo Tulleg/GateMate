@@ -67,7 +67,7 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
   const eventsWithPrices = await Promise.all(
     organizerEvents.map(async (event) => {
       const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
-      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents)) : 0;
+      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents + (t.feeCents || 0))) : 0;
 
       return {
         ...event,
