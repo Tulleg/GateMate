@@ -50,7 +50,7 @@ export default async function LandingPage() {
   const eventsWithData = await Promise.all(
     publicEvents.map(async (event) => {
       const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
-      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents + (t.feeCents || 0))) : 0;
+      const lowestPriceCents = tiers.length > 0 ? Math.min(...tiers.map((t) => t.priceCents)) : 0;
 
       const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
       const organizer = organizerRecords[0];

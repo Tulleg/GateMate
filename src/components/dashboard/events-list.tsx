@@ -10,7 +10,6 @@ interface Tier {
   id: string;
   name: string;
   priceCents: number;
-  feeCents?: number;
   quantityAvailable: number;
   quantitySold: number;
 }
@@ -123,7 +122,7 @@ export function EventsList({ events }: { events: EventItem[] }) {
                       </p>
                     </div>
                     <span className="text-sm font-bold text-indigo-400">
-                      {formatCurrency(tier.priceCents + (tier.feeCents || 0))}
+                      {formatCurrency(tier.priceCents)}
                     </span>
                   </div>
                 ))}
