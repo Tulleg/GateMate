@@ -46,61 +46,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    let stripeAccountId = user.stripeConnectedAccountId;
+    let stripeAccountId = user.stripeAccountId || user.stripeConnectedAccountId;
 
-    // 2. Create Standard connected account if user doesn't have one yet
-    if (!stripeAccountId) {
-      const account = await stripe.accounts.create({
-        type: "standard",
-        email: user.email,
-        business_profile: {
-          name: user.legalCompanyName || user.name || "GateMate Organizer",
-        },
-      });
-
-      stripeAccountId = account.id;
-
-      // Update user record with new Stripe connected account ID and account type
-      await db
-        .update(users)
-        .set({
-          stripeConnectedAccountId: stripeAccountId,
-          stripeAccountId: stripeAccountId,
-          stripeAccountType: "standard",
-          stripeMode: "connect",
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, targetUserId));
-    }
-
-    // 3. If account exists and onboarding is submitted, generate dashboard link
-    try {
-      const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
-      if (existingAccount.details_submitted) {
-        if (existingAccount.type === "express") {
-          try {
-            const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
-            return NextResponse.json({ url: loginLink.url });
-          } catch (loginErr) {
-            console.warn("Could not create Express login link, redirecting to Stripe Dashboard:", loginErr);
+    // 1. If user already has a connected account and onboarding is submitted:
+    if (stripeAccountId) {
+      try {
+        const existingAccount = await stripe.accounts.retrieve(stripeAccountId);
+        if (existingAccount.details_submitted) {
+          if (existingAccount.type === "express") {
+            try {
+              const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
+              return NextResponse.json({ url: loginLink.url });
+            } catch (loginErr) {
+              console.warn("Could not create Express login link:", loginErr);
+            }
           }
+          return NextResponse.json({ url: "https://dashboard.stripe.com" });
         }
-        return NextResponse.json({ url: "https://dashboard.stripe.com" });
+      } catch (err) {
+        console.error("Stripe retrieve account error:", err);
       }
-    } catch (err) {
-      console.error("Stripe retrieve account error:", err);
     }
 
-    // 4. Create Account Link for Stripe Standard Onboarding
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const accountLink = await stripe.accountLinks.create({
-      account: stripeAccountId,
-      refresh_url: `${appUrl}/organizer?stripe_refresh=true`,
-      return_url: `${appUrl}/organizer?stripe_success=true`,
-      type: "account_onboarding",
-    });
+    // 2. Start Stripe Connect OAuth Flow
+    const connectClientId = process.env.STRIPE_CONNECT_CLIENT_ID;
+    if (!connectClientId || !connectClientId.startsWith("ca_")) {
+      return NextResponse.json(
+        {
+          error:
+            "Stripe Connect Client-ID fehlt in den Server-Umgebungsvariablen (STRIPE_CONNECT_CLIENT_ID ist nicht gesetzt oder beginnt nicht mit 'ca_'). Bitte trage deine Client-ID aus dem Stripe Dashboard in der .env-Datei ein.",
+        },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ url: accountLink.url });
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
+      `${appUrl}/api/stripe/oauth/callback`
+    )}&user[email]=${encodeURIComponent(user.email)}`;
+
+    return NextResponse.json({ url: oauthUrl });
   } catch (error: any) {
     console.error("Stripe Connect onboarding error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

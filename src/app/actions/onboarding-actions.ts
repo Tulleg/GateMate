@@ -59,79 +59,24 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
         };
       }
 
-      let stripeAccountId = userRecord.stripeAccountId || userRecord.stripeConnectedAccountId;
-      const targetAccountType = data.stripeAccountType === "express" ? "express" : "standard";
-
-      let needsNewAccount = !stripeAccountId;
-      if (stripeAccountId) {
-        try {
-          const existingAcc = await stripe.accounts.retrieve(stripeAccountId);
-          if (existingAcc.type !== targetAccountType) {
-            needsNewAccount = true;
-          }
-        } catch (e) {
-          needsNewAccount = true;
-        }
-      }
-
-      if (needsNewAccount) {
-        const account = await stripe.accounts.create({
-          type: targetAccountType,
-          email: userRecord.email,
-          business_profile: {
-            name: userRecord.legalCompanyName || userRecord.name || "GateMate Organizer",
-          },
-        });
-        stripeAccountId = account.id;
-      }
-
-      await db
-        .update(users)
-        .set({
-          stripeAccountId: stripeAccountId,
-          stripeConnectedAccountId: stripeAccountId,
-          stripeAccountType: targetAccountType,
-          stripeMode: "connect",
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, currentUser.id));
-
       const connectClientId = process.env.STRIPE_CONNECT_CLIENT_ID;
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-      // If Stripe Connect Client ID is configured, use Standard OAuth flow (allows sign in to existing account OR create new account)
-      if (connectClientId && connectClientId.startsWith("ca_")) {
-        const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
-          `${appUrl}/api/stripe/oauth/callback`
-        )}&user[email]=${encodeURIComponent(userRecord.email)}`;
-
-        return {
-          success: true,
-          data: { url: oauthUrl },
-          message: "Stripe OAuth Onboarding gestartet.",
-        };
-      }
-
-      if (!stripeAccountId) {
+      if (!connectClientId || !connectClientId.startsWith("ca_")) {
         return {
           success: false,
-          error: "Fehler beim Erstellen des Stripe-Kontos.",
+          error:
+            "Stripe Connect Client-ID fehlt in den Server-Umgebungsvariablen (STRIPE_CONNECT_CLIENT_ID ist nicht gesetzt oder beginnt nicht mit 'ca_'). Bitte trage deine Client-ID aus dem Stripe Dashboard in der .env-Datei ein oder nutze Option B ('Eigene Stripe API-Keys hinterlegen').",
         };
       }
 
-      const accountLink = await stripe.accountLinks.create({
-        account: stripeAccountId,
-        refresh_url: `${appUrl}/onboarding?stripe_refresh=true`,
-        return_url: `${appUrl}/onboarding?stripe_success=true`,
-        type: "account_onboarding",
-      });
-
-      revalidatePath("/onboarding");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
+        `${appUrl}/api/stripe/oauth/callback`
+      )}&user[email]=${encodeURIComponent(userRecord.email)}`;
 
       return {
         success: true,
-        data: { url: accountLink.url },
-        message: "Stripe Connect Onboarding gestartet.",
+        data: { url: oauthUrl },
+        message: "Stripe OAuth Onboarding gestartet.",
       };
     } else {
       // Validate direct API keys against Stripe API live test call
