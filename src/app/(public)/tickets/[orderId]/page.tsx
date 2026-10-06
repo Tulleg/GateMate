@@ -37,8 +37,11 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
   // Fallback verification: If order is still pending, check payment status directly via Stripe SDK
   if (order.status === "pending" && order.stripeCheckoutSessionId) {
     try {
-      const { client: stripeClient } = getOrganizerStripeClient(organizer);
-      const session = await stripeClient.checkout.sessions.retrieve(order.stripeCheckoutSessionId);
+      const { client: stripeClient, isDirectKey } = getOrganizerStripeClient(organizer);
+      const connectedAccountId = organizer?.stripeAccountId || organizer?.stripeConnectedAccountId;
+      const stripeRequestOptions = (!isDirectKey && connectedAccountId) ? { stripeAccount: connectedAccountId } : undefined;
+
+      const session = await stripeClient.checkout.sessions.retrieve(order.stripeCheckoutSessionId, stripeRequestOptions);
 
       if (session.payment_status === "paid" || session.status === "complete") {
         const paymentIntentId = typeof session.payment_intent === "string"
