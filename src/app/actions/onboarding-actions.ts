@@ -16,7 +16,10 @@ import { ActionResult, formatZodErrors } from "@/types";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptText } from "@/lib/encryption";
 
-export async function saveStep1StripeAction(input: unknown): Promise<ActionResult> {
+import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
+import Stripe from "stripe";
+
+export async function saveStep1StripeAction(input: unknown): Promise<ActionResult<{ url?: string }>> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -37,18 +40,94 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
 
     const data: OnboardingStep1Input = validated.data;
 
+    const userRecords = await db.select().from(users).where(eq(users.id, currentUser.id));
+    const userRecord = userRecords[0];
+
+    if (!userRecord) {
+      return {
+        success: false,
+        error: "Benutzerkonto nicht in der Datenbank gefunden.",
+      };
+    }
+
     if (data.stripeAccountType === "standard" || data.stripeAccountType === "express") {
-      await db
-        .update(users)
-        .set({
-          stripeAccountType: data.stripeAccountType,
-          stripeMode: "connect",
-          onboardingStep: "legal_info",
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, currentUser.id));
+      if (!hasPlatformStripeKey()) {
+        return {
+          success: false,
+          error:
+            "Stripe Connect ist auf der Server-Plattform nicht konfiguriert (STRIPE_SECRET_KEY fehlt in den Server-Umgebungsvariablen). Bitte wähle Option B ('Eigene Stripe API-Keys hinterlegen').",
+        };
+      }
+
+      let stripeAccountId = userRecord.stripeAccountId || userRecord.stripeConnectedAccountId;
+      const targetAccountType = data.stripeAccountType === "express" ? "express" : "standard";
+
+      if (!stripeAccountId) {
+        const account = await stripe.accounts.create({
+          type: targetAccountType,
+          email: userRecord.email,
+          business_profile: {
+            name: userRecord.legalCompanyName || userRecord.name || "GateMate Organizer",
+          },
+        });
+        stripeAccountId = account.id;
+
+        await db
+          .update(users)
+          .set({
+            stripeAccountId: stripeAccountId,
+            stripeConnectedAccountId: stripeAccountId,
+            stripeAccountType: targetAccountType,
+            stripeMode: "connect",
+            onboardingStep: "legal_info",
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, currentUser.id));
+      } else {
+        await db
+          .update(users)
+          .set({
+            stripeAccountType: targetAccountType,
+            stripeMode: "connect",
+            onboardingStep: "legal_info",
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, currentUser.id));
+      }
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const accountLink = await stripe.accountLinks.create({
+        account: stripeAccountId,
+        refresh_url: `${appUrl}/onboarding?stripe_refresh=true`,
+        return_url: `${appUrl}/onboarding?stripe_success=true`,
+        type: "account_onboarding",
+      });
+
+      revalidatePath("/onboarding");
+
+      return {
+        success: true,
+        data: { url: accountLink.url },
+        message: "Stripe Connect Onboarding gestartet.",
+      };
     } else {
-      const encryptedSecretKey = encryptText(data.stripeSecretKey);
+      // Validate direct API keys against Stripe API live test call
+      try {
+        const testStripeClient = new Stripe(data.stripeSecretKey.trim(), {
+          apiVersion: "2024-12-18.acacia" as any,
+        });
+        await testStripeClient.balance.retrieve();
+      } catch (stripeErr: any) {
+        console.error("Stripe key validation failed:", stripeErr);
+        return {
+          success: false,
+          error: `Stripe API-Key Validierung fehlgeschlagen: ${
+            stripeErr.message || "Der angegebene Secret Key ist ungültig oder wurde von Stripe abgelehnt."
+          }`,
+        };
+      }
+
+      const encryptedSecretKey = encryptText(data.stripeSecretKey.trim());
       await db
         .update(users)
         .set({
@@ -60,14 +139,14 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
           updatedAt: new Date(),
         })
         .where(eq(users.id, currentUser.id));
+
+      revalidatePath("/onboarding");
+
+      return {
+        success: true,
+        message: "Schritt 1 (Zahlungskonto) erfolgreich gespeichert.",
+      };
     }
-
-    revalidatePath("/onboarding");
-
-    return {
-      success: true,
-      message: "Schritt 1 (Zahlungskonto) erfolgreich gespeichert.",
-    };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Fehler beim Speichern von Schritt 1.";
     console.error("[ONBOARDING STEP 1 ERROR]", err);

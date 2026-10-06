@@ -8,6 +8,8 @@ import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
 import { encryptText } from "@/lib/encryption";
 import { onboardingStep1Schema } from "@/lib/validation";
 
+import { getCurrentUser } from "@/lib/auth";
+
 function isDemoAllowed(): boolean {
   return process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_ACCOUNTS === "true";
 }
@@ -24,15 +26,17 @@ export async function POST(req: Request) {
 
     const data = parseResult.data;
 
-    const cookieStore = await cookies();
-    let userId = cookieStore.get("gatemate_user_id")?.value;
+    let currentUser = await getCurrentUser();
+    let userId = currentUser?.id;
 
     if (!userId) {
       if (isDemoAllowed()) {
         userId = "user_organizer_01";
-      } else {
-        return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
       }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
     }
 
     const userRecords = await db.select().from(users).where(eq(users.id, userId));

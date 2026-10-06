@@ -113,8 +113,11 @@ export function OnboardingWizard() {
 
       // Handle Stripe OAuth Return query params
       if (searchParams.get("stripe_success") === "true") {
-        setSuccessToast("Stripe Express Onboarding erfolgreich abgeschlossen!");
+        setSuccessToast("Stripe Standard Onboarding erfolgreich abgeschlossen!");
         setCurrentStep(2);
+      } else if (searchParams.get("stripe_refresh") === "true") {
+        setErrorMessage("Das Stripe-Onboarding wurde abgebrochen oder ist abgelaufen. Bitte erneut versuchen.");
+        setCurrentStep(1);
       }
     } catch (err: any) {
       setErrorMessage("Verbindungsfehler beim Laden des Onboarding-Status.");
@@ -151,6 +154,11 @@ export function OnboardingWizard() {
           }
           setFieldErrors(errors);
         }
+        return;
+      }
+
+      if (res.data?.url) {
+        window.location.href = res.data.url;
         return;
       }
 
