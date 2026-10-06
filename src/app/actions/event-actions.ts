@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { events, ticketTiers } from "@/db/schema";
+import { events, ticketTiers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { eventCreateSchema, eventUpdateSchema, EventCreateInput, EventUpdateInput } from "@/lib/validation";
@@ -16,6 +16,29 @@ export async function createEventAction(input: unknown): Promise<ActionResult<{ 
         success: false,
         error: "Nicht authentifiziert. Bitte melde dich an.",
       };
+    }
+
+    const userRecords = await db.select().from(users).where(eq(users.id, currentUser.id));
+    const userRecord = userRecords[0];
+
+    if (userRecord) {
+      const connectedAccountId = userRecord.stripeAccountId || userRecord.stripeConnectedAccountId;
+      const hasStripe = Boolean(connectedAccountId || (userRecord.stripeSecretKey && userRecord.stripeSecretKey.trim().length > 0));
+      const hasLegalInfo = Boolean(userRecord.legalCompanyName && userRecord.street && userRecord.zip && userRecord.city);
+      const hasTerms = Boolean(userRecord.termsAcceptedAt && userRecord.privacyAcceptedAt && userRecord.avvAcceptedAt);
+      const isComplete = Boolean(userRecord.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
+
+      if (!isComplete) {
+        const missing: string[] = [];
+        if (!hasStripe) missing.push("1. Stripe Payment");
+        if (!hasLegalInfo) missing.push("2. Stammdaten & Adresse");
+        if (!hasTerms) missing.push("3. AGB & Rechtstexte");
+
+        return {
+          success: false,
+          error: `Event-Erstellung gesperrt: Dein Veranstalter-Onboarding ist unvollständig. Es fehlen noch Angaben: ${missing.join(", ")}. Bitte vervollständige das Onboarding unter /onboarding.`,
+        };
+      }
     }
 
     const validated = eventCreateSchema.safeParse(input);

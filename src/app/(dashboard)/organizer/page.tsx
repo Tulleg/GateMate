@@ -7,7 +7,20 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { StripeConnectCard } from "@/components/dashboard/stripe-connect-card";
 import { FormatCurrencyClient } from "@/components/dashboard/format-currency";
 import Link from "next/link";
-import { Calendar, DollarSign, Ticket, TrendingUp, PlusCircle, ArrowUpRight } from "lucide-react";
+import {
+  Calendar,
+  DollarSign,
+  Ticket,
+  TrendingUp,
+  PlusCircle,
+  ArrowUpRight,
+  AlertTriangle,
+  CheckCircle2,
+  Building2,
+  CreditCard,
+  FileText,
+  ArrowRight,
+} from "lucide-react";
 
 import { stripe, hasPlatformStripeKey } from "@/lib/stripe";
 
@@ -34,19 +47,23 @@ export default async function OrganizerDashboardPage() {
   const organizerRecords = await db.select().from(users).where(eq(users.id, organizerId));
   const organizer = organizerRecords[0] || { id: organizerId, stripeConnectedAccountId: null, stripeSecretKey: null, onboardingCompleted: false };
 
-  // Strict onboarding check: redirect if not completed
-  if (organizerRecords[0] && !organizerRecords[0].onboardingCompleted && process.env.ENABLE_DEMO_ACCOUNTS !== "true") {
-    redirect("/onboarding");
-  }
-
-  // Check if Stripe is connected and onboarding completed
+  // Calculate detailed onboarding requirement status
   const connectedAccountId = organizer.stripeAccountId || organizer.stripeConnectedAccountId;
-  let isStripeConnected = false;
+  const hasStripe = Boolean(connectedAccountId || (organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0));
+  const hasLegalInfo = Boolean(organizer.legalCompanyName && organizer.street && organizer.zip && organizer.city);
+  const hasTerms = Boolean(organizer.termsAcceptedAt && organizer.privacyAcceptedAt && organizer.avvAcceptedAt);
+  const isFullyCompleted = Boolean(organizer.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
 
-  if (connectedAccountId) {
-    isStripeConnected = true;
-  } else if (organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0) {
-    isStripeConnected = true;
+  // Auto-sync database and cookies if all 3 steps are complete but onboardingCompleted wasn't marked true
+  if (organizerRecords[0] && !organizerRecords[0].onboardingCompleted && isFullyCompleted) {
+    await db.update(users).set({ onboardingCompleted: true, onboardingStep: "completed" }).where(eq(users.id, organizerId));
+    cookieStore.set("gatemate_onboarding_completed", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
   }
 
   // Fetch organizer events
@@ -55,7 +72,6 @@ export default async function OrganizerDashboardPage() {
     .from(events)
     .where(eq(events.organizerId, organizerId))
     .orderBy(desc(events.createdAt));
-
 
   // Compute analytics
   let totalRevenueCents = 0;
@@ -102,10 +118,109 @@ export default async function OrganizerDashboardPage() {
           </Link>
         </div>
 
+        {/* Onboarding Status Checklist Banner */}
+        {!isFullyCompleted && (
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-900 border-2 border-amber-500/50 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    Freischaltung unvollständig: Ticketverkäufe &amp; Event-Erstellung ausstehend
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                      Onboarding Status
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    Deine Veranstalterfunktionen sind erst vollständig freigeschaltet, sobald alle 3 Einrichtungsschritte abgeschlossen sind. Unten siehst du genau, welche Angaben noch fehlen.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/onboarding"
+                className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all shrink-0 self-start sm:self-auto"
+              >
+                Zum Onboarding Assistenten <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Checklist Items */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-800">
+              {/* Step 1 Stripe */}
+              <div
+                className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                  hasStripe
+                    ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
+                    : "bg-slate-950/60 border-amber-500/40 text-amber-300"
+                }`}
+              >
+                <span className="font-semibold flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" /> 1. Stripe Payment
+                </span>
+                {hasStripe ? (
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Verbunden
+                  </span>
+                ) : (
+                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> Fehlt noch
+                  </span>
+                )}
+              </div>
+
+              {/* Step 2 Legal Info */}
+              <div
+                className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                  hasLegalInfo
+                    ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
+                    : "bg-slate-950/60 border-amber-500/40 text-amber-300"
+                }`}
+              >
+                <span className="font-semibold flex items-center gap-2">
+                  <Building2 className="w-4 h-4" /> 2. Stammdaten &amp; Adresse
+                </span>
+                {hasLegalInfo ? (
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Hinterlegt
+                  </span>
+                ) : (
+                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> Fehlt noch
+                  </span>
+                )}
+              </div>
+
+              {/* Step 3 Terms */}
+              <div
+                className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                  hasTerms
+                    ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
+                    : "bg-slate-950/60 border-amber-500/40 text-amber-300"
+                }`}
+              >
+                <span className="font-semibold flex items-center gap-2">
+                  <FileText className="w-4 h-4" /> 3. AGB, Privacy &amp; AVV
+                </span>
+                {hasTerms ? (
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Akzeptiert
+                  </span>
+                ) : (
+                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> Fehlt noch
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stripe Connect Banner */}
         <StripeConnectCard
           userId={organizer.id}
-          isConnected={isStripeConnected}
+          isConnected={hasStripe}
           accountId={connectedAccountId}
         />
 

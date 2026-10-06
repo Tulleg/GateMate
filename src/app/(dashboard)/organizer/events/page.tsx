@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { events, ticketTiers, orders } from "@/db/schema";
+import { users, events, ticketTiers, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { EventsList } from "@/components/dashboard/events-list";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, AlertTriangle, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +27,20 @@ export default async function OrganizerEventsPage() {
     }
   }
 
+  const userRecords = await db.select().from(users).where(eq(users.id, organizerId));
+  const user = userRecords[0];
+
+  const connectedAccountId = user?.stripeAccountId || user?.stripeConnectedAccountId;
+  const hasStripe = Boolean(connectedAccountId || (user?.stripeSecretKey && user.stripeSecretKey.trim().length > 0));
+  const hasLegalInfo = Boolean(user?.legalCompanyName && user?.street && user?.zip && user?.city);
+  const hasTerms = Boolean(user?.termsAcceptedAt && user?.privacyAcceptedAt && user?.avvAcceptedAt);
+  const isFullyCompleted = Boolean(user?.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
+
   const organizerEvents = await db
     .select()
     .from(events)
     .where(eq(events.organizerId, organizerId))
     .orderBy(desc(events.createdAt));
-
 
   const eventsWithStats = await Promise.all(
     organizerEvents.map(async (event) => {
@@ -70,6 +78,23 @@ export default async function OrganizerEventsPage() {
             <PlusCircle className="w-4 h-4" /> Neues Event erstellen
           </Link>
         </div>
+
+        {!isFullyCompleted && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <span>
+                <strong>Freischaltung ausstehend:</strong> Bitte vervollständige dein Onboarding (Stripe, Stammdaten &amp; Rechtstexte), um Ticketverkäufe zu aktivieren.
+              </span>
+            </div>
+            <Link
+              href="/onboarding"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 shrink-0 self-start sm:self-auto"
+            >
+              Onboarding vervollständigen <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
 
         <EventsList events={eventsWithStats} />
       </main>

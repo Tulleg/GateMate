@@ -24,9 +24,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/stripe/");
 
   // 1. If user is authenticated as organizer and onboarding is incomplete:
-  // Redirect all protected route calls to /onboarding
+  // Allow access to /organizer so user can see what's missing, redirect other non-public routes
   if (isAuthenticated && role !== "superadmin" && !isCompleted) {
-    if (!pathname.startsWith("/onboarding") && !isPublicRoute) {
+    if (!pathname.startsWith("/onboarding") && !pathname.startsWith("/organizer") && !isPublicRoute) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
   }
