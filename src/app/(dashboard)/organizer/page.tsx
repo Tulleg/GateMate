@@ -50,8 +50,16 @@ export default async function OrganizerDashboardPage() {
   // Calculate detailed onboarding requirement status
   const connectedAccountId = organizer.stripeAccountId || organizer.stripeConnectedAccountId;
   const hasStripe = Boolean(connectedAccountId || (organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0));
-  const hasLegalInfo = Boolean(organizer.legalCompanyName && organizer.street && organizer.zip && organizer.city);
-  const hasTerms = Boolean(organizer.termsAcceptedAt && organizer.privacyAcceptedAt && organizer.avvAcceptedAt);
+  const hasLegalInfo = Boolean((organizer.legalCompanyName || organizer.legalName) && (organizer.street || organizer.legalAddress));
+  const hasTerms = Boolean(
+    organizer.termsAcceptedAt ||
+      organizer.privacyAcceptedAt ||
+      organizer.avvAcceptedAt ||
+      organizer.onboardingStep === "completed" ||
+      organizer.onboardingCompleted ||
+      (organizer.termsContent && organizer.termsContent.trim().length > 0) ||
+      (organizer.privacyContent && organizer.privacyContent.trim().length > 0)
+  );
   const isFullyCompleted = Boolean(organizer.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
 
   // Auto-sync database and cookies if all 3 steps are complete but onboardingCompleted wasn't marked true

@@ -32,9 +32,34 @@ export default async function OrganizerEventsPage() {
 
   const connectedAccountId = user?.stripeAccountId || user?.stripeConnectedAccountId;
   const hasStripe = Boolean(connectedAccountId || (user?.stripeSecretKey && user.stripeSecretKey.trim().length > 0));
-  const hasLegalInfo = Boolean(user?.legalCompanyName && user?.street && user?.zip && user?.city);
-  const hasTerms = Boolean(user?.termsAcceptedAt && user?.privacyAcceptedAt && user?.avvAcceptedAt);
+  const hasLegalInfo = Boolean((user?.legalCompanyName || user?.legalName) && (user?.street || user?.legalAddress));
+  const hasTerms = Boolean(
+    user?.termsAcceptedAt ||
+      user?.privacyAcceptedAt ||
+      user?.avvAcceptedAt ||
+      user?.onboardingStep === "completed" ||
+      user?.onboardingCompleted ||
+      (user?.termsContent && user.termsContent.trim().length > 0) ||
+      (user?.privacyContent && user.privacyContent.trim().length > 0)
+  );
   const isFullyCompleted = Boolean(user?.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
+
+  if (user && !user.onboardingCompleted && isFullyCompleted) {
+    await db.update(users).set({ onboardingCompleted: true, onboardingStep: "completed" }).where(eq(users.id, organizerId));
+    cookieStore.set("gatemate_onboarding_completed", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+  }
+
+  const missing: string[] = [];
+  if (!hasStripe) missing.push("Stripe Payment");
+  if (!hasLegalInfo) missing.push("Veranstalter-Stammdaten");
+  if (!hasTerms) missing.push("Rechtstexte & AGB");
+  const missingText = missing.join(", ");
 
   const organizerEvents = await db
     .select()
@@ -84,7 +109,7 @@ export default async function OrganizerEventsPage() {
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
               <span>
-                <strong>Freischaltung ausstehend:</strong> Bitte vervollständige dein Onboarding (Stripe, Stammdaten &amp; Rechtstexte), um Ticketverkäufe zu aktivieren.
+                <strong>Freischaltung ausstehend:</strong> Bitte vervollständige dein Onboarding ({missingText}), um Ticketverkäufe zu aktivieren.
               </span>
             </div>
             <Link

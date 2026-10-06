@@ -23,6 +23,7 @@ export default async function CreateEventPage() {
   }
 
   let isFullyCompleted = true;
+  let missingText = "";
 
   if (organizerId) {
     const userRecords = await db.select().from(users).where(eq(users.id, organizerId));
@@ -30,9 +31,35 @@ export default async function CreateEventPage() {
 
     const connectedAccountId = user?.stripeAccountId || user?.stripeConnectedAccountId;
     const hasStripe = Boolean(connectedAccountId || (user?.stripeSecretKey && user.stripeSecretKey.trim().length > 0));
-    const hasLegalInfo = Boolean(user?.legalCompanyName && user?.street && user?.zip && user?.city);
-    const hasTerms = Boolean(user?.termsAcceptedAt && user?.privacyAcceptedAt && user?.avvAcceptedAt);
+    const hasLegalInfo = Boolean((user?.legalCompanyName || user?.legalName) && (user?.street || user?.legalAddress));
+    const hasTerms = Boolean(
+      user?.termsAcceptedAt ||
+        user?.privacyAcceptedAt ||
+        user?.avvAcceptedAt ||
+        user?.onboardingStep === "completed" ||
+        user?.onboardingCompleted ||
+        (user?.termsContent && user.termsContent.trim().length > 0) ||
+        (user?.privacyContent && user.privacyContent.trim().length > 0)
+    );
+
     isFullyCompleted = Boolean(user?.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
+
+    if (user && !user.onboardingCompleted && isFullyCompleted) {
+      await db.update(users).set({ onboardingCompleted: true, onboardingStep: "completed" }).where(eq(users.id, organizerId));
+      cookieStore.set("gatemate_onboarding_completed", "true", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+    }
+
+    const missing: string[] = [];
+    if (!hasStripe) missing.push("Stripe Payment");
+    if (!hasLegalInfo) missing.push("Veranstalter-Stammdaten");
+    if (!hasTerms) missing.push("Rechtstexte & AGB");
+    missingText = missing.join(", ");
   }
 
   return (
@@ -52,7 +79,7 @@ export default async function CreateEventPage() {
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
               <span>
-                <strong>Freischaltung erforderlich:</strong> Bitte vervollständige dein Onboarding (Stripe, Stammdaten &amp; Rechtstexte), um Tickets zu verkaufen und Events freizuschalten.
+                <strong>Freischaltung erforderlich:</strong> Bitte vervollständige dein Onboarding ({missingText}), um Tickets zu verkaufen und Events freizuschalten.
               </span>
             </div>
             <Link

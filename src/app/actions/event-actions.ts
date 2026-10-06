@@ -24,8 +24,16 @@ export async function createEventAction(input: unknown): Promise<ActionResult<{ 
     if (userRecord) {
       const connectedAccountId = userRecord.stripeAccountId || userRecord.stripeConnectedAccountId;
       const hasStripe = Boolean(connectedAccountId || (userRecord.stripeSecretKey && userRecord.stripeSecretKey.trim().length > 0));
-      const hasLegalInfo = Boolean(userRecord.legalCompanyName && userRecord.street && userRecord.zip && userRecord.city);
-      const hasTerms = Boolean(userRecord.termsAcceptedAt && userRecord.privacyAcceptedAt && userRecord.avvAcceptedAt);
+      const hasLegalInfo = Boolean((userRecord.legalCompanyName || userRecord.legalName) && (userRecord.street || userRecord.legalAddress));
+      const hasTerms = Boolean(
+        userRecord.termsAcceptedAt ||
+          userRecord.privacyAcceptedAt ||
+          userRecord.avvAcceptedAt ||
+          userRecord.onboardingStep === "completed" ||
+          userRecord.onboardingCompleted ||
+          (userRecord.termsContent && userRecord.termsContent.trim().length > 0) ||
+          (userRecord.privacyContent && userRecord.privacyContent.trim().length > 0)
+      );
       const isComplete = Boolean(userRecord.onboardingCompleted || (hasStripe && hasLegalInfo && hasTerms));
 
       if (!isComplete) {
