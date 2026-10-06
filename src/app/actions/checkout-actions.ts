@@ -6,7 +6,7 @@ import { events, ticketTiers, orders, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { orderCreateSchema, OrderCreateInput } from "@/lib/validation";
 import { ActionResult, formatZodErrors } from "@/types";
-import { getOrganizerStripeClient } from "@/lib/stripe";
+import { getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
 import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { formatLegalAddress } from "@/lib/legal";
 
@@ -59,6 +59,13 @@ export async function createCheckoutSessionAction(
     // 2. Fetch Organizer
     const organizerRecords = await db.select().from(users).where(eq(users.id, eventRecord.organizerId));
     const organizer = organizerRecords[0];
+
+    if (!hasOrganizerStripeAccount(organizer)) {
+      return {
+        success: false,
+        error: "Ticketkauf derzeit nicht möglich: Der Veranstalter hat noch kein Zahlungskonto eingerichtet.",
+      };
+    }
 
     const { client: stripeClient, isDirectKey } = getOrganizerStripeClient(organizer);
 
@@ -147,6 +154,11 @@ export async function createCheckoutSessionAction(
         description: `Ticketkauf bei ${organizer?.legalName || organizer?.name || "Veranstalter"} für ${eventRecord.title}`,
       };
       stripeRequestOptions = { stripeAccount: connectedAccountId };
+    } else if (!isDirectKey) {
+      return {
+        success: false,
+        error: "Fehler beim Checkout: Veranstalter besitzt kein verknüpftes Stripe-Konto.",
+      };
     }
 
     const session = await stripeClient.checkout.sessions.create(sessionOptions, stripeRequestOptions);

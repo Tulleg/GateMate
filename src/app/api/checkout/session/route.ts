@@ -191,6 +191,11 @@ export async function POST(req: Request) {
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
       };
       stripeRequestOptions = { stripeAccount: connectedAccountId };
+    } else if (!isDirectKey) {
+      return NextResponse.json(
+        { error: "Fehler beim Checkout: Veranstalter besitzt kein verknüpftes Stripe-Konto." },
+        { status: 400 }
+      );
     } else {
       sessionOptions.payment_intent_data = {
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
