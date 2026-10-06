@@ -73,7 +73,7 @@ export function EventForm() {
     {
       name: "Standard-Eintritt",
       price: "49.00",
-      fee: "2.50",
+      fee: "4.90",
       quantityAvailable: "200",
       includedServices: "Standard Einlass, MVV-Ticket inklusive",
       ticketTerms: "Personengebunden",
@@ -130,6 +130,12 @@ export function EventForm() {
   const updateTier = (index: number, field: keyof TicketTierInput, value: string) => {
     const updated = [...tiers];
     updated[index][field] = value;
+    if (field === "price") {
+      const parsedPrice = parseFloat(value || "0");
+      if (!isNaN(parsedPrice) && parsedPrice >= 0) {
+        updated[index].fee = (parsedPrice * 0.10).toFixed(2);
+      }
+    }
     setTiers(updated);
   };
 

@@ -215,6 +215,12 @@ export function EditEventForm({ eventId }: EditEventFormProps) {
   const updateTier = (index: number, field: keyof TierInput, value: string) => {
     const updated = [...tiers];
     (updated[index] as any)[field] = value;
+    if (field === "price") {
+      const parsedPrice = parseFloat(value || "0");
+      if (!isNaN(parsedPrice) && parsedPrice >= 0) {
+        updated[index].fee = (parsedPrice * 0.10).toFixed(2);
+      }
+    }
     setTiers(updated);
   };
 

@@ -175,6 +175,9 @@ export function CheckoutWidget({
     );
   }
 
+  const totalBasePriceCents = tierBasePrice * quantity;
+  const totalFeePriceCents = tierFeePrice * quantity;
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
       {/* Header */}
@@ -248,7 +251,7 @@ export function CheckoutWidget({
                   </div>
                   <div className="text-right">
                     <span className="text-base font-extrabold text-indigo-400 block">
-                      {formatCurrency(t.priceCents)}
+                      {formatCurrency(t.priceCents + (t.feeCents || 0))}
                     </span>
                     <span className="text-[10px] text-slate-400 font-normal">{taxNotice}</span>
                   </div>
@@ -339,12 +342,12 @@ export function CheckoutWidget({
                 <span className="font-semibold text-white">{selectedTier?.name} ({quantity}x)</span>
               </div>
               <div className="flex justify-between text-slate-400 text-[11px]">
-                <span>Einzelpreis Ticket:</span>
-                <span>{formatCurrency(tierBasePrice)}</span>
+                <span>Ticketpreis ({quantity > 1 ? `${quantity}x ${formatCurrency(tierBasePrice)}` : "1x"}):</span>
+                <span>{formatCurrency(totalBasePriceCents)}</span>
               </div>
               <div className="flex justify-between text-slate-400 text-[11px]">
-                <span>Vorverkaufs- / Systemgebühr:</span>
-                <span>{tierFeePrice > 0 ? formatCurrency(tierFeePrice) : `${formatCurrency(0)} (Inkludiert)`}</span>
+                <span>Vorverkaufs- / Systemgebühr ({quantity > 1 ? `${quantity}x ${formatCurrency(tierFeePrice)}` : "1x"}):</span>
+                <span>{totalFeePriceCents > 0 ? formatCurrency(totalFeePriceCents) : `${formatCurrency(0)} (Inkludiert)`}</span>
               </div>
               <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800 font-bold">
                 <span className="text-white">Gesamtpreis:</span>
