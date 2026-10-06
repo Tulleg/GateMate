@@ -96,6 +96,22 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
         })
         .where(eq(users.id, currentUser.id));
 
+      const connectClientId = process.env.STRIPE_CONNECT_CLIENT_ID;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      // If Stripe Connect Client ID is configured, use Standard OAuth flow (allows sign in to existing account OR create new account)
+      if (connectClientId && connectClientId.startsWith("ca_")) {
+        const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
+          `${appUrl}/api/stripe/oauth/callback`
+        )}&user[email]=${encodeURIComponent(userRecord.email)}`;
+
+        return {
+          success: true,
+          data: { url: oauthUrl },
+          message: "Stripe OAuth Onboarding gestartet.",
+        };
+      }
+
       if (!stripeAccountId) {
         return {
           success: false,
@@ -103,7 +119,6 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
         };
       }
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const accountLink = await stripe.accountLinks.create({
         account: stripeAccountId,
         refresh_url: `${appUrl}/onboarding?stripe_refresh=true`,

@@ -134,11 +134,24 @@ export async function POST(req: Request) {
         })
         .where(eq(users.id, userId));
 
+      const connectClientId = process.env.STRIPE_CONNECT_CLIENT_ID;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      if (connectClientId && connectClientId.startsWith("ca_")) {
+        const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
+          `${appUrl}/api/stripe/oauth/callback`
+        )}&user[email]=${encodeURIComponent(user.email)}`;
+
+        return NextResponse.json({
+          success: true,
+          url: oauthUrl,
+        });
+      }
+
       if (!stripeAccountId) {
         return NextResponse.json({ error: "Fehler beim Erstellen des Stripe-Kontos." }, { status: 500 });
       }
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const accountLink = await stripe.accountLinks.create({
         account: stripeAccountId,
         refresh_url: `${appUrl}/onboarding?stripe_refresh=true`,
