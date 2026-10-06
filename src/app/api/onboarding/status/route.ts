@@ -60,7 +60,7 @@ export async function GET() {
       success: true,
       onboardingCompleted: Boolean(user.onboardingCompleted),
       onboardingStep: user.onboardingStep || "stripe_connect",
-      stripeAccountType: user.stripeAccountType || "express",
+      stripeAccountType: user.stripeAccountType || "standard",
       stripeAccountId,
       stripeExpressDetailsSubmitted,
       stripePublishableKey: user.stripePublishableKey || "",

@@ -95,7 +95,7 @@ export function OnboardingWizard() {
       }
 
       // Pre-fill Stripe data
-      setStripeAccountType(data.stripeAccountType || "express");
+      setStripeAccountType(data.stripeAccountType || "standard");
       setStripeAccountId(data.stripeAccountId || null);
       setStripeExpressDetailsSubmitted(Boolean(data.stripeExpressDetailsSubmitted));
       setStripePublishableKey(data.stripePublishableKey || "");
