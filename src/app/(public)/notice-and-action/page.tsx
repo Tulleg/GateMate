@@ -29,7 +29,7 @@ export default function NoticeAndActionPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-8 py-12 space-y-8">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
             <ShieldAlert className="w-3.5 h-3.5" /> Melde- und Abhilfeverfahren gemäß Art. 16 DSA

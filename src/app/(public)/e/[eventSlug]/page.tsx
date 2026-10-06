@@ -100,7 +100,7 @@ export default async function PublicEventPage({ params, searchParams }: PageProp
       </header>
 
       {/* Main Content Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-12">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 pt-8 space-y-12">
         {/* Checkout Canceled Notice Banner */}
         {isCheckoutCanceled && (
           <div className="p-5 rounded-3xl bg-blue-950/60 border border-blue-800/70 text-blue-200 shadow-2xl flex items-center gap-4">

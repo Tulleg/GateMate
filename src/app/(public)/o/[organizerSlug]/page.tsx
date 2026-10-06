@@ -97,7 +97,7 @@ export default async function OrganizerProfilePage({ params }: PageProps) {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 space-y-12">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 pt-10 space-y-12">
         {/* Organizer Header Banner */}
         <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-800/40 shadow-2xl flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
           <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-extrabold text-3xl text-white shadow-xl shrink-0">

@@ -76,7 +76,7 @@ Gemäß § 312g Abs. 2 Nr. 9 BGB besteht bei Dienstleistungen im Zusammenhang mi
       </header>
 
       {/* Main Container */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-8 pt-10 space-y-8">
         {/* Profile Card */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-4">

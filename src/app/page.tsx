@@ -101,7 +101,7 @@ export default async function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-24 space-y-12 sm:space-y-16">
+      <main className="flex-1 max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 pt-8 sm:pt-12 pb-24 space-y-12 sm:space-y-16">
         {/* Hero Banner */}
         <div className="text-center max-w-3xl mx-auto space-y-4 sm:space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">

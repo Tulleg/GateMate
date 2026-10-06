@@ -4,7 +4,7 @@ import { Ticket, ShieldCheck, FileText, Lock, ShieldAlert, Mail, FileCheck } fro
 export function PlatformFooter() {
   return (
     <footer className="border-t border-slate-800/80 bg-slate-950 text-slate-400 py-12 px-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[1400px] mx-auto space-y-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-slate-800/60 pb-8">
           <div className="space-y-2">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">

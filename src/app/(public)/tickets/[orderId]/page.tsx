@@ -98,7 +98,7 @@ export default async function TicketConfirmationPage({ params }: PageProps) {
         </Link>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-8 pt-8 space-y-8">
         {/* Order Status Banner */}
         {isCompleted ? (
           <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-800/40 text-center space-y-3 print:hidden">

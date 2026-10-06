@@ -78,7 +78,7 @@ ${organizer.isSmallBusiness ? "\n**Umsatzsteuer-Hinweis:**\nGemäß § 19 UStG w
       </header>
 
       {/* Main Container */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-8 pt-10 space-y-8">
         {/* Profile Card */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-xl">
           <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-lg">

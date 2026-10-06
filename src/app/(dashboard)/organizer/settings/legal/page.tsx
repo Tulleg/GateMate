@@ -285,7 +285,7 @@ export default function OrganizerLegalSettingsPage() {
     <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto max-w-5xl min-w-0">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto max-w-[1400px] min-w-0">
         {/* Header Bar */}
         <div className="border-b border-slate-800/80 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
