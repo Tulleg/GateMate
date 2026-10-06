@@ -137,21 +137,19 @@ export async function createCheckoutSessionAction(
     };
 
     const connectedAccountId = organizer?.stripeAccountId || organizer?.stripeConnectedAccountId;
+    let stripeRequestOptions: Stripe.RequestOptions | undefined = undefined;
+
     if (!isDirectKey && connectedAccountId) {
       const platformFeePercent = await getPlatformFeePercent();
       const applicationFeeAmount = Math.round(totalCents * (platformFeePercent / 100));
       sessionOptions.payment_intent_data = {
         ...(applicationFeeAmount > 0 ? { application_fee_amount: applicationFeeAmount } : {}),
-        on_behalf_of: connectedAccountId,
         description: `Ticketkauf bei ${organizer?.legalName || organizer?.name || "Veranstalter"} für ${eventRecord.title}`,
-        transfer_data: {
-          destination: connectedAccountId,
-        },
       };
+      stripeRequestOptions = { stripeAccount: connectedAccountId };
     }
 
-
-    const session = await stripeClient.checkout.sessions.create(sessionOptions);
+    const session = await stripeClient.checkout.sessions.create(sessionOptions, stripeRequestOptions);
 
     if (!session.url) {
       return {

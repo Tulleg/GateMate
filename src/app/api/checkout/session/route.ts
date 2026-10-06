@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { stripe, getOrganizerStripeClient, hasOrganizerStripeAccount } from "@/lib/stripe";
 import { getPlatformFeePercent } from "@/lib/platform-settings";
 import { db } from "@/db";
@@ -181,23 +182,22 @@ export async function POST(req: Request) {
       cancel_url: `${appUrl}/e/${event.slug}?canceled=true`,
     };
 
-    // Apply Stripe Connect Destination Charge & Platform Fee only if using Connect platform account & fee > 0
+    // Apply Stripe Connect Direct Charge & Platform Fee if connected account exists
+    let stripeRequestOptions: Stripe.RequestOptions | undefined = undefined;
+
     if (!isDirectKey && connectedAccountId) {
       sessionOptions.payment_intent_data = {
         ...(platformFeeCents > 0 ? { application_fee_amount: platformFeeCents } : {}),
-        on_behalf_of: connectedAccountId,
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
-        transfer_data: {
-          destination: connectedAccountId,
-        },
       };
+      stripeRequestOptions = { stripeAccount: connectedAccountId };
     } else {
       sessionOptions.payment_intent_data = {
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
       };
     }
 
-    const session = await activeStripe.checkout.sessions.create(sessionOptions);
+    const session = await activeStripe.checkout.sessions.create(sessionOptions, stripeRequestOptions);
 
     // Update order with Stripe Checkout Session ID
     await db.update(orders).set({ stripeCheckoutSessionId: session.id } as any).where(eq(orders.id, orderId));
