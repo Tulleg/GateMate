@@ -113,8 +113,13 @@ export function OnboardingWizard() {
 
       // Handle Stripe OAuth Return query params
       if (searchParams.get("stripe_success") === "true") {
-        setSuccessToast("Stripe Standard Onboarding erfolgreich abgeschlossen!");
-        setCurrentStep(2);
+        if (Boolean(data.stripeExpressDetailsSubmitted) || Boolean(data.hasSecretKey)) {
+          setSuccessToast("Stripe Standard Onboarding erfolgreich abgeschlossen!");
+          setCurrentStep(2);
+        } else {
+          setErrorMessage("Das Stripe-Onboarding wurde nicht abgeschlossen. Bitte schließe die Registrierung bei Stripe ab.");
+          setCurrentStep(1);
+        }
       } else if (searchParams.get("stripe_refresh") === "true") {
         setErrorMessage("Das Stripe-Onboarding wurde abgebrochen oder ist abgelaufen. Bitte erneut versuchen.");
         setCurrentStep(1);

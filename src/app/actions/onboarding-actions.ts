@@ -62,7 +62,19 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
       let stripeAccountId = userRecord.stripeAccountId || userRecord.stripeConnectedAccountId;
       const targetAccountType = data.stripeAccountType === "express" ? "express" : "standard";
 
-      if (!stripeAccountId) {
+      let needsNewAccount = !stripeAccountId;
+      if (stripeAccountId) {
+        try {
+          const existingAcc = await stripe.accounts.retrieve(stripeAccountId);
+          if (existingAcc.type !== targetAccountType) {
+            needsNewAccount = true;
+          }
+        } catch (e) {
+          needsNewAccount = true;
+        }
+      }
+
+      if (needsNewAccount) {
         const account = await stripe.accounts.create({
           type: targetAccountType,
           email: userRecord.email,
@@ -71,28 +83,24 @@ export async function saveStep1StripeAction(input: unknown): Promise<ActionResul
           },
         });
         stripeAccountId = account.id;
+      }
 
-        await db
-          .update(users)
-          .set({
-            stripeAccountId: stripeAccountId,
-            stripeConnectedAccountId: stripeAccountId,
-            stripeAccountType: targetAccountType,
-            stripeMode: "connect",
-            onboardingStep: "legal_info",
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, currentUser.id));
-      } else {
-        await db
-          .update(users)
-          .set({
-            stripeAccountType: targetAccountType,
-            stripeMode: "connect",
-            onboardingStep: "legal_info",
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, currentUser.id));
+      await db
+        .update(users)
+        .set({
+          stripeAccountId: stripeAccountId,
+          stripeConnectedAccountId: stripeAccountId,
+          stripeAccountType: targetAccountType,
+          stripeMode: "connect",
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, currentUser.id));
+
+      if (!stripeAccountId) {
+        return {
+          success: false,
+          error: "Fehler beim Erstellen des Stripe-Kontos.",
+        };
       }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

@@ -100,7 +100,19 @@ export async function POST(req: Request) {
       let stripeAccountId = user.stripeAccountId || user.stripeConnectedAccountId;
       const targetAccountType = data.stripeAccountType === "express" ? "express" : "standard";
 
-      if (!stripeAccountId) {
+      let needsNewAccount = !stripeAccountId;
+      if (stripeAccountId) {
+        try {
+          const existingAcc = await stripe.accounts.retrieve(stripeAccountId);
+          if (existingAcc.type !== targetAccountType) {
+            needsNewAccount = true;
+          }
+        } catch (e) {
+          needsNewAccount = true;
+        }
+      }
+
+      if (needsNewAccount) {
         const account = await stripe.accounts.create({
           type: targetAccountType,
           email: user.email,
@@ -109,26 +121,21 @@ export async function POST(req: Request) {
           },
         });
         stripeAccountId = account.id;
+      }
 
-        await db
-          .update(users)
-          .set({
-            stripeAccountId: stripeAccountId,
-            stripeConnectedAccountId: stripeAccountId,
-            stripeAccountType: targetAccountType,
-            stripeMode: "connect",
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, userId));
-      } else {
-        await db
-          .update(users)
-          .set({
-            stripeAccountType: targetAccountType,
-            stripeMode: "connect",
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, userId));
+      await db
+        .update(users)
+        .set({
+          stripeAccountId: stripeAccountId,
+          stripeConnectedAccountId: stripeAccountId,
+          stripeAccountType: targetAccountType,
+          stripeMode: "connect",
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      if (!stripeAccountId) {
+        return NextResponse.json({ error: "Fehler beim Erstellen des Stripe-Kontos." }, { status: 500 });
       }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -139,16 +146,9 @@ export async function POST(req: Request) {
         type: "account_onboarding",
       });
 
-      // Update onboarding step to legal_info so user progresses after return
-      await db
-        .update(users)
-        .set({ onboardingStep: "legal_info" })
-        .where(eq(users.id, userId));
-
       return NextResponse.json({
         success: true,
         url: accountLink.url,
-        nextStep: "legal_info",
       });
     }
   } catch (error: any) {
