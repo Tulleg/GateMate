@@ -258,7 +258,7 @@ export function CheckoutWidget({
                   </div>
                   <div className="text-right">
                     <span className="text-base font-extrabold text-indigo-400 block">
-                      {formatCurrency(t.priceCents + (activeFeePercent !== null ? Math.round(t.priceCents * (activeFeePercent / 100)) : (t.feeCents || 0)))}
+                      {formatCurrency(t.priceCents)}
                     </span>
                     <span className="text-[10px] text-slate-400 font-normal">{taxNotice}</span>
                   </div>

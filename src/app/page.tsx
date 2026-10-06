@@ -54,7 +54,7 @@ export default async function LandingPage() {
     publicEvents.map(async (event) => {
       const tiers = await db.select().from(ticketTiers).where(eq(ticketTiers.eventId, event.id));
       const lowestPriceCents = tiers.length > 0
-        ? Math.min(...tiers.map((t) => t.priceCents + Math.round(t.priceCents * (platformFeePercent / 100))))
+        ? Math.min(...tiers.map((t) => t.priceCents))
         : 0;
 
       const organizerRecords = await db.select().from(users).where(eq(users.id, event.organizerId));
