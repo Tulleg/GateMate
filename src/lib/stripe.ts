@@ -44,11 +44,12 @@ export function getOrganizerStripeClient(organizer?: { stripeSecretKey?: string 
   };
 }
 
-export function hasOrganizerStripeAccount(organizer?: { stripeSecretKey?: string | null; stripeConnectedAccountId?: string | null } | null): boolean {
+export function hasOrganizerStripeAccount(organizer?: { stripeSecretKey?: string | null; stripeAccountId?: string | null; stripeConnectedAccountId?: string | null } | null): boolean {
   if (!organizer) return false;
   const decryptedKey = decryptText(organizer.stripeSecretKey);
   const hasDirectKey = Boolean(decryptedKey && decryptedKey.trim().length > 0);
-  const hasConnectedAccount = Boolean(organizer.stripeConnectedAccountId && organizer.stripeConnectedAccountId.trim().length > 0);
+  const connectedId = organizer.stripeAccountId || organizer.stripeConnectedAccountId;
+  const hasConnectedAccount = Boolean(connectedId && connectedId.trim().length > 0);
   return hasDirectKey || hasConnectedAccount;
 }
 

@@ -222,10 +222,13 @@ export function validateEventForPublication(
     }
 
     // H. Impressum
-    const hasImpressum =
-      organizer.legalMode === "url"
-        ? Boolean(organizer.impressumUrl?.trim())
-        : Boolean(organizer.impressumContent?.trim() || organizer.impressumUrl?.trim());
+    const hasImpressum = Boolean(
+      organizer.impressumContent?.trim() ||
+        organizer.impressumUrl?.trim() ||
+        organizer.street?.trim() ||
+        organizer.legalCompanyName?.trim() ||
+        organizer.legalName?.trim()
+    );
 
     if (!hasImpressum) {
       issues.push({
@@ -240,10 +243,12 @@ export function validateEventForPublication(
     }
 
     // I. Datenschutz
-    const hasPrivacy =
-      organizer.legalMode === "url"
-        ? Boolean(organizer.privacyUrl?.trim())
-        : Boolean(organizer.privacyContent?.trim() || organizer.privacyUrl?.trim());
+    const hasPrivacy = Boolean(
+      organizer.privacyContent?.trim() ||
+        organizer.privacyUrl?.trim() ||
+        (organizer as any).privacyAcceptedAt ||
+        (organizer as any).onboardingCompleted
+    );
 
     if (!hasPrivacy) {
       issues.push({
@@ -258,10 +263,12 @@ export function validateEventForPublication(
     }
 
     // J. AGB
-    const hasTerms =
-      organizer.legalMode === "url"
-        ? Boolean(organizer.termsUrl?.trim())
-        : Boolean(organizer.termsContent?.trim() || organizer.termsUrl?.trim());
+    const hasTerms = Boolean(
+      organizer.termsContent?.trim() ||
+        organizer.termsUrl?.trim() ||
+        (organizer as any).termsAcceptedAt ||
+        (organizer as any).onboardingCompleted
+    );
 
     if (!hasTerms) {
       issues.push({
@@ -278,7 +285,9 @@ export function validateEventForPublication(
     // K. Stornierungs-/Erstattungsbedingungen
     const hasCancellationPolicy = Boolean(
       (organizer.cancellationPolicyContent && organizer.cancellationPolicyContent.trim()) ||
-        (event?.cancellationPolicy && event.cancellationPolicy.trim())
+        (event?.cancellationPolicy && event.cancellationPolicy.trim()) ||
+        (organizer as any).termsAcceptedAt ||
+        (organizer as any).onboardingCompleted
     );
 
     if (!hasCancellationPolicy) {

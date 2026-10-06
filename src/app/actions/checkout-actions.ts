@@ -136,15 +136,16 @@ export async function createCheckoutSessionAction(
       expires_at: Math.floor(expiresAt.getTime() / 1000),
     };
 
-    if (!isDirectKey && organizer?.stripeConnectedAccountId) {
+    const connectedAccountId = organizer?.stripeAccountId || organizer?.stripeConnectedAccountId;
+    if (!isDirectKey && connectedAccountId) {
       const platformFeePercent = await getPlatformFeePercent();
       const applicationFeeAmount = Math.round(totalCents * (platformFeePercent / 100));
       sessionOptions.payment_intent_data = {
-        application_fee_amount: applicationFeeAmount,
-        on_behalf_of: organizer.stripeConnectedAccountId,
+        ...(applicationFeeAmount > 0 ? { application_fee_amount: applicationFeeAmount } : {}),
+        on_behalf_of: connectedAccountId,
         description: `Ticketkauf bei ${organizer?.legalName || organizer?.name || "Veranstalter"} für ${eventRecord.title}`,
         transfer_data: {
-          destination: organizer.stripeConnectedAccountId,
+          destination: connectedAccountId,
         },
       };
     }

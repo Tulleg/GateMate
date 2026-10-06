@@ -139,7 +139,7 @@ export async function POST(req: Request) {
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const stripeAccountId = organizer?.stripeConnectedAccountId;
+    const connectedAccountId = organizer?.stripeAccountId || organizer?.stripeConnectedAccountId;
     const organizerLegalName = organizer?.legalName || organizer?.name || "Veranstalter";
 
     // 5. Build Stripe Checkout Session options
@@ -182,13 +182,13 @@ export async function POST(req: Request) {
     };
 
     // Apply Stripe Connect Destination Charge & Platform Fee only if using Connect platform account & fee > 0
-    if (!isDirectKey && stripeAccountId) {
+    if (!isDirectKey && connectedAccountId) {
       sessionOptions.payment_intent_data = {
         ...(platformFeeCents > 0 ? { application_fee_amount: platformFeeCents } : {}),
-        on_behalf_of: stripeAccountId,
+        on_behalf_of: connectedAccountId,
         description: `Ticketkauf bei ${organizerLegalName} für ${event.title}`,
         transfer_data: {
-          destination: stripeAccountId,
+          destination: connectedAccountId,
         },
       };
     } else {
