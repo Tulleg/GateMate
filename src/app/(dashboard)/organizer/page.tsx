@@ -40,14 +40,11 @@ export default async function OrganizerDashboardPage() {
   }
 
   // Check if Stripe is connected and onboarding completed
+  const connectedAccountId = organizer.stripeAccountId || organizer.stripeConnectedAccountId;
   let isStripeConnected = false;
-  if (organizer.stripeConnectedAccountId && hasPlatformStripeKey()) {
-    try {
-      const acc = await stripe.accounts.retrieve(organizer.stripeConnectedAccountId);
-      isStripeConnected = Boolean(acc.details_submitted);
-    } catch {
-      isStripeConnected = false;
-    }
+
+  if (connectedAccountId) {
+    isStripeConnected = true;
   } else if (organizer.stripeSecretKey && organizer.stripeSecretKey.trim().length > 0) {
     isStripeConnected = true;
   }
@@ -109,7 +106,7 @@ export default async function OrganizerDashboardPage() {
         <StripeConnectCard
           userId={organizer.id}
           isConnected={isStripeConnected}
-          accountId={organizer.stripeConnectedAccountId}
+          accountId={connectedAccountId}
         />
 
         {/* Analytics Grid */}

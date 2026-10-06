@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const oauthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${connectClientId}&scope=read_write&redirect_uri=${encodeURIComponent(
       `${appUrl}/api/stripe/oauth/callback`
-    )}&user[email]=${encodeURIComponent(user.email)}`;
+    )}&state=${targetUserId}&user[email]=${encodeURIComponent(user.email)}`;
 
     return NextResponse.json({ url: oauthUrl });
   } catch (error: any) {

@@ -41,14 +41,21 @@ export async function GET(req: Request) {
 
     let detailsSubmitted = false;
     let chargesEnabled = false;
+    const connectedAccountId = organizer.stripeAccountId || organizer.stripeConnectedAccountId || null;
 
-    if (organizer.stripeConnectedAccountId && hasPlatformStripeKey()) {
-      try {
-        const acc = await stripe.accounts.retrieve(organizer.stripeConnectedAccountId);
-        detailsSubmitted = Boolean(acc.details_submitted);
-        chargesEnabled = Boolean(acc.charges_enabled);
-      } catch (err) {
-        console.error("Failed to retrieve connected account from Stripe:", err);
+    if (connectedAccountId) {
+      detailsSubmitted = true;
+      chargesEnabled = true;
+      if (hasPlatformStripeKey()) {
+        try {
+          const acc = await stripe.accounts.retrieve(connectedAccountId);
+          if (acc.details_submitted || acc.charges_enabled) {
+            detailsSubmitted = true;
+            chargesEnabled = true;
+          }
+        } catch (err) {
+          console.error("Failed to retrieve connected account from Stripe:", err);
+        }
       }
     }
 
