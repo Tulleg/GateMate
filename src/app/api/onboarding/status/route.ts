@@ -45,6 +45,17 @@ export async function GET() {
 
     const decryptedSecretKey = decryptText(user.stripeSecretKey);
 
+    if (user.onboardingCompleted) {
+      const isProd = process.env.NODE_ENV === "production";
+      cookieStore.set("gatemate_onboarding_completed", "true", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: isProd,
+        sameSite: "lax",
+      });
+    }
+
     return NextResponse.json({
       success: true,
       onboardingCompleted: Boolean(user.onboardingCompleted),

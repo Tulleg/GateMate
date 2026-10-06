@@ -79,7 +79,7 @@ export function OnboardingWizard() {
       }
 
       if (data.onboardingCompleted) {
-        router.push("/organizer");
+        window.location.href = "/organizer";
         return;
       }
 
@@ -238,7 +238,7 @@ export function OnboardingWizard() {
       setSuccessToast("Onboarding erfolgreich abgeschlossen!");
       setCurrentStep(4);
       setTimeout(() => {
-        router.push("/organizer");
+        window.location.href = "/organizer";
       }, 1200);
     } catch (err: unknown) {
       setErrorMessage("Serverfehler beim Absenden der Zustimmungen.");
@@ -850,7 +850,9 @@ export function OnboardingWizard() {
               </div>
               <div>
                 <button
-                  onClick={() => router.push("/organizer")}
+                  onClick={() => {
+                    window.location.href = "/organizer";
+                  }}
                   className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm inline-flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/30"
                 >
                   Direkt zum Dashboard <ArrowRight className="w-4 h-4" />

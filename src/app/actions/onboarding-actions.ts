@@ -209,6 +209,8 @@ export async function saveStep2LegalAction(input: unknown): Promise<ActionResult
   }
 }
 
+import { cookies } from "next/headers";
+
 export async function saveStep3TermsAction(input: unknown): Promise<ActionResult> {
   try {
     const currentUser = await getCurrentUser();
@@ -241,6 +243,17 @@ export async function saveStep3TermsAction(input: unknown): Promise<ActionResult
         updatedAt: now,
       })
       .where(eq(users.id, currentUser.id));
+
+    // Set cookie so middleware immediately grants dashboard access
+    const cookieStore = await cookies();
+    const isProd = process.env.NODE_ENV === "production";
+    cookieStore.set("gatemate_onboarding_completed", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+    });
 
     revalidatePath("/onboarding");
     revalidatePath("/organizer");
