@@ -369,14 +369,7 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
 
   return (
     <>
-      <div className="space-y-8 w-full max-w-[1600px] pb-24 lg:pb-12">
-        <Link
-          href="/organizer/events"
-          className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Zurück zur Event-Übersicht
-        </Link>
-
+      <div className="space-y-8 w-full max-w-[1600px] pb-12">
         {/* Cancelled Banner */}
         {isCancelled && (
           <div className="p-6 rounded-2xl bg-red-950/60 border border-red-800 text-red-200 space-y-2">
@@ -394,6 +387,62 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Sticky Header Bar mit Titel & Dauerhaft Sichtbaren Aktions-Buttons */}
+          <div className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md -mt-4 sm:-mt-6 lg:-mt-8 -mx-4 sm:-mx-6 lg:-mx-8 p-4 sm:p-6 lg:px-8 border-b border-slate-800/80 shadow-2xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Link
+                  href="/organizer/events"
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Zurück zur Event-Übersicht
+                </Link>
+              </div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  {title ? `Event bearbeiten: ${title}` : "Event bearbeiten"}
+                </h1>
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
+                  isCancelled
+                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                    : isPublished
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                }`}>
+                  {isCancelled ? "Storniert" : isPublished ? "Veröffentlicht" : "Entwurf"}
+                </span>
+              </div>
+            </div>
+
+            {!isCancelled && (
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Ban className="w-4 h-4" /> Stornieren
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" /> Änderungen Speichern
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column (7-8 cols): Main Content & Tickets */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-8">
@@ -862,40 +911,6 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
           </div>
         </div>
       </form>
-
-      {/* Mobile Sticky Bottom Action Bar */}
-      {!isCancelled && (
-        <div className="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 sm:px-6 shadow-2xl flex items-center justify-between gap-3 lg:hidden">
-          <Link
-            href="/organizer/events"
-            className="py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors"
-          >
-            Abbrechen
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowCancelModal(true)}
-              className="py-2.5 px-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center gap-1 transition-colors"
-            >
-              <Ban className="w-3.5 h-3.5" /> Stornieren
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => {
-                const formEl = document.querySelector("form");
-                if (formEl) formEl.requestSubmit();
-              }}
-              className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center gap-1.5 transition-all"
-            >
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              <span>Speichern</span>
-            </button>
-          </div>
-        </div>
-      )}
 
         {/* Cancellation Confirmation Modal */}
         {showCancelModal && (

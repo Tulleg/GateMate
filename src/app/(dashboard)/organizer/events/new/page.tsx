@@ -70,13 +70,6 @@ export default async function CreateEventPage() {
       <Sidebar />
 
       <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto min-w-0 md:h-full">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Neues Event erstellen</h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Event-Details, Veranstaltungsort, Bannerbild und individuelle Ticket-Kategorien konfigurieren.
-          </p>
-        </div>
-
         {!isFullyCompleted && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">

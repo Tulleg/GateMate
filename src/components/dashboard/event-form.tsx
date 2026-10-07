@@ -247,7 +247,59 @@ export function EventForm({ platformFeePercent }: EventFormProps) {
 
   return (
     <>
-      <form className="w-full max-w-[1600px] pb-24 lg:pb-12">
+      <form className="w-full max-w-[1600px] pb-12">
+        {/* Sticky Header Bar mit Titel & Dauerhaft Sichtbaren Aktions-Buttons */}
+        <div className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md -mt-4 sm:-mt-6 lg:-mt-8 -mx-4 sm:-mx-6 lg:-mx-8 p-4 sm:p-6 lg:px-8 border-b border-slate-800/80 shadow-2xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Neues Event erstellen</h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+              Event-Details, Veranstaltungsort, Bannerbild und Ticket-Kategorien konfigurieren.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-400 border border-slate-800 transition-colors"
+            >
+              Abbrechen
+            </button>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleSaveDraft}
+              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-500/20 flex items-center gap-1.5 transition-all shadow-md"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Als Entwurf speichern"}
+            </button>
+
+            <button
+              type="button"
+              disabled={loading || !quickValidation.canPublish}
+              onClick={handleOpenPublishChecklist}
+              className={`px-4 py-2 rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all ${
+                !quickValidation.canPublish
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
+              }`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Verarbeite...
+                </>
+              ) : !quickValidation.canPublish ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 text-amber-400" /> Veröffentlichung blockiert
+                </>
+              ) : (
+                "Event Veröffentlichen"
+              )}
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Main Left Column (7-8 cols): Basic Info, Tickets, Conditions */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-8">
@@ -700,40 +752,6 @@ export function EventForm({ platformFeePercent }: EventFormProps) {
           </div>
         </div>
       </form>
-
-      {/* Mobile Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 sm:px-6 shadow-2xl flex items-center justify-between gap-3 lg:hidden">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors"
-        >
-          Abbrechen
-        </button>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={handleSaveDraft}
-            className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/20 flex items-center gap-1.5 transition-all"
-          >
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Entwurf"}
-          </button>
-          <button
-            type="button"
-            disabled={loading || !quickValidation.canPublish}
-            onClick={handleOpenPublishChecklist}
-            className={`py-2.5 px-4 rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all ${
-              !quickValidation.canPublish
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
-            }`}
-          >
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Veröffentlichen"}
-          </button>
-        </div>
-      </div>
 
       {/* Interactive Publish Legal Checklist Modal */}
       <PublishLegalChecklistModal
