@@ -45,7 +45,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           ref={internalRef}
           type={type}
           disabled={disabled}
-          className="w-full bg-transparent text-white text-xs sm:text-sm outline-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+          className="w-full bg-transparent text-white text-xs sm:text-sm outline-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           {...props}
         />
         <div className="pointer-events-none ml-2 text-indigo-400 shrink-0">
