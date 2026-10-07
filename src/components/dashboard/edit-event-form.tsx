@@ -25,6 +25,8 @@ import Link from "next/link";
 import { OrganizerLegalProfile } from "@/lib/legal";
 import { validateEventForPublication, EventPublicationValidationResult } from "@/lib/validation";
 import { PublishLegalChecklistModal } from "./publish-legal-checklist-modal";
+import { ImageUpload } from "./image-upload";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface TierInput {
   id?: string;
@@ -445,18 +447,12 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
                 />
               </div>
 
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Titelbild URL (Cover Banner)</label>
-                <div className="relative">
-                  <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="url"
-                    disabled={isCancelled}
-                    value={bannerUrl}
-                    onChange={(e) => setBannerUrl(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                  />
-                </div>
+              <div className="md:col-span-2">
+                <ImageUpload
+                  value={bannerUrl}
+                  onChange={setBannerUrl}
+                  disabled={loading || isCancelled}
+                />
               </div>
             </div>
           </div>
@@ -527,26 +523,24 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1.5">
                 <label className="font-semibold text-slate-300 block">Veranstaltungsbeginn (Datum &amp; Uhrzeit) *</label>
-                <input
+                <DatePicker
                   type="datetime-local"
                   required
                   disabled={isCancelled}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                 />
               </div>
 
               {hasEndTime && (
                 <div className="space-y-1.5">
                   <label className="font-semibold text-slate-300 block">Veranstaltungsende (Datum &amp; Uhrzeit) *</label>
-                  <input
+                  <DatePicker
                     type="datetime-local"
                     required={hasEndTime}
                     disabled={isCancelled}
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
               )}

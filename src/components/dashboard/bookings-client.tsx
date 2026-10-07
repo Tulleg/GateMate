@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FormatCurrencyClient } from "./format-currency";
 import { TaxReportModal } from "./tax-report-modal";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface EventOption {
   id: string;
@@ -322,28 +323,26 @@ export function BookingsClient() {
           {/* Custom Start Date */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-300">Von Datum</label>
-            <input
+            <DatePicker
               type="date"
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
                 setDatePreset("custom");
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           {/* Custom End Date */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-300">Bis Datum</label>
-            <input
+            <DatePicker
               type="date"
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value);
                 setDatePreset("custom");
               }}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
             />
           </div>
 

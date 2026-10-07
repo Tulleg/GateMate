@@ -709,7 +709,15 @@ export const eventCreateSchema = z.object({
   slug: z.string().trim().min(3).regex(/^[a-z0-9-]+$/, "Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."),
   description: z.string().trim().nullable().optional(),
   eventType: z.enum(["concert", "sports", "club_association", "workshop", "festival", "other"]).default("other"),
-  bannerUrl: z.string().url("Ungültige Bild-URL").nullable().optional().or(z.literal("")),
+  bannerUrl: z
+    .string()
+    .refine(
+      (val) => !val || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://") || val.startsWith("data:"),
+      "Ungültige Bild-URL oder Pfad"
+    )
+    .nullable()
+    .optional()
+    .or(z.literal("")),
   venue: z.string().trim().min(2, "Veranstaltungsort (Location) ist erforderlich."),
   venueStreet: z.string().trim().min(2, "Straße ist erforderlich."),
   venueZip: z.string().trim().min(2, "Postleitzahl ist erforderlich."),
