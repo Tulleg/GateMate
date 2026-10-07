@@ -369,7 +369,7 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
 
   return (
     <>
-      <div className="space-y-8 w-full max-w-[1600px] pb-12">
+      <div className="space-y-8 w-full max-w-[1600px] pb-24 lg:pb-12">
         <Link
           href="/organizer/events"
           className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
@@ -646,6 +646,49 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
 
           {/* Right Column (4-5 cols): Metadata, Dates, Location & Status Controls */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-4">
+            {/* Action Controls Card (Immer an erster Stelle in der rechten Spalte) */}
+            {!isCancelled && (
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 shadow-xl">
+                <h4 className="text-sm font-bold text-white flex items-center justify-between">
+                  <span>Änderungen Speichern</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-normal">Aktionen</span>
+                </h4>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Änderungen Speichern
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(true)}
+                    className="w-full py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Ban className="w-4 h-4" /> Event Stornieren
+                  </button>
+
+                  <Link
+                    href="/organizer/events"
+                    className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors text-center"
+                  >
+                    Abbrechen
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Section 3: Dates & Times */}
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5 shadow-xl">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -816,49 +859,43 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
                 </div>
               </div>
             </div>
-
-            {/* Action Controls Card */}
-            {!isCancelled && (
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 shadow-xl">
-                <h4 className="text-sm font-bold text-white">Änderungen Speichern</h4>
-
-                <div className="flex flex-col gap-3">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" /> Änderungen Speichern
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowCancelModal(true)}
-                    className="w-full py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Ban className="w-4 h-4" /> Event Stornieren
-                  </button>
-
-                  <Link
-                    href="/organizer/events"
-                    className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors text-center"
-                  >
-                    Abbrechen
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </form>
+
+      {/* Mobile Sticky Bottom Action Bar */}
+      {!isCancelled && (
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 sm:px-6 shadow-2xl flex items-center justify-between gap-3 lg:hidden">
+          <Link
+            href="/organizer/events"
+            className="py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors"
+          >
+            Abbrechen
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="py-2.5 px-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Ban className="w-3.5 h-3.5" /> Stornieren
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                const formEl = document.querySelector("form");
+                if (formEl) formEl.requestSubmit();
+              }}
+              className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center gap-1.5 transition-all"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              <span>Speichern</span>
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* Cancellation Confirmation Modal */}
         {showCancelModal && (
