@@ -11,10 +11,10 @@ export default async function EditEventPage({ params }: PageProps) {
   const platformFeePercent = await getPlatformFeePercent();
 
   return (
-    <div className="flex flex-col md:flex-row min-h-dvh bg-slate-950 text-slate-50 overflow-x-hidden">
+    <div className="flex flex-col md:flex-row min-h-dvh md:h-dvh md:overflow-hidden bg-slate-950 text-slate-50">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto min-w-0">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 overflow-y-auto min-w-0 md:h-full">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">Event bearbeiten</h1>
           <p className="text-sm text-slate-400 mt-1">
