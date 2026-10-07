@@ -369,7 +369,7 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
 
   return (
     <>
-      <div className="space-y-8 max-w-4xl">
+      <div className="space-y-8 w-full max-w-[1600px] pb-12">
         <Link
           href="/organizer/events"
           className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
@@ -393,9 +393,12 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Section 1: Main Details */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column (7-8 cols): Main Content & Tickets */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-8">
+              {/* Section 1: Main Details */}
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-indigo-400" /> 1. Event-Stammdaten
             </h3>
@@ -457,401 +460,405 @@ export function EditEventForm({ eventId, platformFeePercent }: EditEventFormProp
             </div>
           </div>
 
-          {/* Section 2: Location & Address */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-indigo-400" /> 2. Veranstaltungsort &amp; Vollständige Adresse
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="font-semibold text-slate-300 block">Veranstaltungsort Name (Location / Venue) *</label>
-                <input
-                  type="text"
-                  required
-                  disabled={isCancelled}
-                  value={venue}
-                  onChange={(e) => setVenue(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
+            {/* Section 4: Ticket Tiers */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-indigo-400" /> 4. Ticket-Kategorien &amp; Preise
+                </h3>
+                {!isCancelled && (
+                  <button
+                    type="button"
+                    onClick={addTier}
+                    className="px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Kategorie Hinzufügen
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="font-semibold text-slate-300 block">Straße &amp; Hausnummer *</label>
-                <input
-                  type="text"
-                  required
-                  disabled={isCancelled}
-                  value={venueStreet}
-                  onChange={(e) => setVenueStreet(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
+              <div className="space-y-4">
+                {tiers.map((tier, idx) => {
+                  const basePrice = parseFloat(tier.price || "0");
+                  const feePrice = parseFloat(tier.fee || "0");
+                  const totalPrice = (basePrice + feePrice).toFixed(2);
 
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Postleitzahl (PLZ) *</label>
-                <input
-                  type="text"
-                  required
-                  disabled={isCancelled}
-                  value={venueZip}
-                  onChange={(e) => setVenueZip(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
+                  return (
+                    <div key={idx} className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <span className="font-bold text-white text-sm">Ticketkategorie #{idx + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="px-3 py-1 rounded-xl bg-indigo-500/10 text-indigo-400 font-mono font-bold text-xs">
+                            Gesamtpreis: {totalPrice} € (inkl. {feePrice.toFixed(2)} € Gebühren)
+                          </span>
+                          {!isCancelled && tier.quantitySold === 0 && tiers.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeTier(idx)}
+                              className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
 
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Stadt / Ort *</label>
-                <input
-                  type="text"
-                  required
-                  disabled={isCancelled}
-                  value={venueCity}
-                  onChange={(e) => setVenueCity(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">Kategorie Name *</label>
+                          <input
+                            type="text"
+                            required
+                            disabled={isCancelled}
+                            value={tier.name}
+                            onChange={(e) => updateTier(idx, "name", e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">Ticket Grundpreis (Brutto in €) *</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            required
+                            disabled={isCancelled}
+                            value={tier.price}
+                            onChange={(e) => updateTier(idx, "price", e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr ({activeFeePercent}% - EUR €)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            disabled={isCancelled}
+                            value={tier.fee}
+                            onChange={(e) => updateTier(idx, "fee", e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">
+                            Kapazität (Verkauft: {tier.quantitySold}) *
+                          </label>
+                          <input
+                            type="number"
+                            required
+                            min={tier.quantitySold}
+                            disabled={isCancelled}
+                            value={tier.quantityAvailable}
+                            onChange={(e) => updateTier(idx, "quantityAvailable", e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">Enthaltene Leistungen (optional)</label>
+                          <input
+                            type="text"
+                            disabled={isCancelled}
+                            value={tier.includedServices}
+                            onChange={(e) => updateTier(idx, "includedServices", e.target.value)}
+                            placeholder="z.B. MVV-Ticket inklusive"
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-medium text-slate-400 block mb-1">Ticketbedingungen</label>
+                          <input
+                            type="text"
+                            disabled={isCancelled}
+                            value={tier.ticketTerms}
+                            onChange={(e) => updateTier(idx, "ticketTerms", e.target.value)}
+                            placeholder="z.B. Personengebunden"
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </div>
 
-          {/* Section 3: Dates & Times */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-400" /> 3. Termine, Uhrzeiten &amp; Status
-            </h3>
+            {/* Section 5: Specific Rules */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-400" /> 5. Event-Bedingungen, Barrierefreiheit &amp; Hausordnung
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Veranstaltungsbeginn (Datum &amp; Uhrzeit) *</label>
-                <DatePicker
-                  type="datetime-local"
-                  required
-                  disabled={isCancelled}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-
-              {hasEndTime && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-300 block">Veranstaltungsende (Datum &amp; Uhrzeit) *</label>
-                  <DatePicker
-                    type="datetime-local"
-                    required={hasEndTime}
+                  <label className="font-semibold text-slate-300 block">Barrierefreiheit</label>
+                  <textarea
+                    rows={2}
                     disabled={isCancelled}
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    value={accessibilityInfo}
+                    onChange={(e) => setAccessibilityInfo(e.target.value)}
+                    placeholder="Rollstuhlgerecht..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
-              )}
 
-              <div className="md:col-span-2 p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">Event hat ein relevantes Enddatum</p>
-                  <p className="text-[11px] text-slate-400">
-                    Deaktivieren Sie diese Option für Ausstellungen oder Ganztagesevents ohne feste Enduhrzeit.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  disabled={isCancelled}
-                  checked={hasEndTime}
-                  onChange={(e) => setHasEndTime(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 bg-slate-900 border-slate-700"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Altersbeschränkung *</label>
-                <select
-                  disabled={isCancelled}
-                  value={ageRestriction}
-                  onChange={(e) => setAgeRestriction(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                >
-                  <option value="Keine">Keine Altersbeschränkung</option>
-                  <option value="Ab 18 Jahren">Ab 18 Jahren</option>
-                  <option value="Ab 16 Jahren">Ab 16 Jahren</option>
-                  <option value="Ab 14 Jahren">Ab 14 Jahren</option>
-                  <option value="Ab 6 Jahren">Ab 6 Jahren</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Visibility Toggles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isPublished ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
-                    {isPublished ? <CheckCircle2 className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Veröffentlichungs-Status</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {isPublished ? "Event ist veröffentlicht & aktiv" : "Event ist ein Entwurf"}
-                    </p>
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Besondere Einlassbedingungen</label>
+                  <textarea
+                    rows={2}
+                    disabled={isCancelled}
+                    value={specialAdmissionConditions}
+                    onChange={(e) => setSpecialAdmissionConditions(e.target.value)}
+                    placeholder="Ausweispflicht..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isCancelled}
-                  onClick={() => setIsPublished(!isPublished)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    isPublished ? "bg-emerald-600 text-white" : "bg-amber-600/20 text-amber-300 border border-amber-500/30"
-                  } disabled:opacity-50`}
-                >
-                  {isPublished ? "Veröffentlicht" : "Entwurf"}
-                </button>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isListedInDirectory ? "bg-indigo-500/10 text-indigo-400" : "bg-slate-800 text-slate-400"}`}>
-                    {isListedInDirectory ? <Globe className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">GateMate Katalog-Sichtbarkeit</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {isListedInDirectory ? "Öffentlich im Katalog gelistet" : "Ungelistet (nur per Direktlink)"}
-                    </p>
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Hausordnung</label>
+                  <textarea
+                    rows={2}
+                    disabled={isCancelled}
+                    value={houseRules}
+                    onChange={(e) => setHouseRules(e.target.value)}
+                    placeholder="Rauchverbot..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isCancelled}
-                  onClick={() => setIsListedInDirectory(!isListedInDirectory)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                    isListedInDirectory ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
-                  } disabled:opacity-50`}
-                >
-                  {isListedInDirectory ? "Gelistet" : "Ungelistet"}
-                </button>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Event Stornobedingungen</label>
+                  <textarea
+                    rows={2}
+                    disabled={isCancelled}
+                    value={cancellationPolicy}
+                    onChange={(e) => setCancellationPolicy(e.target.value)}
+                    placeholder="Spezifische Stornobedingungen für dieses Event..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Section 4: Ticket Tiers */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
-            <div className="flex justify-between items-center">
+          {/* Right Column (4-5 cols): Metadata, Dates, Location & Status Controls */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-4">
+            {/* Section 3: Dates & Times */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5 shadow-xl">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-indigo-400" /> 4. Ticket-Kategorien &amp; Preise
+                <Clock className="w-5 h-5 text-indigo-400" /> 3. Termine, Uhrzeiten &amp; Status
               </h3>
-              {!isCancelled && (
-                <button
-                  type="button"
-                  onClick={addTier}
-                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Kategorie Hinzufügen
-                </button>
-              )}
-            </div>
 
-            <div className="space-y-4">
-              {tiers.map((tier, idx) => {
-                const basePrice = parseFloat(tier.price || "0");
-                const feePrice = parseFloat(tier.fee || "0");
-                const totalPrice = (basePrice + feePrice).toFixed(2);
+              <div className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Veranstaltungsbeginn *</label>
+                  <DatePicker
+                    type="datetime-local"
+                    required
+                    disabled={isCancelled}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
 
-                return (
-                  <div key={idx} className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 text-xs">
-                    <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                      <span className="font-bold text-white text-sm">Ticketkategorie #{idx + 1}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 rounded-xl bg-indigo-500/10 text-indigo-400 font-mono font-bold text-xs">
-                          Gesamtpreis: {totalPrice} € (inkl. {feePrice.toFixed(2)} € Gebühren)
-                        </span>
-                        {!isCancelled && tier.quantitySold === 0 && tiers.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeTier(idx)}
-                            className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                {hasEndTime && (
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-300 block">Veranstaltungsende *</label>
+                    <DatePicker
+                      type="datetime-local"
+                      required={hasEndTime}
+                      disabled={isCancelled}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-white text-xs">Festes Enddatum</p>
+                    <p className="text-[10px] text-slate-400">Für Ausstellungen / ganztägig deaktivieren</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    disabled={isCancelled}
+                    checked={hasEndTime}
+                    onChange={(e) => setHasEndTime(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 bg-slate-900 border-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Altersbeschränkung *</label>
+                  <select
+                    disabled={isCancelled}
+                    value={ageRestriction}
+                    onChange={(e) => setAgeRestriction(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  >
+                    <option value="Keine">Keine Altersbeschränkung</option>
+                    <option value="Ab 18 Jahren">Ab 18 Jahren</option>
+                    <option value="Ab 16 Jahren">Ab 16 Jahren</option>
+                    <option value="Ab 14 Jahren">Ab 14 Jahren</option>
+                    <option value="Ab 6 Jahren">Ab 6 Jahren</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Visibility Toggles */}
+              <div className="space-y-3 pt-2 border-t border-slate-800/80">
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg ${isPublished ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
+                      {isPublished ? <CheckCircle2 className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">Kategorie Name *</label>
-                        <input
-                          type="text"
-                          required
-                          disabled={isCancelled}
-                          value={tier.name}
-                          onChange={(e) => updateTier(idx, "name", e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">Ticket Grundpreis (Brutto in €) *</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          required
-                          disabled={isCancelled}
-                          value={tier.price}
-                          onChange={(e) => updateTier(idx, "price", e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">System-/Servicegebühr ({activeFeePercent}% - EUR €)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          disabled={isCancelled}
-                          value={tier.fee}
-                          onChange={(e) => updateTier(idx, "fee", e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">
-                          Kapazität (Verkauft: {tier.quantitySold}) *
-                        </label>
-                        <input
-                          type="number"
-                          required
-                          min={tier.quantitySold}
-                          disabled={isCancelled}
-                          value={tier.quantityAvailable}
-                          onChange={(e) => updateTier(idx, "quantityAvailable", e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono disabled:opacity-50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">Enthaltene Leistungen (optional)</label>
-                        <input
-                          type="text"
-                          disabled={isCancelled}
-                          value={tier.includedServices}
-                          onChange={(e) => updateTier(idx, "includedServices", e.target.value)}
-                          placeholder="z.B. MVV-Ticket inklusive"
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-medium text-slate-400 block mb-1">Ticketbedingungen</label>
-                        <input
-                          type="text"
-                          disabled={isCancelled}
-                          value={tier.ticketTerms}
-                          onChange={(e) => updateTier(idx, "ticketTerms", e.target.value)}
-                          placeholder="z.B. Personengebunden"
-                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-                        />
-                      </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Status</p>
+                      <p className="text-[10px] text-slate-400">{isPublished ? "Veröffentlicht" : "Entwurf"}</p>
                     </div>
                   </div>
-                );
-              })}
+
+                  <button
+                    type="button"
+                    disabled={isCancelled}
+                    onClick={() => setIsPublished(!isPublished)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                      isPublished ? "bg-emerald-600 text-white" : "bg-amber-600/20 text-amber-300 border border-amber-500/30"
+                    } disabled:opacity-50`}
+                  >
+                    {isPublished ? "Aktiv" : "Entwurf"}
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg ${isListedInDirectory ? "bg-indigo-500/10 text-indigo-400" : "bg-slate-800 text-slate-400"}`}>
+                      {isListedInDirectory ? <Globe className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Katalog-Sichtbarkeit</p>
+                      <p className="text-[10px] text-slate-400">{isListedInDirectory ? "Gelistet" : "Ungelistet"}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isCancelled}
+                    onClick={() => setIsListedInDirectory(!isListedInDirectory)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                      isListedInDirectory ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+                    } disabled:opacity-50`}
+                  >
+                    {isListedInDirectory ? "Gelistet" : "Ungelistet"}
+                  </button>
+                </div>
+              </div>
             </div>
+
+            {/* Section 2: Location & Address */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5 shadow-xl">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-indigo-400" /> 2. Veranstaltungsort &amp; Adresse
+              </h3>
+
+              <div className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Location Name *</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={isCancelled}
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-300 block">Straße &amp; Hausnummer *</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={isCancelled}
+                    value={venueStreet}
+                    onChange={(e) => setVenueStreet(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-300 block">PLZ *</label>
+                    <input
+                      type="text"
+                      required
+                      disabled={isCancelled}
+                      value={venueZip}
+                      onChange={(e) => setVenueZip(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-300 block">Stadt *</label>
+                    <input
+                      type="text"
+                      required
+                      disabled={isCancelled}
+                      value={venueCity}
+                      onChange={(e) => setVenueCity(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Controls Card */}
+            {!isCancelled && (
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 shadow-xl">
+                <h4 className="text-sm font-bold text-white">Änderungen Speichern</h4>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Änderungen Speichern
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(true)}
+                    className="w-full py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Ban className="w-4 h-4" /> Event Stornieren
+                  </button>
+
+                  <Link
+                    href="/organizer/events"
+                    className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-xs font-medium text-slate-400 transition-colors text-center"
+                  >
+                    Abbrechen
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Section 5: Specific Rules */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-5">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-400" /> 5. Event-Bedingungen, Barrierefreiheit &amp; Hausordnung
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Barrierefreiheit</label>
-                <textarea
-                  rows={2}
-                  disabled={isCancelled}
-                  value={accessibilityInfo}
-                  onChange={(e) => setAccessibilityInfo(e.target.value)}
-                  placeholder="Rollstuhlgerecht..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Besondere Einlassbedingungen</label>
-                <textarea
-                  rows={2}
-                  disabled={isCancelled}
-                  value={specialAdmissionConditions}
-                  onChange={(e) => setSpecialAdmissionConditions(e.target.value)}
-                  placeholder="Ausweispflicht..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Hausordnung</label>
-                <textarea
-                  rows={2}
-                  disabled={isCancelled}
-                  value={houseRules}
-                  onChange={(e) => setHouseRules(e.target.value)}
-                  placeholder="Rauchverbot..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Event Stornobedingungen</label>
-                <textarea
-                  rows={2}
-                  disabled={isCancelled}
-                  value={cancellationPolicy}
-                  onChange={(e) => setCancellationPolicy(e.target.value)}
-                  placeholder="Spezifische Stornobedingungen für dieses Event..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Action Controls */}
-          {!isCancelled && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setShowCancelModal(true)}
-                className="px-4 py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-semibold flex items-center gap-2 transition-colors w-full sm:w-auto"
-              >
-                <Ban className="w-4 h-4" /> Event Stornieren / Absagen
-              </button>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <Link
-                  href="/organizer/events"
-                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors"
-                >
-                  Abbrechen
-                </Link>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Speichere...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" /> Änderungen Speichern
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </form>
+        </div>
+      </form>
 
         {/* Cancellation Confirmation Modal */}
         {showCancelModal && (
